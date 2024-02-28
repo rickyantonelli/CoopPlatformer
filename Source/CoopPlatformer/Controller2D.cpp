@@ -179,7 +179,6 @@ void AController2D::BallThrownServerRPCFunction_Implementation(float DeltaTime)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke!");
 			}
-
 		}
 		else
 		{
