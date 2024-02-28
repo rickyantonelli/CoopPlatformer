@@ -34,7 +34,6 @@ void AController2D::Tick(float DeltaSeconds)
 	if (!BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
 	{
 		// set up an array of actors
-	   // BallActor->Sphere->GetOverlappingActors(OverlapActors, AMyPaperCharacter::StaticClass()); // overlapping actors that are of the character class
 		for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
 		{
 			TArray<AActor*> OverlapActors;
@@ -49,8 +48,6 @@ void AController2D::Tick(float DeltaSeconds)
 	if (BallActor->IsMoving)
 	{
 		// lets move it to the other player
-		//if (HoldingPlayer && NonHoldingPlayer && HasAuthority()) BallThrownMulticastFunction(DeltaSeconds);
-		//if (HoldingPlayer && NonHoldingPlayer) BallThrownMulticastFunction(DeltaSeconds);
 		if (ActivePlayers.Num() == 2)
 		{
 			if (HoldingPlayer && NonHoldingPlayer)
@@ -70,7 +67,6 @@ void AController2D::Tick(float DeltaSeconds)
 				}
 				else
 				{
-					//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, HoldingPlayer->GetActorLabel());
 					FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->GetActorLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
 					BallActor->SetActorLocation(NewLocation);
 				}
@@ -162,7 +158,6 @@ void AController2D::BallThrownServerRPCFunction_Implementation(float DeltaTime)
 	{
 		if (BallActor->GetAttachParentActor())
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Detaching");
 			BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			BallActor->IsAttached = false;
 		}
@@ -179,7 +174,6 @@ void AController2D::BallThrownServerRPCFunction_Implementation(float DeltaTime)
 			AMyPaperCharacter* TempPlayer = HoldingPlayer;
 			HoldingPlayer = NonHoldingPlayer;
 			NonHoldingPlayer = TempPlayer;
-			//BallActor->SetActorLocation(TargetLocation);
 			BallActor->AttachToComponent(HoldingPlayer->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			if (!HoldingPlayer->IsHolding)
 			{
@@ -189,7 +183,6 @@ void AController2D::BallThrownServerRPCFunction_Implementation(float DeltaTime)
 		}
 		else
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, HoldingPlayer->GetActorLabel());
 			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), TargetLocation, DeltaTime, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
 			BallActor->SetActorLocation(NewLocation);
 			HoldingPlayer->IsHolding = false;
@@ -227,7 +220,6 @@ void AController2D::BallThrownMulticastFunction_Implementation(float DeltaTime)
 				BallActor->IsAttached = false;
 				HoldingPlayer->IsHolding = false;
 			}
-			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, HoldingPlayer->GetActorLabel());
 			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), TargetLocation, DeltaTime, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
 			BallActor->SetActorLocation(NewLocation);
 		}
