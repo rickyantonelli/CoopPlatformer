@@ -30,6 +30,8 @@ void AMyPaperCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpawnLocation = GetActorLocation();
+
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{

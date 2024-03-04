@@ -83,6 +83,9 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	bool CanJumpReset;
 
+	UPROPERTY(VisibleAnywhere)
+	FVector SpawnLocation;
+
 	UPROPERTY(BlueprintAssignable)
 	FBallPassActivated OnPassActivated;
 

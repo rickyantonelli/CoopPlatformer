@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-
 #include "MyPaperCharacter.h"
 #include "BallActor.h"
 
@@ -42,9 +41,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void BallPickupMulticastFunction(AMyPaperCharacter* PlayerActor);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void BallPickupServerRPCFunction(AMyPaperCharacter* PlayerActor);
-
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void BallThrownMulticastFunction(float DeltaTime);
 
@@ -57,12 +53,20 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void PassServerRPCFunction();
 
-	UFUNCTION(BlueprintCallable)
-	void AttachBallToPlayer();// AMyPaperCharacter* PlayerActor);
-
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void GatherPlayersMulticastFunction(const TArray<AMyPaperCharacter*>& UpdatedActivePlayers);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void GatherPlayersServerRPCFunction(const TArray<AMyPaperCharacter*>& UpdatedActivePlayers);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void PlayerDeathMulticastFunction(AMyPaperCharacter* PlayerActor);
+
+	UFUNCTION()
+	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);
+
+	void GatherActorsHandler();
+
+	void BallPickupHandler();
+
+	void BallPassingHandler(float DeltaSeconds);
+
+	void DeathHandler();
 };
