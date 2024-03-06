@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MyPaperCharacter.h"
 #include "BallActor.h"
+#include "Checkpoint.h"
 
 
 #include "Controller2D.generated.h"
@@ -19,6 +20,7 @@ class COOPPLATFORMER_API AController2D : public APlayerController
 	GENERATED_BODY()
 
 protected:
+	virtual void BeginPlay() override;
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
@@ -59,6 +61,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void PlayerDeathMulticastFunction(AMyPaperCharacter* PlayerActor);
 
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void CheckpointActivatedMulticastFunction(AMyPaperCharacter* PlayerActor, ACheckpoint* Checkpoint);
+
 	UFUNCTION()
 	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);
 
@@ -69,4 +74,6 @@ public:
 	void BallPassingHandler(float DeltaSeconds);
 
 	void DeathHandler();
+
+	void CheckpointHandler(AMyPaperCharacter* PlayerActor, ACheckpoint* Checkpoint);
 };

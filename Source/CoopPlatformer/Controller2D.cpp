@@ -10,9 +10,21 @@ void AController2D::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	GatherActorsHandler();
-	// BallPickupHandler();
+	BallPickupHandler();
 	BallPassingHandler(DeltaSeconds);
 	DeathHandler();
+}
+
+void AController2D::BeginPlay()
+{
+	Super::BeginPlay();
+
+	/*TArray<AActor*> CheckpointActors;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Checkpoint", CheckpointActors);
+	for (AActor* Actor : CheckpointActors) {
+		ACheckpoint* Checkpoint = Cast<ACheckpoint>(Actor);
+		Checkpoint->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+	}*/
 }
 
 
@@ -23,6 +35,14 @@ void AController2D::OnPassActorActivated()
 
 void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter* MyPlayerActor)
 {
+	if (HasAuthority())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Attached Server");
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Attached Client");
+	}
 	BallActor->AttachToComponent(MyPlayerActor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach this to the actor
 	MyPlayerActor->IsHolding = true;
 	HoldingPlayer = MyPlayerActor;
@@ -224,7 +244,6 @@ void AController2D::GatherActorsHandler()
 		{
 			Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
 			Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
-			// DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams( FActorBeginOverlapSignature, AActor, OnActorBeginOverlap, AActor*, OverlappedActor, AActor*, OtherActor );
 		}
 		if (HasAuthority()) GatherPlayersMulticastFunction(ActivePlayers);
 	}
@@ -264,43 +283,50 @@ void AController2D::DeathHandler()
 
 void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacter* PlayerActor)
 {
-	// in this function we should keep Overlapping Actors, if any of them have type "death" then we know we died
-	// when a player dies, they should respawn at the start or checkpoint
-	// the ball should go back to the non-dead player, here's how we do this:
-	// if IsMoving is false and the dead player is not the holder, do nothing
-	// if IsMoving is false and the dead player is the holder, then pass to the other player
-	// if IsMoving is true, and the dead player is NonHolding player, then swap Holding and Nonholding players so that (hopefully) the ball just turns around
-	// if IsMoving is true, and the dead player is the Holding player, do nothing
-	// for now lets just get a print statement
-	
-
-	// first we need to figure out if the player is the holdingcharacter
-	if (PlayerActor == HoldingPlayer)
+	if (HasAuthority())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Death");
-		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);// , false);// , (FHitResult*)nullptr, ETeleportType::ResetPhysics);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Death Server");
 	}
-
-
-	// once the ball is thrown, move the actor to the starting location
-	
-
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Death Client");
+	}
+	if (PlayerActor)
+	{
+		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);
+	}
 }
 
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
 
 	// ball pickup handling
-	if (!BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2 && OtherActor->ActorHasTag("Ball") && HasAuthority())
+	/*if (OtherActor->ActorHasTag("Ball") && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2 && HasAuthority())
 	{
 		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
 		if (PlayerCharacterActor) BallPickupMulticastFunction(PlayerCharacterActor);
-	}
+	}*/
 
 	// death handling
 	if (OtherActor->ActorHasTag("Death") && HasAuthority())
 	{
 		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
 		if (PlayerCharacterActor) PlayerDeathMulticastFunction(PlayerCharacterActor);
+	}
+
+	// checkpoint handling
+	if (OtherActor->ActorHasTag("Checkpoint") && HasAuthority())
+	{
+		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
+		ACheckpoint* CheckpointActor = Cast<ACheckpoint>(OtherActor);
+		if (PlayerCharacterActor && CheckpointActor) CheckpointActivatedMulticastFunction(PlayerCharacterActor, CheckpointActor);
+	}
+}
+
+void AController2D::CheckpointActivatedMulticastFunction_Implementation(AMyPaperCharacter* PlayerActor, ACheckpoint* Checkpoint)
+{
+	if (Checkpoint->CheckpointedPlayers.Find(PlayerActor) == -1) // if the player actor is not in our Tarray for the checkpoint
+	{
+		Checkpoint->AddPlayer(PlayerActor);
 	}
 }
