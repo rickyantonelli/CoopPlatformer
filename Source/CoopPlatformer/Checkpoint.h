@@ -39,7 +39,7 @@ public:
 	UFUNCTION()
 	void AddPlayer(AMyPaperCharacter* PlayerActor);
 
-	bool HasBeenGathered;
+	bool CanBeCollected;
 
 
 };
