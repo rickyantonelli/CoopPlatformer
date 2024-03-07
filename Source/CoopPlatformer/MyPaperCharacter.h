@@ -77,16 +77,28 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UCharacterMovementComponent* MyCharacterMovement;
 
+	UPROPERTY(EditAnywhere)
+	float DeathDuration;
+
 	UPROPERTY(VisibleAnywhere)
 	bool IsHolding;
 
 	UPROPERTY(VisibleAnywhere)
 	bool CanJumpReset;
 
+	UPROPERTY(VisibleAnywhere)
+	bool MovementEnabled;
+
+	UPROPERTY(VisibleAnywhere)
+	FVector SpawnLocation;
+
 	UPROPERTY(BlueprintAssignable)
 	FBallPassActivated OnPassActivated;
 
 	UFUNCTION()
 	void ResetJumpAbility();
+
+	UFUNCTION()
+	void OnDeath();
 
 };
