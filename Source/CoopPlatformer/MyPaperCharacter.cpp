@@ -130,10 +130,6 @@ void AMyPaperCharacter::Jump()
 	if (MovementEnabled)
 	{
 		Super::Jump();
-		if (IsLocallyControlled())
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Owner");
-		}
 	}
 }
 
