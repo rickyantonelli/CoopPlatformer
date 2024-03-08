@@ -2,6 +2,7 @@
 
 
 #include "MyPaperCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -18,14 +19,15 @@ AMyPaperCharacter::AMyPaperCharacter()
 	//Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->SetupAttachment(RootComponent);
 
-	MyCharacterMovement = GetCharacterMovement();
 
 	IsHolding = false;
 	CanJumpReset = false;
 	MovementEnabled = true;
+	WithinCoyoteTime = false;
+	Jumping = false;
 
 	DeathDuration = 1.0f;
-
+	CoyoteDuration = 0.5f;
 }
 
 // Called when the game starts or when spawned
@@ -50,6 +52,19 @@ void AMyPaperCharacter::BeginPlay()
 void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+}
+
+void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
+{
+	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+
+	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
+	if (NewMovementMode == EMovementMode::MOVE_Falling)
+	{
+		FTimerHandle TimerHandler;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinCoyoteTime = true; }, CoyoteDuration, false);
+	}
 
 }
 
@@ -117,11 +132,16 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 	CanJumpReset = false;	
+	Jumping = false;
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 {
-	if (CanJumpReset) return true;
+	if (CanJumpReset || WithinCoyoteTime && !Jumping) 
+	{
+		return true;
+	}
+
 	else return Super::CanJumpInternal_Implementation();
 }
 
@@ -131,12 +151,14 @@ void AMyPaperCharacter::Jump()
 	{
 		Super::Jump();
 	}
+	
 }
 
 void AMyPaperCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
 	CanJumpReset = false;
+	Jumping = true;
 }
 
 void AMyPaperCharacter::OnDeath()

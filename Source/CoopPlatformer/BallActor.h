@@ -48,6 +48,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	UStaticMeshComponent* Mesh;
 
+	UPROPERTY(EditAnywhere)
+	float PassCooldownDuration;
+
+	UPROPERTY(VisibleAnywhere)
+	bool NoPassCooldown;
+
 	UPROPERTY(VisibleAnywhere)
 	bool IsMoving;
 
@@ -59,4 +65,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	bool CanPass;
+
+	UFUNCTION()
+	void BeginPassCooldown();
 };

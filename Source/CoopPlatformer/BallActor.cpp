@@ -27,6 +27,9 @@ ABallActor::ABallActor()
 	IsHeld = false;
 	CanPass = false;
 	IsAttached = false;
+	NoPassCooldown = true;
+
+	PassCooldownDuration = 0.5f;
 }
 
 void ABallActor::BeginPlay()
@@ -39,6 +42,13 @@ void ABallActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ABallActor::BeginPassCooldown()
+{
+	NoPassCooldown = false;
+	FTimerHandle TimerHandler;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {NoPassCooldown = true; }, PassCooldownDuration, false);
 }
 
 

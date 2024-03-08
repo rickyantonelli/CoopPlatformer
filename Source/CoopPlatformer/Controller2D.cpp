@@ -138,7 +138,7 @@ void AController2D::BallThrownMulticastFunction_Implementation(float DeltaTime)
 
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (BallActor->CanPass)
+	if (BallActor->CanPass && BallActor->NoPassCooldown)
 	{
 		if (HoldingPlayer && NonHoldingPlayer)
 		{
@@ -149,6 +149,7 @@ void AController2D::PassServerRPCFunction_Implementation()
 				HoldingPlayer->IsHolding = false;
 				BallActor->IsMoving = true;
 				BallActor->CanPass = false;
+				BallActor->BeginPassCooldown();
 			}
 		}
 		PassMulticastFunction();
@@ -157,7 +158,7 @@ void AController2D::PassServerRPCFunction_Implementation()
 
 void AController2D::PassMulticastFunction_Implementation()
 {
-	if (BallActor->CanPass)
+	if (BallActor->CanPass && BallActor->NoPassCooldown)
 	{
 		if (HoldingPlayer && NonHoldingPlayer)
 		{
@@ -168,6 +169,7 @@ void AController2D::PassMulticastFunction_Implementation()
 				HoldingPlayer->IsHolding = false;
 				BallActor->IsMoving = true;
 				BallActor->CanPass = false;
+				BallActor->BeginPassCooldown();
 			}
 		}
 	}
