@@ -72,6 +72,4 @@ public:
 	void BallPickupHandler();
 
 	void BallPassingHandler(float DeltaSeconds);
-
-	void DeathHandler();
 };
