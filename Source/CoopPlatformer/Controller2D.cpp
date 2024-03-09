@@ -12,19 +12,11 @@ void AController2D::Tick(float DeltaSeconds)
 	GatherActorsHandler();
 	BallPickupHandler();
 	BallPassingHandler(DeltaSeconds);
-	DeathHandler();
 }
 
 void AController2D::BeginPlay()
 {
 	Super::BeginPlay();
-
-	/*TArray<AActor*> CheckpointActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Checkpoint", CheckpointActors);
-	for (AActor* Actor : CheckpointActors) {
-		ACheckpoint* Checkpoint = Cast<ACheckpoint>(Actor);
-		Checkpoint->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
-	}*/
 }
 
 
@@ -138,38 +130,28 @@ void AController2D::BallThrownMulticastFunction_Implementation(float DeltaTime)
 
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (BallActor->CanPass)
+	if (BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
 	{
-		if (HoldingPlayer && NonHoldingPlayer)
-		{
-			if (BallActor->GetAttachParentActor())
-			{
-				BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				BallActor->IsAttached = false;
-				HoldingPlayer->IsHolding = false;
-				BallActor->IsMoving = true;
-				BallActor->CanPass = false;
-			}
-		}
-		PassMulticastFunction();
+		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BallActor->IsAttached = false;
+		HoldingPlayer->IsHolding = false;
+		BallActor->IsMoving = true;
+		BallActor->CanPass = false;
+		BallActor->BeginPassCooldown();
 	}
+	PassMulticastFunction();
 }
 
 void AController2D::PassMulticastFunction_Implementation()
 {
-	if (BallActor->CanPass)
+	if (BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
 	{
-		if (HoldingPlayer && NonHoldingPlayer)
-		{
-			if (BallActor->GetAttachParentActor())
-			{
-				BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				BallActor->IsAttached = false;
-				HoldingPlayer->IsHolding = false;
-				BallActor->IsMoving = true;
-				BallActor->CanPass = false;
-			}
-		}
+		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BallActor->IsAttached = false;
+		HoldingPlayer->IsHolding = false;
+		BallActor->IsMoving = true;
+		BallActor->CanPass = false;
+		BallActor->BeginPassCooldown();
 	}
 }
 
@@ -200,32 +182,25 @@ void AController2D::BallPickupHandler()
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
 {
-	if (BallActor->IsMoving)
+	if (BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
 	{
-		// lets move it to the other player
-		if (ActivePlayers.Num() == 2)
+		TArray<AActor*> OverlapActors;
+		NonHoldingPlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+		if (!OverlapActors.IsEmpty())
 		{
-			if (HoldingPlayer && NonHoldingPlayer)
-			{
-				TArray<AActor*> OverlapActors;
-				NonHoldingPlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-				if (!OverlapActors.IsEmpty())
-				{
-					NonHoldingPlayer->ResetJumpAbility();
-					BallActor->CanPass = true;
-					BallActor->IsAttached = true;
-					AMyPaperCharacter* TempPlayer = HoldingPlayer;
-					HoldingPlayer = NonHoldingPlayer;
-					NonHoldingPlayer = TempPlayer;
-					BallActor->AttachToComponent(HoldingPlayer->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-					BallActor->IsMoving = false;
-				}
-				else
-				{
-					FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->GetActorLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
-					BallActor->SetActorLocation(NewLocation);
-				}
-			}
+			NonHoldingPlayer->ResetJumpAbility();
+			BallActor->CanPass = true;
+			BallActor->IsAttached = true;
+			AMyPaperCharacter* TempPlayer = HoldingPlayer;
+			HoldingPlayer = NonHoldingPlayer;
+			NonHoldingPlayer = TempPlayer;
+			BallActor->AttachToComponent(HoldingPlayer->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			BallActor->IsMoving = false;
+		}
+		else
+		{
+			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->GetActorLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
+			BallActor->SetActorLocation(NewLocation);
 		}
 	}
 }
@@ -252,32 +227,6 @@ void AController2D::GatherActorsHandler()
 		TArray<AActor*> BallActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Ball", BallActors);
 		BallActor = Cast<ABallActor>(BallActors[0]);
-	}
-}
-
-void AController2D::DeathHandler()
-{
-	
-
-	// we tried the delegate idea and failed, so lets just do the normal first implementation with the "death" tag
-	// we can probably do the same logic as ball pick (in terms of authority)
-	for (AMyPaperCharacter* AA : ActivePlayers)
-	{
-		TArray<AActor*> OverlapActors;
-		AA->GetOverlappingActors(OverlapActors);
-		if (!OverlapActors.IsEmpty()) 
-		{
-			
-			for (AActor* OverlapActor : OverlapActors)
-			{
-				if (OverlapActor->ActorHasTag("Death"))
-				{
-					//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Death");
-					//AMyPaperCharacter* PlayerActor = Cast<AMyPaperCharacter>(OverlapActor);
-					//if (PlayerActor && HasAuthority()) PlayerDeathMulticastFunction(PlayerActor);
-				}
-			}
-		}
 	}
 }
 

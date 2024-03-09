@@ -8,7 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
-#include "CharacterMovementComponent.generated.h"
+//#include "CharacterMovementComponent.generated.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "PaperCharacter.h"
@@ -53,6 +53,8 @@ public:
 
 	virtual void Jump() override;
 
+	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm;
 
@@ -74,11 +76,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PassAction;
 
-	UPROPERTY(VisibleAnywhere)
-	UCharacterMovementComponent* MyCharacterMovement;
-
 	UPROPERTY(EditAnywhere)
 	float DeathDuration;
+
+	UPROPERTY(EditAnywhere)
+	float CoyoteDuration;
 
 	UPROPERTY(VisibleAnywhere)
 	bool IsHolding;
@@ -88,6 +90,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	bool MovementEnabled;
+
+	UPROPERTY(VisibleAnywhere)
+	bool WithinCoyoteTime;
+
+	UPROPERTY(VisibleAnywhere)
+	bool Jumping;
 
 	UPROPERTY(VisibleAnywhere)
 	FVector SpawnLocation;
