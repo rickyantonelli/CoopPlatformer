@@ -19,6 +19,11 @@ AMyPaperCharacter::AMyPaperCharacter()
 	//Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->SetupAttachment(RootComponent);
 
+	BallHolder = CreateDefaultSubobject<UBoxComponent>(TEXT("BallHolder"));
+	BallHolder->SetupAttachment(RootComponent);
+	BallHolder->SetCollisionProfileName(FName("OverlapAllDynamic"));
+	BallHolder->SetIsReplicated(true);
+
 
 	IsHolding = false;
 	CanJumpReset = false;
