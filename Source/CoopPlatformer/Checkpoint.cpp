@@ -25,7 +25,7 @@ ACheckpoint::ACheckpoint()
 	Mesh->SetIsReplicated(true);
 	Mesh->SetCollisionProfileName(FName("OverlapAllDynamic"));
 
-	HasBeenGathered = false;
+	CanBeCollected = true;
 	Tags.Add("Checkpoint");
 	
 }
@@ -46,16 +46,20 @@ void ACheckpoint::Tick(float DeltaTime)
 
 void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 {
-	if (CheckpointedPlayers.Find(PlayerActor) == -1)
+	if (CanBeCollected)
 	{
-		CheckpointedPlayers.Add(PlayerActor);
-	}
-	if (CheckpointedPlayers.Num() == 2)
-	{
-		for (AMyPaperCharacter* CheckpointedActor : CheckpointedPlayers)
+		if (CheckpointedPlayers.Find(PlayerActor) == -1)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Checkpoint!");
-			CheckpointedActor->SpawnLocation = GetActorLocation();
+			CheckpointedPlayers.Add(PlayerActor);
+		}
+		if (CheckpointedPlayers.Num() == 2)
+		{
+			for (AMyPaperCharacter* CheckpointedActor : CheckpointedPlayers)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Checkpoint!");
+				CheckpointedActor->SpawnLocation = GetActorLocation();
+				CanBeCollected = false;
+			}
 		}
 	}
 }

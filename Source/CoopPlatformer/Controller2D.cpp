@@ -294,6 +294,7 @@ void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacte
 	if (PlayerActor)
 	{
 		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);
+		PlayerActor->OnDeath();
 	}
 }
 

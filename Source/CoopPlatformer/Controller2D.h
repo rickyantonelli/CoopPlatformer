@@ -74,6 +74,4 @@ public:
 	void BallPassingHandler(float DeltaSeconds);
 
 	void DeathHandler();
-
-	void CheckpointHandler(AMyPaperCharacter* PlayerActor, ACheckpoint* Checkpoint);
 };

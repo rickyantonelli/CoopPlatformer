@@ -22,6 +22,9 @@ AMyPaperCharacter::AMyPaperCharacter()
 
 	IsHolding = false;
 	CanJumpReset = false;
+	MovementEnabled = true;
+
+	DeathDuration = 1.0f;
 
 }
 
@@ -74,20 +77,23 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void AMyPaperCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector MovementVector = Value.Get<FVector>();
-
-	if (Controller != nullptr)
+	if (MovementEnabled)
 	{
-		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.X);
+		// input is a Vector2D
+		FVector MovementVector = Value.Get<FVector>();
+
+		if (Controller != nullptr)
+		{
+			// add movement 
+			AddMovementInput(GetActorForwardVector(), MovementVector.X);
+		}
 	}
 }
 
 
 void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
-	if (IsHolding)
+	if (IsHolding && MovementEnabled)
 	{
 		OnPassActivated.Broadcast();
 	}
@@ -110,7 +116,7 @@ void AMyPaperCharacter::ResetJumpAbility()
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-	CanJumpReset = false;
+	CanJumpReset = false;	
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
@@ -121,11 +127,28 @@ bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 
 void AMyPaperCharacter::Jump()
 {
-	Super::Jump();
+	if (MovementEnabled)
+	{
+		Super::Jump();
+		if (IsLocallyControlled())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Owner");
+		}
+	}
 }
 
 void AMyPaperCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
 	CanJumpReset = false;
+}
+
+void AMyPaperCharacter::OnDeath()
+{
+	if (IsLocallyControlled())
+	{
+		MovementEnabled = false;
+		FTimerHandle TimerHandler;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {MovementEnabled = true; }, DeathDuration, false);
+	}
 }
