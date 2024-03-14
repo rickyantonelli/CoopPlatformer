@@ -3,6 +3,7 @@
 
 #include "Controller2D.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 void AController2D::Tick(float DeltaSeconds)
@@ -165,6 +166,11 @@ void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacte
 	}
 	if (PlayerActor)
 	{
+		UCharacterMovementComponent* MyCharacterMovement = PlayerActor->GetCharacterMovement();
+		if (MyCharacterMovement)
+		{
+			MyCharacterMovement->Velocity = FVector::ZeroVector;
+		}
 		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);
 		PlayerActor->OnDeath();
 	}
