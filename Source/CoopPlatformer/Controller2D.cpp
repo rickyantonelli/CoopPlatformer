@@ -3,6 +3,7 @@
 
 #include "Controller2D.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 void AController2D::Tick(float DeltaSeconds)
@@ -35,7 +36,7 @@ void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Attached Client");
 	}
-	BallActor->AttachToComponent(MyPlayerActor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach this to the actor
+	BallActor->AttachToComponent(MyPlayerActor->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach this to the actor
 	MyPlayerActor->IsHolding = true;
 	HoldingPlayer = MyPlayerActor;
 	for (AMyPaperCharacter* APlayerActor : ActivePlayers)
@@ -49,83 +50,6 @@ void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter
 	BallActor->IsHeld = true;
 	BallActor->CanPass = true;
 	BallActor->IsAttached = true;
-}
-
-void AController2D::BallThrownServerRPCFunction_Implementation(float DeltaTime)
-{
-	if (ActivePlayers.Num() == 2)
-	{
-		if (BallActor->GetAttachParentActor())
-		{
-			BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-			BallActor->IsAttached = false;
-		}
-		FVector CurrentLocation = HoldingPlayer->GetActorLocation();
-		FVector TargetLocation = NonHoldingPlayer->GetActorLocation();
-		TArray<AActor*> OverlapActors;
-		NonHoldingPlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-		if (!OverlapActors.IsEmpty())
-		{
-			NonHoldingPlayer->ResetJumpAbility();
-			BallActor->IsMoving = false;
-			BallActor->CanPass = true;
-			BallActor->IsAttached = true;
-			AMyPaperCharacter* TempPlayer = HoldingPlayer;
-			HoldingPlayer = NonHoldingPlayer;
-			NonHoldingPlayer = TempPlayer;
-			BallActor->AttachToComponent(HoldingPlayer->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			if (!HoldingPlayer->IsHolding)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke!");
-			}
-		}
-		else
-		{
-			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), TargetLocation, DeltaTime, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
-			BallActor->SetActorLocation(NewLocation);
-			HoldingPlayer->IsHolding = false;
-		}
-	}
-
-	BallThrownMulticastFunction(DeltaTime);
-}
-
-void AController2D::BallThrownMulticastFunction_Implementation(float DeltaTime)
-{
-	if (ActivePlayers.Num() == 2)
-	{
-
-		FVector CurrentLocation = HoldingPlayer->GetActorLocation();
-		FVector TargetLocation = NonHoldingPlayer->GetActorLocation();
-		TArray<AActor*> OverlapActors;
-		NonHoldingPlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-		if (!OverlapActors.IsEmpty())
-		{
-			NonHoldingPlayer->ResetJumpAbility();
-			BallActor->CanPass = true;
-			BallActor->IsAttached = true;
-			AMyPaperCharacter* TempPlayer = HoldingPlayer;
-			HoldingPlayer = NonHoldingPlayer;
-			NonHoldingPlayer = TempPlayer;
-			BallActor->AttachToComponent(HoldingPlayer->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			BallActor->IsMoving = false;
-		}
-		else
-		{
-			if (BallActor->GetAttachParentActor())
-			{
-				BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				BallActor->IsAttached = false;
-				HoldingPlayer->IsHolding = false;
-			}
-			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), TargetLocation, DeltaTime, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
-			BallActor->SetActorLocation(NewLocation);
-		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Not enough");
-	}
 }
 
 void AController2D::PassServerRPCFunction_Implementation()
@@ -185,7 +109,7 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 	if (BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
 	{
 		TArray<AActor*> OverlapActors;
-		NonHoldingPlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+		NonHoldingPlayer->BallHolder->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 		if (!OverlapActors.IsEmpty())
 		{
 			NonHoldingPlayer->ResetJumpAbility();
@@ -194,12 +118,12 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 			AMyPaperCharacter* TempPlayer = HoldingPlayer;
 			HoldingPlayer = NonHoldingPlayer;
 			NonHoldingPlayer = TempPlayer;
-			BallActor->AttachToComponent(HoldingPlayer->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			BallActor->IsMoving = false;
 		}
 		else
 		{
-			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->GetActorLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
+			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->BallHolder->GetComponentLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
 			BallActor->SetActorLocation(NewLocation);
 		}
 	}
@@ -242,6 +166,11 @@ void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacte
 	}
 	if (PlayerActor)
 	{
+		UCharacterMovementComponent* MyCharacterMovement = PlayerActor->GetCharacterMovement();
+		if (MyCharacterMovement)
+		{
+			MyCharacterMovement->Velocity = FVector::ZeroVector;
+		}
 		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);
 		PlayerActor->OnDeath();
 	}

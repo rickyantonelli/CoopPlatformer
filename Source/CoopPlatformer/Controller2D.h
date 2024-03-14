@@ -44,12 +44,6 @@ public:
 	void BallPickupMulticastFunction(AMyPaperCharacter* PlayerActor);
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void BallThrownMulticastFunction(float DeltaTime);
-
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void BallThrownServerRPCFunction(float DeltaTime);
-
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void PassMulticastFunction();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)

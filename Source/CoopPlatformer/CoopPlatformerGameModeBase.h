@@ -14,4 +14,9 @@ class COOPPLATFORMER_API ACoopPlatformerGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+protected:
+	
 };

@@ -8,7 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
-//#include "CharacterMovementComponent.generated.h"
+#include "Components/BoxComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "PaperCharacter.h"
@@ -75,6 +75,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PassAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UBoxComponent* BallHolder;
 
 	UPROPERTY(EditAnywhere)
 	float DeathDuration;
