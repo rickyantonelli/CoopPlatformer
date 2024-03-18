@@ -89,7 +89,7 @@ void AController2D::GatherPlayersMulticastFunction_Implementation(const TArray<A
 
 void AController2D::BallPickupHandler()
 {
-	if (!BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
+	if (BallActor && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
 	{
 		// set up an array of actors
 		for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
@@ -106,7 +106,7 @@ void AController2D::BallPickupHandler()
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
 {
-	if (BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
+	if (BallActor && BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
 	{
 		TArray<AActor*> OverlapActors;
 		NonHoldingPlayer->BallHolder->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
@@ -135,22 +135,28 @@ void AController2D::GatherActorsHandler()
 	{
 		TArray<AActor*> PaperActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Player", PaperActors);
-		for (AActor* Actor : PaperActors) {
-			AMyPaperCharacter* ActivePlayer = Cast<AMyPaperCharacter>(Actor);
-			ActivePlayers.Add(ActivePlayer);
-		}
-		for (AMyPaperCharacter* Actor : ActivePlayers)
+		if (!PaperActors.IsEmpty())
 		{
-			Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
-			Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+			for (AActor* Actor : PaperActors) {
+				AMyPaperCharacter* ActivePlayer = Cast<AMyPaperCharacter>(Actor);
+				ActivePlayers.Add(ActivePlayer);
+			}
+			for (AMyPaperCharacter* Actor : ActivePlayers)
+			{
+				Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
+				Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+			}
+			if (HasAuthority()) GatherPlayersMulticastFunction(ActivePlayers);
 		}
-		if (HasAuthority()) GatherPlayersMulticastFunction(ActivePlayers);
 	}
 	if (!BallActor)
 	{
 		TArray<AActor*> BallActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Ball", BallActors);
-		BallActor = Cast<ABallActor>(BallActors[0]);
+		if (!BallActors.IsEmpty())
+		{
+			BallActor = Cast<ABallActor>(BallActors[0]);
+		}
 	}
 }
 
