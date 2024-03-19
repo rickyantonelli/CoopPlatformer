@@ -30,9 +30,11 @@ AMyPaperCharacter::AMyPaperCharacter()
 	MovementEnabled = true;
 	WithinCoyoteTime = false;
 	Jumping = false;
+	DevInfiniteJump = false;
 
 	DeathDuration = 1.0f;
 	CoyoteDuration = 0.5f;
+	DevJumpResetTimer = 0.5f;
 }
 
 // Called when the game starts or when spawned
@@ -164,6 +166,11 @@ void AMyPaperCharacter::OnJumped_Implementation()
 	Super::OnJumped_Implementation();
 	CanJumpReset = false;
 	Jumping = true;
+	if (DevInfiniteJump)
+	{
+		FTimerHandle TimerHandler;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanJumpReset = true; }, DevJumpResetTimer, false);
+	}
 }
 
 void AMyPaperCharacter::OnDeath()

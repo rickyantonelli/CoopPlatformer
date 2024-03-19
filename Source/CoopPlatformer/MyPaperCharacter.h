@@ -100,6 +100,12 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	bool Jumping;
 
+	UPROPERTY(EditAnywhere)
+	bool DevInfiniteJump;
+
+	UPROPERTY(EditAnywhere)
+	float DevJumpResetTimer;
+
 	UPROPERTY(VisibleAnywhere)
 	FVector SpawnLocation;
 
