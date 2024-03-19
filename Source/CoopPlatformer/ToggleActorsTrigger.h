@@ -16,11 +16,22 @@ class COOPPLATFORMER_API AToggleActorsTrigger : public ATriggerBox
 	GENERATED_BODY()
 	
 public:
+	AToggleActorsTrigger();
+
 	UPROPERTY(EditAnywhere)
-	AActor* SingleActor;
+	AActor* EnableActor;
+
+	UPROPERTY(EditAnywhere)
+	AActor* DisableActor;
 
 	UPROPERTY(VisibleAnywhere)
-	TArray<AActor*> ActivePlayers;
+	TArray<AActor*> PlayerActors;
+
+	UPROPERTY(EditAnywhere)
+	int TriggerAmount;
+
+	UPROPERTY(VisibleAnywhere)
+	bool CanTrigger;
 
 	UFUNCTION()
 	void OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherActor);
