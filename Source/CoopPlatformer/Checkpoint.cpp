@@ -56,7 +56,6 @@ void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 		{
 			for (AMyPaperCharacter* CheckpointedActor : CheckpointedPlayers)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Checkpoint!");
 				CheckpointedActor->SpawnLocation = GetActorLocation();
 				CanBeCollected = false;
 			}

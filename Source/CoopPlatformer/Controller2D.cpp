@@ -28,14 +28,6 @@ void AController2D::OnPassActorActivated()
 
 void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter* MyPlayerActor)
 {
-	if (HasAuthority())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Attached Server");
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Attached Client");
-	}
 	BallActor->AttachToComponent(MyPlayerActor->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach this to the actor
 	MyPlayerActor->IsHolding = true;
 	HoldingPlayer = MyPlayerActor;
@@ -162,14 +154,6 @@ void AController2D::GatherActorsHandler()
 
 void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacter* PlayerActor)
 {
-	if (HasAuthority())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Death Server");
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Death Client");
-	}
 	if (PlayerActor)
 	{
 		UCharacterMovementComponent* MyCharacterMovement = PlayerActor->GetCharacterMovement();

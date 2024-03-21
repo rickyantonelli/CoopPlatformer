@@ -135,14 +135,6 @@ void AMyPaperCharacter::ResetJumpAbility()
 {
 	CanJumpReset = true;
 	IsHolding = true;
-	if (HasAuthority())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, "SERVER");
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Purple, "CLIENT");
-	}
 }
 
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
@@ -219,7 +211,6 @@ void AMyPaperCharacter::GravityAtApex()
 {
 	if (Jumping)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, "At Apex");
 		GetCharacterMovement()->GravityScale = BaseGravityScale * JumpApexGravityScale;
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {GetCharacterMovement()->GravityScale = BaseGravityScale; }, JumpApexTimer, false);

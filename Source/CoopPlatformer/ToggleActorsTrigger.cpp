@@ -16,7 +16,6 @@ void AToggleActorsTrigger::OnOverlapBegin(AActor* TriggerBoxActor, AActor* Other
 	// get the children of the actor
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Player Entered");
 		if (PlayerActors.Find(OtherActor) == -1)
 		{
 			PlayerActors.Add(OtherActor);
