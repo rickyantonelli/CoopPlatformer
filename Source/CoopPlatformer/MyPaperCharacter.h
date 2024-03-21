@@ -53,6 +53,10 @@ public:
 
 	virtual void Jump() override;
 
+	virtual void StopJumping() override;
+
+	virtual void NotifyJumpApex() override;
+
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -71,6 +75,9 @@ public:
 	UInputAction* JumpAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* JumpReleaseAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -79,32 +86,43 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* BallHolder;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DeathDuration;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float CoyoteDuration;
 
-	UPROPERTY(VisibleAnywhere)
-	bool IsHolding;
-
-	UPROPERTY(VisibleAnywhere)
-	bool CanJumpReset;
-
-	UPROPERTY(VisibleAnywhere)
-	bool MovementEnabled;
-
-	UPROPERTY(VisibleAnywhere)
-	bool WithinCoyoteTime;
-
-	UPROPERTY(VisibleAnywhere)
-	bool Jumping;
-
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	bool DevInfiniteJump;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DevJumpResetTimer;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float JumpApexTimer;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float JumpApexGravityScale;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool IsHolding;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool CanJumpReset;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool MovementEnabled;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool WithinCoyoteTime;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool Jumping;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool HasJumpInput;
+
+	float BaseGravityScale;
 
 	UPROPERTY(VisibleAnywhere)
 	FVector SpawnLocation;
@@ -117,5 +135,11 @@ public:
 
 	UFUNCTION()
 	void OnDeath();
+
+	UFUNCTION()
+	void JumpReleased();
+
+	UFUNCTION()
+	void GravityAtApex();
 
 };

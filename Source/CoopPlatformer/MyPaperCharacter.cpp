@@ -24,6 +24,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	BallHolder->SetCollisionProfileName(FName("OverlapAllDynamic"));
 	BallHolder->SetIsReplicated(true);
 
+	GetCharacterMovement()->bNotifyApex = true;
 
 	IsHolding = false;
 	CanJumpReset = false;
@@ -31,10 +32,16 @@ AMyPaperCharacter::AMyPaperCharacter()
 	WithinCoyoteTime = false;
 	Jumping = false;
 	DevInfiniteJump = false;
+	HasJumpInput = true;
+
+	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
 	DeathDuration = 1.0f;
 	CoyoteDuration = 0.5f;
 	DevJumpResetTimer = 0.5f;
+	JumpApexTimer = 0.2f;
+	JumpApexGravityScale = 0.5f;
+
 }
 
 // Called when the game starts or when spawned
@@ -69,8 +76,9 @@ void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode
 	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
 	if (NewMovementMode == EMovementMode::MOVE_Falling)
 	{
+		WithinCoyoteTime = true;
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinCoyoteTime = true; }, CoyoteDuration, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinCoyoteTime = false; }, CoyoteDuration, false);
 	}
 
 }
@@ -85,7 +93,9 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMyPaperCharacter::StopJumping);
+
+		EnhancedInputComponent->BindAction(JumpReleaseAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::JumpReleased);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Move);
@@ -138,13 +148,14 @@ void AMyPaperCharacter::ResetJumpAbility()
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
+	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	CanJumpReset = false;	
 	Jumping = false;
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 {
-	if (CanJumpReset || WithinCoyoteTime && !Jumping) 
+	if (CanJumpReset || WithinCoyoteTime && !Jumping)
 	{
 		return true;
 	}
@@ -154,18 +165,31 @@ bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 
 void AMyPaperCharacter::Jump()
 {
-	if (MovementEnabled)
+	if (MovementEnabled && HasJumpInput)
 	{
 		Super::Jump();
 	}
 	
 }
 
+void AMyPaperCharacter::StopJumping()
+{
+	Super::StopJumping();
+	// leaving this override in case we need it later
+}
+
+void AMyPaperCharacter::JumpReleased()
+{
+	HasJumpInput = true;
+}
+
 void AMyPaperCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
 	CanJumpReset = false;
+	HasJumpInput = false;
 	Jumping = true;
+	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	if (DevInfiniteJump)
 	{
 		FTimerHandle TimerHandler;
@@ -181,4 +205,25 @@ void AMyPaperCharacter::OnDeath()
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {MovementEnabled = true; }, DeathDuration, false);
 	}
+}
+
+void AMyPaperCharacter::NotifyJumpApex()
+{
+	
+	GravityAtApex();
+	Super::NotifyJumpApex();
+
+}
+
+void AMyPaperCharacter::GravityAtApex()
+{
+	if (Jumping)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, "At Apex");
+		GetCharacterMovement()->GravityScale = BaseGravityScale * JumpApexGravityScale;
+		FTimerHandle TimerHandler;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {GetCharacterMovement()->GravityScale = BaseGravityScale; }, JumpApexTimer, false);
+		
+	}
+	GetCharacterMovement()->bNotifyApex = true;
 }
