@@ -1,0 +1,1 @@
+This is an Online Co-Op Game developed in Unreal Engine using C++ and blueprints - created by Ricky Antonelli and Ricardo Mohammed. We hereby declare that no permission is granted for re-use, distribution, or modification of the code and assets contained within this repository.
