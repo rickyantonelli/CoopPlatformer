@@ -27,7 +27,6 @@ AMyPaperCharacter::AMyPaperCharacter()
 	GetCharacterMovement()->bNotifyApex = true;
 
 	IsHolding = false;
-	CanJumpReset = false;
 	MovementEnabled = true;
 	WithinCoyoteTime = false;
 	Jumping = false;
@@ -133,21 +132,25 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 
 void AMyPaperCharacter::ResetJumpAbility()
 {
-	CanJumpReset = true;
+	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
+
 	IsHolding = true;
+
+	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
+	JumpMaxCount = 2;
 }
 
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
+	JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
-	CanJumpReset = false;	
 	Jumping = false;
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 {
-	if (CanJumpReset || WithinCoyoteTime && !Jumping)
+	if (WithinCoyoteTime && !Jumping)
 	{
 		return true;
 	}
@@ -178,14 +181,14 @@ void AMyPaperCharacter::JumpReleased()
 void AMyPaperCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
-	CanJumpReset = false;
 	HasJumpInput = false;
 	Jumping = true;
+	//JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	if (DevInfiniteJump)
 	{
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanJumpReset = true; }, DevJumpResetTimer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {JumpMaxCount = 2; }, DevJumpResetTimer, false);
 	}
 }
 

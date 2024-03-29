@@ -108,9 +108,6 @@ public:
 	bool IsHolding;
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	bool CanJumpReset;
-
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool MovementEnabled;
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
