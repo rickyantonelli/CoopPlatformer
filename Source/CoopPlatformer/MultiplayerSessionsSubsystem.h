@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 #pragma once
 
@@ -11,11 +11,6 @@
 // creating a custom delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerCreateDelegate, bool, WasSuccessful); // name of delegate, type of parameter that we will accept, name of the parameter
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerJoinDelegate, bool, WasSuccessful);
-// declaring a delegate type
-// dynamic means we are gonna use in blueprint
-// multicast means we can bind multiple functions to this
-// one param is the argument that the delegate is going to accept
-
 
 /**
  *
@@ -51,7 +46,7 @@ public:
 
 	FName MySessionName;
 
-	TSharedPtr<FOnlineSessionSearch> SessionSearch; //TShardPtr is a pointer that is reference counted, so we dont have to deallocate the memory
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
 	UPROPERTY(BlueprintAssignable)
 	FServerCreateDelegate ServerCreateDel;

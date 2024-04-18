@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 #pragma once
 
@@ -18,19 +18,19 @@ class COOPPLATFORMER_API AToggleActorsTrigger : public ATriggerBox
 public:
 	AToggleActorsTrigger();
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	AActor* EnableActor;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	AActor* DisableActor;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	TArray<AActor*> PlayerActors;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	int TriggerAmount;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool CanTrigger;
 
 	UFUNCTION()

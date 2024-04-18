@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 #pragma once
 
@@ -13,16 +13,16 @@ class COOPPLATFORMER_API ACheckpoint : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ACheckpoint();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+	void AddPlayer(AMyPaperCharacter* PlayerActor);
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	USceneComponent* RootComp; 
@@ -33,12 +33,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	TArray<AMyPaperCharacter*> CheckpointedPlayers;
-
-	UFUNCTION()
-	void AddPlayer(AMyPaperCharacter* PlayerActor);
-
+	
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool CanBeCollected;
 
 

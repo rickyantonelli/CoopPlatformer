@@ -1,19 +1,20 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Ricky Antonelli
 
 #include "OneWayPlatform.h"
 
 // Sets default values
 AOneWayPlatform::AOneWayPlatform()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	bReplicates = true;
 	SetReplicateMovement(true);
 
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
+
+	// this one way platform has a Mesh and a Box
+	// the Mesh is your standard mesh, the Box sits below the mesh to be able to identify collision from below
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
@@ -25,31 +26,26 @@ AOneWayPlatform::AOneWayPlatform()
 	Box->SetIsReplicated(true);
 }
 
-// Called when the game starts or when spawned
 void AOneWayPlatform::BeginPlay()
 {
 	Super::BeginPlay();
 	Box->OnComponentBeginOverlap.AddDynamic(this, &AOneWayPlatform::OnBoxCollision);
 	Box->OnComponentEndOverlap.AddDynamic(this, &AOneWayPlatform::OnBoxCollisionEnd);
-	
 }
 
-// Called every frame 
 void AOneWayPlatform::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AOneWayPlatform::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Starting");
-		
+		// we ignore collision with the mesh because the player is entering from below
+		// ECC_GameTraceChannel5 is the channel that the mesh is tied to
+		// we use a channel because there are multiple players - if we just turn off the mesh then it could make the other player fall through
 		OtherComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel5, ECollisionResponse::ECR_Ignore);
-
 	}
 }
 
@@ -57,11 +53,8 @@ void AOneWayPlatform::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Ending");
-
+		// we turn collision with the mesh back on
 		OtherComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel5, ECollisionResponse::ECR_Block);
-
 	}
 
 }

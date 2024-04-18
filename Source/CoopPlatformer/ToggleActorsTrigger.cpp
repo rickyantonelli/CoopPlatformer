@@ -1,35 +1,34 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Ricky Antonelli
 
 #include "ToggleActorsTrigger.h"
 
 AToggleActorsTrigger::AToggleActorsTrigger()
 {
-	TriggerAmount = 2;
+	TriggerAmount = 2; // efaulted to 2, but customizable in case we want the trigger to just be for 1 player
 	CanTrigger = false;
 }
 
 void AToggleActorsTrigger::OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherActor)
 {
-	// OtherActor has to be a player
-	// Add OtherActor to the array
-	// get the children of the actor
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		if (PlayerActors.Find(OtherActor) == -1)
 		{
+			// add the player to the array if they arent already there
 			PlayerActors.Add(OtherActor);
 			if (PlayerActors.Num() >= TriggerAmount) CanTrigger = true;
 		}
 
 		if (CanTrigger)
 		{
+			// this is meant to take an actor, and perform an action on all its children
 			TArray<AActor*> EnableAttachedActors;
 			EnableActor->GetAttachedActors(EnableAttachedActors);
 			if (!EnableAttachedActors.IsEmpty())
 			{
 				for (AActor* AttachedActor : EnableAttachedActors)
 				{
+					// turn on the meshes for all actors that are to be enabled
 					UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
 					if (ActorMesh)
 					{
@@ -45,6 +44,7 @@ void AToggleActorsTrigger::OnOverlapBegin(AActor* TriggerBoxActor, AActor* Other
 			{
 				for (AActor* AttachedActor : DisableAttachedActors)
 				{
+					// turn off the meshes for all actors that are to be disabled
 					UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
 					if (ActorMesh)
 					{
@@ -59,18 +59,16 @@ void AToggleActorsTrigger::OnOverlapBegin(AActor* TriggerBoxActor, AActor* Other
 
 void AToggleActorsTrigger::OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherActor)
 {
+	// if a player steps out before the event is triggered, remove from the array
 	if (OtherActor->ActorHasTag("Player") && PlayerActors.Find(OtherActor) != -1)
 	{
 		PlayerActors.Remove(OtherActor);
 	}
 }
 
-
-
 void AToggleActorsTrigger::BeginPlay()
 {
 	Super::BeginPlay();
 	OnActorBeginOverlap.AddDynamic(this, &AToggleActorsTrigger::OnOverlapBegin);
 	OnActorEndOverlap.AddDynamic(this, &AToggleActorsTrigger::OnOverlapEnd);
-
 }

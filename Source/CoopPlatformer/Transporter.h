@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 #pragma once
 
@@ -28,7 +28,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	FVector EndPoint;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	float MoveSpeed;
 
 	UFUNCTION(BlueprintCallable)

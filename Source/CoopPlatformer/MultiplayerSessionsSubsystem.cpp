@@ -1,40 +1,27 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Ricky Antonelli
+// Code written by Ricky Antonelli, but used in reference to https://www.udemy.com/course/unreal-engine-5-multiplayer 
 
 #include "MultiplayerSessionsSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
-
-
-void PrintString(const FString& Str)
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, Str);
-	}
-}
 
 UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 {
 	CreateServerAfterDestroy = false;
 	DestroyServerName = "";
 	ServerNameToFind = "";
-	MySessionName = FName("Co-Op Adventure Session Name:");
+	MySessionName = FName("Nova Session Name:");
 }
 
 void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	// PrintString("MSS Initialize");
 	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get(); // this is going to return the online subsystem for us (i.e. Steam)
 	if (OnlineSubsystem)
 	{
-		//FString SubsystemName = OnlineSubsystem->GetSubsystemName().ToString(); // returns the name of the subsystem (obviously) - has to do with the value we set in the defaultengine.ini file
-		//PrintString(SubsystemName);
-
 		SessionInterface = OnlineSubsystem->GetSessionInterface(); // returns a pointer to the session interface of type IOnlineSessionPointer
 		if (SessionInterface.IsValid()) // checks if this is valid or not since this is a shared pointer
 		{
-			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete); // if you put an '&' before a function name, it will give you the address to that function
+			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete);
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnDestroySessionComplete);
 			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindSessionsComplete);
 			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnJoinSessionComplete);
@@ -49,20 +36,16 @@ void UMultiplayerSessionsSubsystem::Deinitialize()
 
 void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 {
-	PrintString("CreateServer");
-
 	if (ServerName.IsEmpty())
 	{
-		PrintString("Server name cannot be empty!");
-		ServerCreateDel.Broadcast(false); // this is how you fire the delegate, once you do this all the functions that are bound to this delegate are called
+		// do nothing if we have an empty server name
+		ServerCreateDel.Broadcast(false);
 		return;
 	}
 
 	FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(MySessionName);
 	if (ExistingSession)
 	{
-		FString Msg = FString::Printf(TEXT("Session with name %s already exists, destroying it."), *MySessionName.ToString()); // asterisk turns it into a cstyle string
-		PrintString(Msg);
 		CreateServerAfterDestroy = true;
 		DestroyServerName = ServerName;
 		SessionInterface->DestroySession(MySessionName); // want to destroy the session if it exists so we can create a new one, but we need to wait for the delegate to fire
@@ -92,27 +75,26 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 
 
 	SessionInterface->CreateSession(0, MySessionName, SessionSettings);
-
 	// the session is not created until we hear back from Steam
 }
 
 void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 {
-	PrintString("FindServer");
-
 	if (ServerName.IsEmpty())
 	{
-		PrintString("ServerName cannot be empty!");
+		// do nothing if we have an empty server name
 		ServerJoinDel.Broadcast(false);
 		return;
 	}
 
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+
 	bool IsLan = false;
 	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL")
 	{
 		IsLan = true;
 	}
+
 	SessionSearch->bIsLanQuery = IsLan; // will make the search purely a lan search
 	SessionSearch->MaxSearchResults = 9999; // the max search results that we can get
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals); // this is an object called query settings that we can set - only search for sessions with presence
@@ -124,12 +106,12 @@ void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool WasSuccessful)
 {
-	PrintString(FString::Printf(TEXT("OnCreateSessionComplete: %d"), WasSuccessful));
-
+	// session was successfully created - so lets do some stuff
 	ServerCreateDel.Broadcast(WasSuccessful);
 
 	if (WasSuccessful)
 	{
+		// defaults to the third person map if we can't load the map we want - should probably just make this a check()
 		FString Path = "/Game/ThirdPerson/Maps/ThirdPersonMap?listen";
 
 		if (!GameMapPath.IsEmpty())
@@ -143,9 +125,7 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 
 void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool WasSuccessful)
 {
-	FString Msg = FString::Printf(TEXT("OnDestroySessionComplete, SessionName: %s, Success: %d"), *SessionName.ToString(), WasSuccessful); // reminder that the asterisk turns it into a cstyle string
-	PrintString(Msg);
-
+	// session was successfully destroyed
 	if (CreateServerAfterDestroy)
 	{
 		CreateServerAfterDestroy = false;
@@ -155,28 +135,25 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 {
+	// successfully finished searching, but didnt necessarily find something to join
 	if (!WasSuccessful) return;
 	if (ServerNameToFind.IsEmpty()) return;
-	TArray<FOnlineSessionSearchResult> Results = SessionSearch->SearchResults; // this is an Array of FOnlineSearchResults
-	FOnlineSessionSearchResult* CorrectResult = 0; // 0 by default so that it is invalid
 
+	TArray<FOnlineSessionSearchResult> Results = SessionSearch->SearchResults;
+	FOnlineSessionSearchResult* CorrectResult = 0; // 0 by default so that it is invalid
 
 	if (Results.Num() > 0)
 	{
-		FString Msg = FString::Printf(TEXT("%d sessions found."), Results.Num());
-		PrintString(Msg);
-		for (FOnlineSessionSearchResult Result : Results) // loops over each element in the results array
+		for (FOnlineSessionSearchResult Result : Results)
 		{
 			if (Result.IsValid())
 			{
 				FString ServerName = "No-name";
 				Result.Session.SessionSettings.Get(FName("SERVER_NAME"), ServerName);
 
-				if (ServerName.Equals(ServerNameToFind)) // fstring has a function called equals
+				if (ServerName.Equals(ServerNameToFind))
 				{
-					CorrectResult = &Result; // need the address because correctresult is a pointer
-					FString Msg2 = FString::Printf(TEXT("Found server with name = %s"), *ServerName); //Fstrings need to be cstyle strings
-					PrintString(Msg2);
+					CorrectResult = &Result;
 					break; // found the one we are looking for, so dont need to keep going
 				}
 			}
@@ -184,18 +161,18 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 
 		if (CorrectResult)
 		{
-			SessionInterface->JoinSession(0, MySessionName, *CorrectResult); // need to dereference the pointer
+			SessionInterface->JoinSession(0, MySessionName, *CorrectResult);
 		}
 		else
 		{
-			PrintString(FString::Printf(TEXT("Couldnt find server with name = %s"), *ServerNameToFind));
+			// we are not joining the server
 			ServerNameToFind = "";
 			ServerJoinDel.Broadcast(false);
 		}
 	}
 	else
 	{
-		PrintString("Zero sessions found!");
+		// we are not joining the server
 		ServerJoinDel.Broadcast(false);
 	}
 }
@@ -206,28 +183,16 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
-		FString Msg = FString::Printf(TEXT("Successfully joined session %s"), *SessionName.ToString());
-		PrintString(Msg);
-
 		FString Address = "";
 		bool Success = SessionInterface->GetResolvedConnectString(MySessionName, Address);
 		if (Success)
 		{
-			PrintString(FString::Printf(TEXT("Address: %s"), *Address));
 			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
 			if (PlayerController)
 			{
 				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 			}
 		}
-		else
-		{
-			PrintString("GetResolvedConnectString returned false!");
-		}
-	}
-	else
-	{
-		PrintString("OnJoinSessionComplete failed");
 	}
 }
 

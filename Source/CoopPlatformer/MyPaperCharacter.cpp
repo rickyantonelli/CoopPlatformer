@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Ricky Antonelli
 
 #include "MyPaperCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,14 +10,10 @@ AMyPaperCharacter::AMyPaperCharacter()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	//SpringArm->SetupAttachment(RootComponent);
-	//SpringArm->bUsePawnControlRotation = false;
-
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	//Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->SetupAttachment(RootComponent);
 
+	// favor a box component to hold over the player's head
 	BallHolder = CreateDefaultSubobject<UBoxComponent>(TEXT("BallHolder"));
 	BallHolder->SetupAttachment(RootComponent);
 	BallHolder->SetCollisionProfileName(FName("OverlapAllDynamic"));
@@ -43,7 +38,6 @@ AMyPaperCharacter::AMyPaperCharacter()
 
 }
 
-// Called when the game starts or when spawned
 void AMyPaperCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -61,7 +55,6 @@ void AMyPaperCharacter::BeginPlay()
 
 }
 
-// Called every frame
 void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -72,6 +65,7 @@ void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode
 {
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 
+	// Coyote time application - allows the player a set amount of time to jump after leaving a platform
 	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
 	if (NewMovementMode == EMovementMode::MOVE_Falling)
 	{
@@ -82,7 +76,6 @@ void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode
 
 }
 
-// Called to bind functionality to input
 void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -93,7 +86,6 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMyPaperCharacter::StopJumping);
-
 		EnhancedInputComponent->BindAction(JumpReleaseAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::JumpReleased);
 
 		//Moving
@@ -115,7 +107,7 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 
 		if (Controller != nullptr)
 		{
-			// add movement 
+			// Standard left and right movement
 			AddMovementInput(GetActorForwardVector(), MovementVector.X);
 		}
 	}
@@ -132,8 +124,9 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 
 void AMyPaperCharacter::ResetJumpAbility()
 {
+	// Resets the jump ability if the player is in the air
+	// For catching the ball mid-air and getting a jump reset
 	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
-
 	IsHolding = true;
 
 	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
@@ -142,6 +135,7 @@ void AMyPaperCharacter::ResetJumpAbility()
 
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
+	// Once the player lands, reset anything gained while the player was in the air (jump reset)
 	Super::Landed(Hit);
 	JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
@@ -150,6 +144,7 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 {
+	// overriding to see if we are within coyote time, if not just use Super
 	if (WithinCoyoteTime && !Jumping)
 	{
 		return true;
@@ -160,6 +155,7 @@ bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 
 void AMyPaperCharacter::Jump()
 {
+	// only allow if movement is enabled
 	if (MovementEnabled && HasJumpInput)
 	{
 		Super::Jump();
@@ -175,6 +171,7 @@ void AMyPaperCharacter::StopJumping()
 
 void AMyPaperCharacter::JumpReleased()
 {
+	// we care about this because we want the player to release the jump button before getting another jump
 	HasJumpInput = true;
 }
 
@@ -183,12 +180,12 @@ void AMyPaperCharacter::OnJumped_Implementation()
 	Super::OnJumped_Implementation();
 	HasJumpInput = false;
 	Jumping = true;
-	//JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	if (DevInfiniteJump)
 	{
+		// For solo testing, just gives a large amount of jumps so you can test without passing
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {JumpMaxCount = 2; }, DevJumpResetTimer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {JumpMaxCount = 10; }, DevJumpResetTimer, false);
 	}
 }
 
@@ -196,6 +193,9 @@ void AMyPaperCharacter::OnDeath()
 {
 	if (IsLocallyControlled())
 	{
+		// On death we instantly return the player to spawn
+		// but we want to disable controls for a short amount of time so player's dont instantly move on respawn
+		// set it up with MovementEnabled so that players still have things like pause menu still available
 		MovementEnabled = false;
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {MovementEnabled = true; }, DeathDuration, false);
@@ -204,7 +204,6 @@ void AMyPaperCharacter::OnDeath()
 
 void AMyPaperCharacter::NotifyJumpApex()
 {
-	
 	GravityAtApex();
 	Super::NotifyJumpApex();
 
@@ -212,6 +211,8 @@ void AMyPaperCharacter::NotifyJumpApex()
 
 void AMyPaperCharacter::GravityAtApex()
 {
+	// in order to get a smoother controller, we slightly reduce the gravity scale of the player when they are at a jump apex
+	// for a short amount of time - gives a floating feeling at the top
 	if (Jumping)
 	{
 		GetCharacterMovement()->GravityScale = BaseGravityScale * JumpApexGravityScale;

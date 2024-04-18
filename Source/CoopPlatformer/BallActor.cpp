@@ -22,14 +22,16 @@ ABallActor::ABallActor()
 	Mesh->SetIsReplicated(true);
 	Mesh->SetCollisionProfileName(FName("OverlapAllDynamic")); // for now lets set this to no collision
 
-	BallMovementSpeed = 100.0f; // just set some base number
+	BallMovementSpeed = 100.0f; // to be tweaked in the engine
+	PassCooldownDuration = 0.5f;
+
 	IsMoving = false;
 	IsHeld = false;
 	CanPass = false;
 	IsAttached = false;
 	NoPassCooldown = true;
 
-	PassCooldownDuration = 0.5f;
+	
 }
 
 void ABallActor::BeginPlay()
@@ -46,6 +48,7 @@ void ABallActor::Tick(float DeltaTime)
 
 void ABallActor::BeginPassCooldown()
 {
+	// set a slight pass cooldown so that players cant infinitely pass back and forth and fly
 	NoPassCooldown = false;
 	FTimerHandle TimerHandler;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {NoPassCooldown = true; }, PassCooldownDuration, false);

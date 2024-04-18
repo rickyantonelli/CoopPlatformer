@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 #pragma once
 
@@ -21,23 +21,13 @@ class COOPPLATFORMER_API ABallActor : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	ABallActor();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//void Pass(const FInputActionValue& Value);
-
-	// void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeTimeProps) const override;
-
 public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float BallMovementSpeed;
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	USceneComponent* RootComp;
@@ -48,24 +38,27 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float BallMovementSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float PassCooldownDuration;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool NoPassCooldown;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool IsMoving;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool IsAttached;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool IsHeld; // simple bool to see if the ball is being held by anyone yet
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool CanPass;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void BeginPassCooldown();
 };

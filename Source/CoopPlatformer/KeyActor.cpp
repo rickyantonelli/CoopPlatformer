@@ -1,13 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 
 #include "KeyActor.h"
 #include "BallActor.h"
 
-// Sets default values
 AKeyActor::AKeyActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
@@ -24,16 +22,15 @@ AKeyActor::AKeyActor()
 
 }
 
-// Called when the game starts or when spawned
 void AKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void AKeyActor::Tick(float DeltaTime)
 {
+	// TODO: Change this from GetOverlappingActors() to OnOverlapBegin()
 	Super::Tick(DeltaTime);
 	if (Locked) // only check if the key is locked
 	{
@@ -43,20 +40,17 @@ void AKeyActor::Tick(float DeltaTime)
 		{
 			for (AActor* AA : OverlapActors)
 			{
-				if (AA->ActorHasTag("Ball"))
+				if (AA->ActorHasTag("Ball") && LockActor)
 				{
 					// we've found the ball actor lets do the logic
-					Locked = false;
-					if (LockActor)
+					Locked = false; // set this to false so that we dont check overlaps anymore since it's already been unlocked
+					UStaticMeshComponent* LockMesh = LockActor->GetComponentByClass<UStaticMeshComponent>();
+					if (LockMesh)
 					{
-						//LockActor->GetDefaultSubobjectByName("Mesh");
-						UStaticMeshComponent* LockMesh = LockActor->GetComponentByClass<UStaticMeshComponent>();
-						if (LockMesh)
-						{
-							LockMesh->SetVisibility(false);
-							LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-						}
+						LockMesh->SetVisibility(false);
+						LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 					}
+					// no need to keep looping 
 					break;
 				}
 			}

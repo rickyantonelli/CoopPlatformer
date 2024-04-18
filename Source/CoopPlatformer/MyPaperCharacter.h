@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Ricky Antonelli
 
 #pragma once
 
@@ -25,7 +25,6 @@ class COOPPLATFORMER_API AMyPaperCharacter : public APaperCharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AMyPaperCharacter();
 
 protected:
@@ -39,10 +38,8 @@ protected:
 	void Pass(const FInputActionValue& Value);
 
 public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Landed(const FHitResult& Hit) override;
@@ -119,9 +116,10 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool HasJumpInput;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	float BaseGravityScale;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	FVector SpawnLocation;
 
 	UPROPERTY(BlueprintAssignable)

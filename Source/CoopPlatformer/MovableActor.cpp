@@ -1,12 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Ricky Antonelli
 
 #include "MovableActor.h"
 
-// Sets default values
 AMovableActor::AMovableActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
@@ -31,18 +28,17 @@ AMovableActor::AMovableActor()
 
 }
 
-// Called when the game starts or when spawned
 void AMovableActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// set points for the transporter to keep track of, and the transporter component will do the moving of the object
 	FVector StartPoint = GetActorLocation() + Point1->GetRelativeLocation();
 	FVector EndPoint = GetActorLocation() + Point2->GetRelativeLocation();
 
 	Transporter->SetPoints(StartPoint, EndPoint);
 }
 
-// Called every frame
 void AMovableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

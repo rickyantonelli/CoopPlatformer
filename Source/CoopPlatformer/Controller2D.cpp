@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Ricky Antonelli
 
 #include "Controller2D.h"
 #include "Net/UnrealNetwork.h"
@@ -23,14 +22,19 @@ void AController2D::BeginPlay()
 
 void AController2D::OnPassActorActivated()
 {
+	// delegate received from the player
 	PassServerRPCFunction();
 }
 
 void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter* MyPlayerActor)
 {
-	BallActor->AttachToComponent(MyPlayerActor->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach this to the actor
+	// broadcasts to all clients that the ball has been picked up and all necessary bools
+	BallActor->AttachToComponent(MyPlayerActor->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	MyPlayerActor->IsHolding = true;
 	HoldingPlayer = MyPlayerActor;
+
+	// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
+	// but less of a priority since
 	for (AMyPaperCharacter* APlayerActor : ActivePlayers)
 	{
 		if (APlayerActor == HoldingPlayer) continue;
@@ -73,6 +77,7 @@ void AController2D::PassMulticastFunction_Implementation()
 
 void AController2D::GatherPlayersMulticastFunction_Implementation(const TArray<AMyPaperCharacter*>& UpdatedActivePlayers)
 {
+	// Broadcasts the ActivePlayers array to ensure all clients are in sync
 	for (int i = 0; i < ActivePlayers.Num(); i++)
 	{
 		ActivePlayers[i] = UpdatedActivePlayers[i];
@@ -81,6 +86,9 @@ void AController2D::GatherPlayersMulticastFunction_Implementation(const TArray<A
 
 void AController2D::BallPickupHandler()
 {
+	// This only will get called once per level - when the ball is not being held by anyone yet
+
+	// TODO: A lot of checks here and there is likely redundancy
 	if (BallActor && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
 	{
 		// set up an array of actors
@@ -98,13 +106,18 @@ void AController2D::BallPickupHandler()
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
 {
+	// When the ball is passed and while it is traveling, this gets called every frame
+
 	if (BallActor && BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
 	{
+		// TODO: This should be moved to OnOverlapBegin - inefficient to constantly check an array of overlap actors
 		TArray<AActor*> OverlapActors;
 		NonHoldingPlayer->BallHolder->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 		if (!OverlapActors.IsEmpty())
 		{
-			NonHoldingPlayer->ResetJumpAbility();
+		
+			// The ball has arrived at the NonHoldingPlayer
+			NonHoldingPlayer->ResetJumpAbility(); // resets the jump for the player if they are in mid-air (core mechanic)
 			BallActor->CanPass = true;
 			BallActor->IsAttached = true;
 			AMyPaperCharacter* TempPlayer = HoldingPlayer;
@@ -123,15 +136,24 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 
 void AController2D::GatherActorsHandler()
 {
+	// This gathers the both the players and the ball actor into arrays that we use for passing and pickup
+	// The reason this is not in BeginPlay() is because for now the players spawn into the level at separate times
+	// So we'll just check every frame until both players are in
 	if (ActivePlayers.Num() < 2)
 	{
 		TArray<AActor*> PaperActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Player", PaperActors);
 		if (!PaperActors.IsEmpty())
 		{
+			// add players
 			for (AActor* Actor : PaperActors) {
 				AMyPaperCharacter* ActivePlayer = Cast<AMyPaperCharacter>(Actor);
-				ActivePlayers.Add(ActivePlayer);
+				if (ActivePlayers.Find(ActivePlayer) == -1)
+				{
+					// add player if it's not already in our array
+					ActivePlayers.Add(ActivePlayer);
+				}
+				//ActivePlayers.Add(ActivePlayer);
 			}
 			for (AMyPaperCharacter* Actor : ActivePlayers)
 			{
@@ -141,6 +163,7 @@ void AController2D::GatherActorsHandler()
 			if (HasAuthority()) GatherPlayersMulticastFunction(ActivePlayers);
 		}
 	}
+	// TODO: can just move this to BeginPlay() whenever since the ball is just an object in the level
 	if (!BallActor)
 	{
 		TArray<AActor*> BallActors;
@@ -154,11 +177,13 @@ void AController2D::GatherActorsHandler()
 
 void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacter* PlayerActor)
 {
+	// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
 	if (PlayerActor)
 	{
 		UCharacterMovementComponent* MyCharacterMovement = PlayerActor->GetCharacterMovement();
 		if (MyCharacterMovement)
 		{
+			// reset the movement to zero so that the momentum doesn't continue when the player respawns
 			MyCharacterMovement->Velocity = FVector::ZeroVector;
 		}
 		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);
@@ -168,14 +193,6 @@ void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacte
 
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
-
-	// ball pickup handling
-	/*if (OtherActor->ActorHasTag("Ball") && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2 && HasAuthority())
-	{
-		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-		if (PlayerCharacterActor) BallPickupMulticastFunction(PlayerCharacterActor);
-	}*/
-
 	// death handling
 	if (OtherActor->ActorHasTag("Death") && HasAuthority())
 	{

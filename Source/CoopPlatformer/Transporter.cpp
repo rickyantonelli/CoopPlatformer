@@ -1,5 +1,4 @@
-
-
+// Copyright Ricky Antonelli
 
 #include "Transporter.h"
 
@@ -8,7 +7,7 @@ UTransporter::UTransporter()
 	PrimaryComponentTick.bCanEverTick = true;
 	SetIsReplicatedByDefault(true);
 
-	MoveSpeed = 100.0f;
+	MoveSpeed = 100.0f; // just a default value, this is customizable
 
 	StartPoint = FVector::Zero();
 	EndPoint = FVector::Zero();
@@ -16,7 +15,7 @@ UTransporter::UTransporter()
 
 void UTransporter::SetPoints(FVector Point1, FVector Point2)
 {
-	if (Point1.Equals(Point2)) return; // if the 2 points are the same
+	if (Point1.Equals(Point2)) return; // if the 2 points are the same we dont want to do anything
 
 	StartPoint = Point1;
 	EndPoint = Point2;
@@ -31,7 +30,9 @@ void UTransporter::BeginPlay()
 void UTransporter::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	AActor* MyOwner = GetOwner(); // returns the owner as an actor pointer
+
+	// move from point to point every frame
+	AActor* MyOwner = GetOwner();
 	if (MyOwner && MyOwner->HasAuthority()) // authority because we only want the server to do this
 	{
 		FVector CurrentLocation = MyOwner->GetActorLocation();
@@ -43,6 +44,7 @@ void UTransporter::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 		}
 		else
 		{
+			// if the current location is at the TargetLocation, flip the start and end point so that we go the other way
 			FVector Temp = StartPoint;
 			StartPoint = EndPoint;
 			EndPoint = Temp;

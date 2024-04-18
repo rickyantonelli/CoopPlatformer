@@ -7,6 +7,7 @@
 
 AActor* ACoopPlatformerGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
 {
+	// ensures that player's dont start on the same start point
 	TArray<AActor*> StartActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), StartActors);
 	for (AActor* Actor : StartActors)
