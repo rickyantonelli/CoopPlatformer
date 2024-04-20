@@ -125,6 +125,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FBallPassActivated OnPassActivated;
 
+	FRotator ControlRotation;
+
 	UFUNCTION()
 	void ResetJumpAbility();
 

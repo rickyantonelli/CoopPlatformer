@@ -71,4 +71,22 @@ void AToggleActorsTrigger::BeginPlay()
 	Super::BeginPlay();
 	OnActorBeginOverlap.AddDynamic(this, &AToggleActorsTrigger::OnOverlapBegin);
 	OnActorEndOverlap.AddDynamic(this, &AToggleActorsTrigger::OnOverlapEnd);
+
+	// turn off the collision of the enable actors
+	// we do this here and not just in the editor so that we can see these meshes while developing
+	TArray<AActor*> EnableAttachedActors;
+	EnableActor->GetAttachedActors(EnableAttachedActors);
+	if (!EnableAttachedActors.IsEmpty())
+	{
+		for (AActor* AttachedActor : EnableAttachedActors)
+		{
+			// turn on the meshes for all actors that are to be enabled
+			UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
+			if (ActorMesh)
+			{
+				ActorMesh->SetVisibility(false);
+				ActorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		}
+	}
 }

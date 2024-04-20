@@ -10,8 +10,11 @@ AMyPaperCharacter::AMyPaperCharacter()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	Camera->SetupAttachment(RootComponent);
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
 	// favor a box component to hold over the player's head
 	BallHolder = CreateDefaultSubobject<UBoxComponent>(TEXT("BallHolder"));
@@ -35,6 +38,8 @@ AMyPaperCharacter::AMyPaperCharacter()
 	DevJumpResetTimer = 0.5f;
 	JumpApexTimer = 0.2f;
 	JumpApexGravityScale = 0.5f;
+
+	ControlRotation = FRotator::ZeroRotator;
 
 }
 
@@ -108,7 +113,18 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 		if (Controller != nullptr)
 		{
 			// Standard left and right movement
-			AddMovementInput(GetActorForwardVector(), MovementVector.X);
+			if (MovementVector.X > 0)
+			{
+				ControlRotation.Yaw = 0;
+				GetController()->SetControlRotation(ControlRotation);
+				AddMovementInput(GetActorForwardVector(), MovementVector.X);
+			}
+			else
+			{
+				ControlRotation.Yaw = 180;
+				GetController()->SetControlRotation(ControlRotation);
+				AddMovementInput(GetActorForwardVector(), -MovementVector.X);
+			}
 		}
 	}
 }

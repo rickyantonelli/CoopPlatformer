@@ -153,7 +153,6 @@ void AController2D::GatherActorsHandler()
 					// add player if it's not already in our array
 					ActivePlayers.Add(ActivePlayer);
 				}
-				//ActivePlayers.Add(ActivePlayer);
 			}
 			for (AMyPaperCharacter* Actor : ActivePlayers)
 			{
