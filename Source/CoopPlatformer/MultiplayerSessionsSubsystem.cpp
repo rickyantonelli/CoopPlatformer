@@ -36,6 +36,7 @@ void UMultiplayerSessionsSubsystem::Deinitialize()
 
 void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, IOnlineSubsystem::Get()->GetSubsystemName().ToString());
 	if (ServerName.IsEmpty())
 	{
 		// do nothing if we have an empty server name
@@ -80,6 +81,7 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 
 void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, IOnlineSubsystem::Get()->GetSubsystemName().ToString());
 	if (ServerName.IsEmpty())
 	{
 		// do nothing if we have an empty server name

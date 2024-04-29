@@ -25,6 +25,11 @@ AKeyActor::AKeyActor()
 void AKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (LockActor)
+	{
+		LockActor->SetReplicates(true);
+	}
 	
 }
 
@@ -32,7 +37,7 @@ void AKeyActor::Tick(float DeltaTime)
 {
 	// TODO: Change this from GetOverlappingActors() to OnOverlapBegin()
 	Super::Tick(DeltaTime);
-	if (Locked) // only check if the key is locked
+	if (Locked && LockActor) // only check if the key is locked
 	{
 		TArray<AActor*> OverlapActors;
 		GetOverlappingActors(OverlapActors, ABallActor::StaticClass());

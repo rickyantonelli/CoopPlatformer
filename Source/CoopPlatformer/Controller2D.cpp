@@ -64,14 +64,17 @@ void AController2D::PassServerRPCFunction_Implementation()
 
 void AController2D::PassMulticastFunction_Implementation()
 {
-	if (BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
+	if (!HasAuthority())
 	{
-		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		BallActor->IsAttached = false;
-		HoldingPlayer->IsHolding = false;
-		BallActor->IsMoving = true;
-		BallActor->CanPass = false;
-		BallActor->BeginPassCooldown();
+		if (BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
+		{
+			BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+			BallActor->IsAttached = false;
+			HoldingPlayer->IsHolding = false;
+			BallActor->IsMoving = true;
+			BallActor->CanPass = false;
+			BallActor->BeginPassCooldown();
+		}
 	}
 }
 
@@ -123,6 +126,7 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 			AMyPaperCharacter* TempPlayer = HoldingPlayer;
 			HoldingPlayer = NonHoldingPlayer;
 			NonHoldingPlayer = TempPlayer;
+			HoldingPlayer->IsHolding = true;
 			BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			BallActor->IsMoving = false;
 		}

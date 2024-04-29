@@ -10,6 +10,8 @@ AMyPaperCharacter::AMyPaperCharacter()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SetReplicates(true);
+
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 
@@ -143,7 +145,7 @@ void AMyPaperCharacter::ResetJumpAbility()
 	// Resets the jump ability if the player is in the air
 	// For catching the ball mid-air and getting a jump reset
 	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
-	IsHolding = true;
+	//IsHolding = true;
 
 	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
 	JumpMaxCount = 2;
