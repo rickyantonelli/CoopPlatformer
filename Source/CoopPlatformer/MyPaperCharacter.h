@@ -56,6 +56,9 @@ public:
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void BallArrivingClientRPCFunction();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm;
 
@@ -137,6 +140,6 @@ public:
 	void JumpReleased();
 
 	UFUNCTION()
-	void GravityAtApex();
+	void GravityAtApex() const;
 
 };

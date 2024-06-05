@@ -24,6 +24,12 @@ void AController2D::OnPassActorActivated()
 {
 	// delegate received from the player
 	PassServerRPCFunction();
+	if (HasAuthority() && NonHoldingPlayer)
+	{
+		// notify the non-holding player that a pass is arriving - this is to be used in the NonHoldingPlayer's UI
+		// only do this on the server, not the clients
+		NonHoldingPlayer->BallArrivingClientRPCFunction();
+	}
 }
 
 void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter* MyPlayerActor)
@@ -50,7 +56,7 @@ void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter
 
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
+	if (HasAuthority() && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
 	{
 		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		BallActor->IsAttached = false;

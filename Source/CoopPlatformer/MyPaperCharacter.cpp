@@ -66,6 +66,22 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+
+	// debugging for a persistent bug we've been encountering
+	// player has the ball but IsHolding is not true
+	if (!IsHolding)
+	{
+		TArray<AActor*> ChildActors;
+		GetAllChildActors(ChildActors);
+		for (AActor* ChildActor : ChildActors)
+		{
+			if (ChildActor->ActorHasTag("Ball"))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke here");
+			}
+		}
+	}
+
 }
 
 void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -134,7 +150,7 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 
 void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
-	if (IsHolding && MovementEnabled)
+	if (IsHolding && MovementEnabled && IsLocallyControlled())
 	{
 		OnPassActivated.Broadcast();
 	}
@@ -227,7 +243,7 @@ void AMyPaperCharacter::NotifyJumpApex()
 
 }
 
-void AMyPaperCharacter::GravityAtApex()
+void AMyPaperCharacter::GravityAtApex() const
 {
 	// in order to get a smoother controller, we slightly reduce the gravity scale of the player when they are at a jump apex
 	// for a short amount of time - gives a floating feeling at the top
@@ -239,4 +255,11 @@ void AMyPaperCharacter::GravityAtApex()
 		
 	}
 	GetCharacterMovement()->bNotifyApex = true;
+}
+
+void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
+{
+	// widget blueprint logic to show client that a ball is coming their way
+	if (IsLocallyControlled()) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "BALL ARRIVING");
+
 }
