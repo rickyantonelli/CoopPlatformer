@@ -3,6 +3,7 @@
 #include "MyPaperCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 
 AMyPaperCharacter::AMyPaperCharacter()
@@ -66,9 +67,8 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
 	// debugging for a persistent bug we've been encountering
-	// player has the ball but IsHolding is not true
+	// this will hang around for a bit, just to ensure the bug is fixed
 	if (!IsHolding)
 	{
 		TArray<AActor*> ChildActors;
@@ -262,4 +262,11 @@ void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 	// widget blueprint logic to show client that a ball is coming their way
 	if (IsLocallyControlled()) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "BALL ARRIVING");
 
+}
+
+void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMyPaperCharacter, IsHolding);
 }

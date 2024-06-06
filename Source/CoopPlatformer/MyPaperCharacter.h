@@ -56,6 +56,8 @@ public:
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void BallArrivingClientRPCFunction();
 
@@ -104,10 +106,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float JumpApexGravityScale;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Debug")
 	bool IsHolding;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool MovementEnabled;
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")

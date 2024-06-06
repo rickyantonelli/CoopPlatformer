@@ -24,39 +24,11 @@ void AController2D::OnPassActorActivated()
 {
 	// delegate received from the player
 	PassServerRPCFunction();
-	if (HasAuthority() && NonHoldingPlayer)
-	{
-		// notify the non-holding player that a pass is arriving - this is to be used in the NonHoldingPlayer's UI
-		// only do this on the server, not the clients
-		NonHoldingPlayer->BallArrivingClientRPCFunction();
-	}
-}
-
-void AController2D::BallPickupMulticastFunction_Implementation(AMyPaperCharacter* MyPlayerActor)
-{
-	// broadcasts to all clients that the ball has been picked up and all necessary bools
-	BallActor->AttachToComponent(MyPlayerActor->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	MyPlayerActor->IsHolding = true;
-	HoldingPlayer = MyPlayerActor;
-
-	// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
-	// but less of a priority since
-	for (AMyPaperCharacter* APlayerActor : ActivePlayers)
-	{
-		if (APlayerActor == HoldingPlayer) continue;
-		else
-		{
-			NonHoldingPlayer = APlayerActor;
-		}
-	}
-	BallActor->IsHeld = true;
-	BallActor->CanPass = true;
-	BallActor->IsAttached = true;
 }
 
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (HasAuthority() && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
+	if (HasAuthority() && BallActor && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
 	{
 		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		BallActor->IsAttached = false;
@@ -65,32 +37,6 @@ void AController2D::PassServerRPCFunction_Implementation()
 		BallActor->CanPass = false;
 		BallActor->BeginPassCooldown();
 	}
-	PassMulticastFunction();
-}
-
-void AController2D::PassMulticastFunction_Implementation()
-{
-	if (!HasAuthority())
-	{
-		if (BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
-		{
-			BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-			BallActor->IsAttached = false;
-			HoldingPlayer->IsHolding = false;
-			BallActor->IsMoving = true;
-			BallActor->CanPass = false;
-			BallActor->BeginPassCooldown();
-		}
-	}
-}
-
-void AController2D::GatherPlayersMulticastFunction_Implementation(const TArray<AMyPaperCharacter*>& UpdatedActivePlayers)
-{
-	// Broadcasts the ActivePlayers array to ensure all clients are in sync
-	for (int i = 0; i < ActivePlayers.Num(); i++)
-	{
-		ActivePlayers[i] = UpdatedActivePlayers[i];
-	}
 }
 
 void AController2D::BallPickupHandler()
@@ -98,16 +44,33 @@ void AController2D::BallPickupHandler()
 	// This only will get called once per level - when the ball is not being held by anyone yet
 
 	// TODO: A lot of checks here and there is likely redundancy
-	if (BallActor && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
+	if (HasAuthority() && BallActor && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
 	{
 		// set up an array of actors
 		for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
 		{
 			TArray<AActor*> OverlapActors;
-			ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+			if (ActivePlayer) ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 			if (!OverlapActors.IsEmpty())
 			{
-				if (HasAuthority()) BallPickupMulticastFunction(ActivePlayer);
+				// broadcasts to all clients that the ball has been picked up and all necessary bools
+				BallActor->AttachToComponent(ActivePlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+				ActivePlayer->IsHolding = true;
+				HoldingPlayer = ActivePlayer;
+
+				// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
+				// but less of a priority since
+				for (AMyPaperCharacter* APlayerActor : ActivePlayers)
+				{
+					if (APlayerActor == HoldingPlayer) continue;
+					else
+					{
+						NonHoldingPlayer = APlayerActor;
+					}
+				}
+				BallActor->IsHeld = true;
+				BallActor->CanPass = true;
+				BallActor->IsAttached = true;
 			}
 		}
 	}
@@ -169,7 +132,6 @@ void AController2D::GatherActorsHandler()
 				Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
 				Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
 			}
-			if (HasAuthority()) GatherPlayersMulticastFunction(ActivePlayers);
 		}
 	}
 	// TODO: can just move this to BeginPlay() whenever since the ball is just an object in the level
@@ -184,44 +146,50 @@ void AController2D::GatherActorsHandler()
 	}
 }
 
-void AController2D::PlayerDeathMulticastFunction_Implementation(AMyPaperCharacter* PlayerActor)
-{
-	// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
-	if (PlayerActor)
-	{
-		UCharacterMovementComponent* MyCharacterMovement = PlayerActor->GetCharacterMovement();
-		if (MyCharacterMovement)
-		{
-			// reset the movement to zero so that the momentum doesn't continue when the player respawns
-			MyCharacterMovement->Velocity = FVector::ZeroVector;
-		}
-		PlayerActor->SetActorLocation(PlayerActor->SpawnLocation);
-		PlayerActor->OnDeath();
-	}
-}
-
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
 	// death handling
-	if (OtherActor->ActorHasTag("Death") && HasAuthority())
+	if (OtherActor->ActorHasTag("Death"))
 	{
 		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-		if (PlayerCharacterActor) PlayerDeathMulticastFunction(PlayerCharacterActor);
+		if (PlayerCharacterActor)
+		{
+			// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
+			if (PlayerCharacterActor)
+			{
+				UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
+				if (MyCharacterMovement)
+				{
+					// reset the movement to zero so that the momentum doesn't continue when the player respawns
+					MyCharacterMovement->Velocity = FVector::ZeroVector;
+				}
+				PlayerCharacterActor->SetActorLocation(PlayerCharacterActor->SpawnLocation);
+				PlayerCharacterActor->OnDeath();
+			}
+		}
 	}
 
 	// checkpoint handling
-	if (OtherActor->ActorHasTag("Checkpoint") && HasAuthority())
+	if (OtherActor->ActorHasTag("Checkpoint"))
 	{
 		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
 		ACheckpoint* CheckpointActor = Cast<ACheckpoint>(OtherActor);
-		if (PlayerCharacterActor && CheckpointActor) CheckpointActivatedMulticastFunction(PlayerCharacterActor, CheckpointActor);
+		if (PlayerCharacterActor && CheckpointActor)
+		{
+			if (CheckpointActor->CheckpointedPlayers.Find(PlayerCharacterActor) == -1) // if the player actor is not in our Tarray for the checkpoint
+			{
+				CheckpointActor->AddPlayer(PlayerCharacterActor);
+			}
+		}
 	}
 }
 
-void AController2D::CheckpointActivatedMulticastFunction_Implementation(AMyPaperCharacter* PlayerActor, ACheckpoint* Checkpoint)
+void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {
-	if (Checkpoint->CheckpointedPlayers.Find(PlayerActor) == -1) // if the player actor is not in our Tarray for the checkpoint
-	{
-		Checkpoint->AddPlayer(PlayerActor);
-	}
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AController2D, HoldingPlayer);
+	DOREPLIFETIME(AController2D, NonHoldingPlayer);
+	DOREPLIFETIME(AController2D, ActivePlayers);
+	DOREPLIFETIME(AController2D, BallActor);
 }

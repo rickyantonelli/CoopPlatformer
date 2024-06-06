@@ -25,38 +25,25 @@ protected:
 public:
 	virtual void Tick(float DeltaSeconds) override;
 
-	UPROPERTY(VisibleAnywhere)
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	AMyPaperCharacter* HoldingPlayer;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	AMyPaperCharacter* NonHoldingPlayer;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TArray<AMyPaperCharacter*> ActivePlayers;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	ABallActor* BallActor;
 
 	UFUNCTION()
 	void OnPassActorActivated();
 
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void BallPickupMulticastFunction(AMyPaperCharacter* PlayerActor);
-
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void PassMulticastFunction();
-
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void PassServerRPCFunction();
-
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void GatherPlayersMulticastFunction(const TArray<AMyPaperCharacter*>& UpdatedActivePlayers);
-
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void PlayerDeathMulticastFunction(AMyPaperCharacter* PlayerActor);
-
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void CheckpointActivatedMulticastFunction(AMyPaperCharacter* PlayerActor, ACheckpoint* Checkpoint);
 
 	UFUNCTION()
 	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);

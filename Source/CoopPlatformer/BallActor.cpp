@@ -31,7 +31,6 @@ ABallActor::ABallActor()
 	CanPass = false;
 	IsAttached = false;
 	NoPassCooldown = true;
-
 	
 }
 
@@ -54,5 +53,16 @@ void ABallActor::BeginPassCooldown()
 	FTimerHandle TimerHandler;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {NoPassCooldown = true; }, PassCooldownDuration, false);
 }
+
+void ABallActor::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABallActor, IsMoving);
+	DOREPLIFETIME(ABallActor, IsAttached);
+	DOREPLIFETIME(ABallActor, IsHeld);
+	DOREPLIFETIME(ABallActor, CanPass);
+}
+
 
 
