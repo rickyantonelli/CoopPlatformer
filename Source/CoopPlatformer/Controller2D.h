@@ -53,4 +53,6 @@ public:
 	void BallPickupHandler();
 
 	void BallPassingHandler(float DeltaSeconds);
+
+	bool PlayersSet;
 };

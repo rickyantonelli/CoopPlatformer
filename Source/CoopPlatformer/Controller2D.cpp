@@ -17,11 +17,14 @@ void AController2D::Tick(float DeltaSeconds)
 void AController2D::BeginPlay()
 {
 	Super::BeginPlay();
+
+	PlayersSet = false;
 }
 
 
 void AController2D::OnPassActorActivated()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Pass");
 	// delegate received from the player
 	PassServerRPCFunction();
 }
@@ -127,12 +130,16 @@ void AController2D::GatherActorsHandler()
 					ActivePlayers.Add(ActivePlayer);
 				}
 			}
-			for (AMyPaperCharacter* Actor : ActivePlayers)
-			{
-				Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
-				Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
-			}
 		}
+	}
+	if (ActivePlayers.Num() == 2 && !PlayersSet)
+	{
+		for (AMyPaperCharacter* Actor : ActivePlayers)
+		{
+			Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
+			Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+		}
+		PlayersSet = true;
 	}
 	// TODO: can just move this to BeginPlay() whenever since the ball is just an object in the level
 	if (!BallActor)
