@@ -152,7 +152,7 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
 	if (IsHolding && MovementEnabled && IsLocallyControlled())
 	{
-		OnPassActivated.Broadcast();
+		OnPassActivated.Broadcast(this);
 	}
 }
 
@@ -261,6 +261,11 @@ void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 {
 	// widget blueprint logic to show client that a ball is coming their way
 	if (IsLocallyControlled()) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "BALL ARRIVING");
+
+	checkf(BallArrivingOverlayWidgetClass, TEXT("Ball Arriving Overlay Widget class uninitialized"));
+	UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
+
+	Widget->AddToViewport();
 
 }
 

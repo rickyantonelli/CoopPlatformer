@@ -22,9 +22,8 @@ void AController2D::BeginPlay()
 }
 
 
-void AController2D::OnPassActorActivated()
+void AController2D::OnPassActorActivated(AMyPaperCharacter* PassingPlayer)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Pass");
 	// delegate received from the player
 	PassServerRPCFunction();
 }
@@ -39,6 +38,8 @@ void AController2D::PassServerRPCFunction_Implementation()
 		BallActor->IsMoving = true;
 		BallActor->CanPass = false;
 		BallActor->BeginPassCooldown();
+
+		NonHoldingPlayer->BallArrivingClientRPCFunction();
 	}
 }
 
@@ -83,29 +84,32 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 {
 	// When the ball is passed and while it is traveling, this gets called every frame
 
-	if (BallActor && BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
+	if (HasAuthority())
 	{
-		// TODO: This should be moved to OnOverlapBegin - inefficient to constantly check an array of overlap actors
-		TArray<AActor*> OverlapActors;
-		NonHoldingPlayer->BallHolder->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-		if (!OverlapActors.IsEmpty())
+		if (BallActor && BallActor->IsMoving && ActivePlayers.Num() == 2 && HoldingPlayer && NonHoldingPlayer)
 		{
-		
-			// The ball has arrived at the NonHoldingPlayer
-			NonHoldingPlayer->ResetJumpAbility(); // resets the jump for the player if they are in mid-air (core mechanic)
-			BallActor->CanPass = true;
-			BallActor->IsAttached = true;
-			AMyPaperCharacter* TempPlayer = HoldingPlayer;
-			HoldingPlayer = NonHoldingPlayer;
-			NonHoldingPlayer = TempPlayer;
-			HoldingPlayer->IsHolding = true;
-			BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			BallActor->IsMoving = false;
-		}
-		else
-		{
-			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->BallHolder->GetComponentLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
-			BallActor->SetActorLocation(NewLocation);
+			// TODO: This should be moved to OnOverlapBegin - inefficient to constantly check an array of overlap actors
+			TArray<AActor*> OverlapActors;
+			NonHoldingPlayer->BallHolder->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+			if (!OverlapActors.IsEmpty())
+			{
+
+				// The ball has arrived at the NonHoldingPlayer
+				NonHoldingPlayer->ResetJumpAbility(); // resets the jump for the player if they are in mid-air (core mechanic)
+				BallActor->CanPass = true;
+				BallActor->IsAttached = true;
+				AMyPaperCharacter* TempPlayer = HoldingPlayer;
+				HoldingPlayer = NonHoldingPlayer;
+				NonHoldingPlayer = TempPlayer;
+				HoldingPlayer->IsHolding = true;
+				BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+				BallActor->IsMoving = false;
+			}
+			else
+			{
+				FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->BallHolder->GetComponentLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
+				BallActor->SetActorLocation(NewLocation);
+			}
 		}
 	}
 }
@@ -136,8 +140,11 @@ void AController2D::GatherActorsHandler()
 	{
 		for (AMyPaperCharacter* Actor : ActivePlayers)
 		{
-			Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
-			Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+			if (Actor)
+			{
+				Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
+				Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+			}
 		}
 		PlayersSet = true;
 	}

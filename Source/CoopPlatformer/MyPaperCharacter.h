@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -14,7 +15,8 @@
 #include "PaperCharacter.h"
 #include "MyPaperCharacter.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBallPassActivated, AMyPaperCharacter*, PassingPlayer);
 
 /**
  *
@@ -87,6 +89,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* BallHolder;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DeathDuration;
