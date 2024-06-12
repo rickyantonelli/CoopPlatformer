@@ -257,16 +257,27 @@ void AMyPaperCharacter::GravityAtApex() const
 	GetCharacterMovement()->bNotifyApex = true;
 }
 
+void AMyPaperCharacter::RemoveBallArrivingWidget()
+{
+	if (BallArrivingWidget && BallArrivingWidget->IsInViewport() && IsHolding)
+	{
+		BallArrivingWidget->RemoveFromParent();
+	}
+}
+
 void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 {
-	// widget blueprint logic to show client that a ball is coming their way
-	if (IsLocallyControlled()) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "BALL ARRIVING");
-
+	// RPC to display the Ball Arriving widget when a ball is on its way to the player
 	checkf(BallArrivingOverlayWidgetClass, TEXT("Ball Arriving Overlay Widget class uninitialized"));
-	UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
+	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
 
-	Widget->AddToViewport();
+	BallArrivingWidget->AddToViewport();
 
+}
+
+void AMyPaperCharacter::OnRep_IsHolding()
+{
+	RemoveBallArrivingWidget();
 }
 
 void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

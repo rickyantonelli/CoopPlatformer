@@ -102,6 +102,7 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 				HoldingPlayer = NonHoldingPlayer;
 				NonHoldingPlayer = TempPlayer;
 				HoldingPlayer->IsHolding = true;
+				HoldingPlayer->RemoveBallArrivingWidget();
 				BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				BallActor->IsMoving = false;
 			}

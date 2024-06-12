@@ -111,7 +111,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float JumpApexGravityScale;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHolding, BlueprintReadWrite, Category = "Debug")
 	bool IsHolding;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
@@ -137,6 +137,11 @@ public:
 
 	FRotator ControlRotation;
 
+	UUserWidget* BallArrivingWidget;
+
+	UFUNCTION()
+	void OnRep_IsHolding();
+
 	UFUNCTION()
 	void ResetJumpAbility();
 
@@ -148,5 +153,8 @@ public:
 
 	UFUNCTION()
 	void GravityAtApex() const;
+
+	UFUNCTION()
+	void RemoveBallArrivingWidget();
 
 };
