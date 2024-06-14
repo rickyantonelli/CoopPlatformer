@@ -29,6 +29,8 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	USceneComponent* RootComp;
 
@@ -47,16 +49,16 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool NoPassCooldown;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool IsMoving;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool IsAttached;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool IsHeld; // simple bool to see if the ball is being held by anyone yet
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanPass;
 
 	UFUNCTION(BlueprintCallable)

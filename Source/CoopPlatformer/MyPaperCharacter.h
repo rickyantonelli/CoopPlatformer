@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -14,7 +15,8 @@
 #include "PaperCharacter.h"
 #include "MyPaperCharacter.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBallPassActivated, AMyPaperCharacter*, PassingPlayer);
 
 /**
  *
@@ -56,6 +58,8 @@ public:
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void BallArrivingClientRPCFunction();
 
@@ -86,6 +90,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* BallHolder;
 
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
+
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DeathDuration;
 
@@ -104,10 +111,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float JumpApexGravityScale;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHolding, BlueprintReadWrite, Category = "Debug")
 	bool IsHolding;
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool MovementEnabled;
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
@@ -130,6 +137,11 @@ public:
 
 	FRotator ControlRotation;
 
+	UUserWidget* BallArrivingWidget;
+
+	UFUNCTION()
+	void OnRep_IsHolding();
+
 	UFUNCTION()
 	void ResetJumpAbility();
 
@@ -141,5 +153,8 @@ public:
 
 	UFUNCTION()
 	void GravityAtApex() const;
+
+	UFUNCTION()
+	void RemoveBallArrivingWidget();
 
 };
