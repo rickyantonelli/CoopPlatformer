@@ -90,7 +90,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* BallHolder;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")

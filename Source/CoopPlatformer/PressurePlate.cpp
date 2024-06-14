@@ -44,8 +44,23 @@ void APressurePlate::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 	if (PressurePlatedActor == nullptr) return;
 	UStaticMeshComponent* DoorMesh = PressurePlatedActor->GetComponentByClass<UStaticMeshComponent>();
 	if (DoorMesh == nullptr) return;
-	DoorMesh->SetVisibility(false);
-	DoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// check for visibility here so that the we have the flexibility
+	// to have the pressure plate turn on or off
+	if (DoorMesh->IsVisible())
+	{
+		// disable visibility and collision
+		DoorMesh->SetVisibility(false);
+		DoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else
+	{
+		// enable visibility and collision
+		DoorMesh->SetVisibility(true);
+		DoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+
+	
 	Activated = true;
 }
 
@@ -53,15 +68,24 @@ void APressurePlate::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent,
 {
 	if (PressurePlatedActor == nullptr) return;
 
-	// TODO: need to check if there are any other overlapping actors
 	TArray<AActor*> OverlappingActors;
 	TriggerMesh->GetOverlappingActors(OverlappingActors);
 	if (OverlappingActors.Num() > 0) return;
 
 	UStaticMeshComponent* DoorMesh = PressurePlatedActor->GetComponentByClass<UStaticMeshComponent>();
 	if (DoorMesh == nullptr) return;
-	DoorMesh->SetVisibility(true);
-	DoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	if (DoorMesh->IsVisible())
+	{
+		DoorMesh->SetVisibility(false);
+		DoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else
+	{
+		DoorMesh->SetVisibility(true);
+		DoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	
 }
 
 

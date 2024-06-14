@@ -259,6 +259,7 @@ void AMyPaperCharacter::GravityAtApex() const
 
 void AMyPaperCharacter::RemoveBallArrivingWidget()
 {
+	// TODO: Can open this up by allowing a user widget to be passed in
 	if (BallArrivingWidget && BallArrivingWidget->IsInViewport() && IsHolding)
 	{
 		BallArrivingWidget->RemoveFromParent();
@@ -272,7 +273,6 @@ void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
 
 	BallArrivingWidget->AddToViewport();
-
 }
 
 void AMyPaperCharacter::OnRep_IsHolding()
