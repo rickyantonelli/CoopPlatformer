@@ -44,6 +44,8 @@ AMyPaperCharacter::AMyPaperCharacter()
 
 	ControlRotation = FRotator::ZeroRotator;
 
+
+
 }
 
 void AMyPaperCharacter::BeginPlay()
@@ -80,6 +82,13 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke here");
 			}
 		}
+	}
+
+	// if we ever get to a frame where we are jumping but also have 0 z velocity (vertical) then stop the jump
+	// this stops us from sticking to the ceiling because we've hit the top but are holding jump
+	if (Jumping)
+	{
+		if (GetCharacterMovement()->Velocity.Z == 0) StopJumping();
 	}
 
 }
@@ -205,6 +214,7 @@ void AMyPaperCharacter::StopJumping()
 
 void AMyPaperCharacter::JumpReleased()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Released");
 	// we care about this because we want the player to release the jump button before getting another jump
 	HasJumpInput = true;
 }
