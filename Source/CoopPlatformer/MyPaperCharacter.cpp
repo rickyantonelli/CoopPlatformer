@@ -214,7 +214,6 @@ void AMyPaperCharacter::StopJumping()
 
 void AMyPaperCharacter::JumpReleased()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Released");
 	// we care about this because we want the player to release the jump button before getting another jump
 	HasJumpInput = true;
 }
