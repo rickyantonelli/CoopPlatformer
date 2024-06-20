@@ -10,9 +10,8 @@ AMyPaperCharacter::AMyPaperCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	bReplicates = true;
 
-	//SetReplicates(true);
+	SetReplicates(true);
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -69,6 +68,21 @@ void AMyPaperCharacter::BeginPlay()
 void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// debugging for a persistent bug we've been encountering
+	// this will hang around for a bit, just to ensure the bug is fixed
+	if (!IsHolding)
+	{
+		TArray<AActor*> ChildActors;
+		GetAllChildActors(ChildActors);
+		for (AActor* ChildActor : ChildActors)
+		{
+			if (ChildActor->ActorHasTag("Ball"))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke here");
+			}
+		}
+	}
 
 	// if we ever get to a frame where we are jumping but also have 0 z velocity (vertical) then stop the jump
 	// this stops us from sticking to the ceiling because we've hit the top but are holding jump
@@ -147,7 +161,7 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
 	if (IsHolding && MovementEnabled && IsLocallyControlled())
 	{
-		OnPassActivated.Broadcast();
+		OnPassActivated.Broadcast(this);
 	}
 }
 

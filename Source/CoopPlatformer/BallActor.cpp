@@ -8,7 +8,7 @@ ABallActor::ABallActor()
 
 	bReplicates = true; // make sure the actor has replication enabled
 	SetReplicateMovement(true); // replicating movement is obviously very important
-	// SetReplicates(true);
+	SetReplicates(true);
 
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);

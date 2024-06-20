@@ -40,7 +40,7 @@ public:
 	ABallActor* BallActor;
 
 	UFUNCTION()
-	void OnPassActorActivated();
+	void OnPassActorActivated(AMyPaperCharacter* PassingPlayer);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void PassServerRPCFunction();
