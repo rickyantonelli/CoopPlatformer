@@ -22,7 +22,7 @@ void AController2D::BeginPlay()
 }
 
 
-void AController2D::OnPassActorActivated(AMyPaperCharacter* PassingPlayer)
+void AController2D::OnPassActorActivated()
 {
 	// delegate received from the player
 	PassServerRPCFunction();
@@ -30,9 +30,14 @@ void AController2D::OnPassActorActivated(AMyPaperCharacter* PassingPlayer)
 
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (HasAuthority() && BallActor && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
+	if (HasAuthority() && BallActor && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetRootComponent()->GetAttachParent())
 	{
-		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Calling");
+		if (HoldingPlayer->BallHolder->GetAttachChildren().Contains(BallActor->GetRootComponent()))
+		{
+			//BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+			BallActor->GetRootComponent()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		}
 		BallActor->IsAttached = false;
 		HoldingPlayer->IsHolding = false;
 		BallActor->IsMoving = true;
@@ -57,7 +62,6 @@ void AController2D::BallPickupHandler()
 			if (ActivePlayer) ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 			if (!OverlapActors.IsEmpty())
 			{
-				// broadcasts to all clients that the ball has been picked up and all necessary bools
 				BallActor->AttachToComponent(ActivePlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				ActivePlayer->IsHolding = true;
 				HoldingPlayer = ActivePlayer;
