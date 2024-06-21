@@ -67,7 +67,7 @@ void AController2D::BallPickupHandler()
 	// This only will get called once per level - when the ball is not being held by anyone yet
 
 	// TODO: A lot of checks here and there is likely redundancy
-	if (HasAuthority() && BallActor && !BallActor->IsHeld && !BallActor->IsMoving && ActivePlayers.Num() == 2)
+	if (HasAuthority() && BallActor && !BallActor->IsAttached && !BallActor->IsMoving && ActivePlayers.Num() == 2)
 	{
 		// set up an array of actors
 		for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
@@ -90,7 +90,6 @@ void AController2D::BallPickupHandler()
 						NonHoldingPlayer = APlayerActor;
 					}
 				}
-				BallActor->IsHeld = true;
 				BallActor->CanPass = true;
 				BallActor->IsAttached = true;
 			}

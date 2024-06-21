@@ -27,7 +27,6 @@ ABallActor::ABallActor()
 	PassCooldownDuration = 0.5f;
 
 	IsMoving = false;
-	IsHeld = false;
 	CanPass = false;
 	IsAttached = false;
 	NoPassCooldown = true;
@@ -43,7 +42,6 @@ void ABallActor::BeginPlay()
 void ABallActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ABallActor::BeginPassCooldown()
@@ -69,7 +67,6 @@ void ABallActor::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifet
 
 	DOREPLIFETIME(ABallActor, IsMoving);
 	DOREPLIFETIME(ABallActor, IsAttached);
-	DOREPLIFETIME(ABallActor, IsHeld);
 	DOREPLIFETIME(ABallActor, CanPass);
 }
 

@@ -56,9 +56,6 @@ public:
 	bool IsAttached;
 
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
-	bool IsHeld; // simple bool to see if the ball is being held by anyone yet
-
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanPass;
 
 	UFUNCTION(BlueprintCallable)
