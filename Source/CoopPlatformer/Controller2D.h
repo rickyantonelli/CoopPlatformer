@@ -46,6 +46,9 @@ public:
 	void PassServerRPCFunction();
 
 	UFUNCTION()
+	void DeferredDetachBall();
+
+	UFUNCTION()
 	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);
 
 	void GatherActorsHandler();

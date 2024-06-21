@@ -8,7 +8,7 @@ ABallActor::ABallActor()
 
 	bReplicates = true; // make sure the actor has replication enabled
 	SetReplicateMovement(true); // replicating movement is obviously very important
-	SetReplicates(true);
+	// SetReplicates(true);
 
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
@@ -52,6 +52,15 @@ void ABallActor::BeginPassCooldown()
 	NoPassCooldown = false;
 	FTimerHandle TimerHandler;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {NoPassCooldown = true; }, PassCooldownDuration, false);
+}
+
+void ABallActor::OnRep_IsAttached()
+{
+	if (!IsAttached)
+	{
+		// DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BeginPassCooldown();
+	}
 }
 
 void ABallActor::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

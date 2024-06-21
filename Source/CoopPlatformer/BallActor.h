@@ -52,7 +52,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool IsMoving;
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsAttached, Category = "Debug")
 	bool IsAttached;
 
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
@@ -63,4 +63,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void BeginPassCooldown();
+
+	UFUNCTION()
+	void OnRep_IsAttached();
 };

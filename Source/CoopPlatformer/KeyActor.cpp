@@ -26,10 +26,10 @@ void AKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (LockActor)
+	/*if (LockActor)
 	{
 		LockActor->SetReplicates(true);
-	}
+	}*/
 	
 }
 

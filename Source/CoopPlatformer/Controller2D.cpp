@@ -28,16 +28,35 @@ void AController2D::OnPassActorActivated(AMyPaperCharacter* PassingPlayer)
 	PassServerRPCFunction();
 }
 
+void AController2D::DeferredDetachBall()
+{
+	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	BallActor->IsAttached = false;
+	HoldingPlayer->IsHolding = false;
+	BallActor->IsMoving = true;
+	BallActor->CanPass = false;
+	BallActor->BeginPassCooldown();
+
+	BallActor->ForceNetUpdate();
+
+	NonHoldingPlayer->BallArrivingClientRPCFunction();
+}
+
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (HasAuthority() && BallActor && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor())
+	if (BallActor && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor() == HoldingPlayer)
 	{
+		// Schedule the detachment to occur after a small delay
+		// GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AController2D::DeferredDetachBall);
+
 		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		BallActor->IsAttached = false;
 		HoldingPlayer->IsHolding = false;
 		BallActor->IsMoving = true;
 		BallActor->CanPass = false;
 		BallActor->BeginPassCooldown();
+
+		BallActor->ForceNetUpdate();
 
 		NonHoldingPlayer->BallArrivingClientRPCFunction();
 	}
@@ -57,10 +76,9 @@ void AController2D::BallPickupHandler()
 			if (ActivePlayer) ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 			if (!OverlapActors.IsEmpty())
 			{
-				// broadcasts to all clients that the ball has been picked up and all necessary bools
-				BallActor->AttachToComponent(ActivePlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-				ActivePlayer->IsHolding = true;
 				HoldingPlayer = ActivePlayer;
+				HoldingPlayer->IsHolding = true;
+				BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 				// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
 				// but less of a priority since
@@ -105,6 +123,8 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 				HoldingPlayer->RemoveBallArrivingWidget();
 				BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				BallActor->IsMoving = false;
+
+				BallActor->ForceNetUpdate();
 			}
 			else
 			{
