@@ -22,3 +22,8 @@ AActor* ACoopPlatformerGameModeBase::ChoosePlayerStart_Implementation(AControlle
 
 	return Super::ChoosePlayerStart(Player);
 }
+
+void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+}

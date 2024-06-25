@@ -181,6 +181,7 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Joining");
 	ServerJoinDel.Broadcast(Result == EOnJoinSessionCompleteResult::Success);
 
 	if (Result == EOnJoinSessionCompleteResult::Success)
@@ -192,6 +193,7 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
 			if (PlayerController)
 			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "player controller");
 				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 			}
 		}
