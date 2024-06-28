@@ -60,7 +60,7 @@ public:
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(Client, Reliable, BlueprintCallable)
+	UFUNCTION(Client, Unreliable, BlueprintCallable)
 	void BallArrivingClientRPCFunction();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -86,9 +86,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PassAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UBoxComponent* BallHolder;
 
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;

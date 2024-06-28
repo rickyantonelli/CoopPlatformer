@@ -19,12 +19,6 @@ AMyPaperCharacter::AMyPaperCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
-	// favor a box component to hold over the player's head
-	BallHolder = CreateDefaultSubobject<UBoxComponent>(TEXT("BallHolder"));
-	BallHolder->SetupAttachment(RootComponent);
-	BallHolder->SetCollisionProfileName(FName("OverlapAllDynamic"));
-	BallHolder->SetIsReplicated(true);
-
 	GetCharacterMovement()->bNotifyApex = true;
 
 	IsHolding = false;

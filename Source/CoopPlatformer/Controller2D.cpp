@@ -3,7 +3,11 @@
 #include "Controller2D.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "MyPlayerState.h"
+#include "Engine/World.h"
+#include "CoopPlatformerGameModeBase.h"
 
 void AController2D::Tick(float DeltaSeconds)
 {
@@ -12,6 +16,13 @@ void AController2D::Tick(float DeltaSeconds)
 	GatherActorsHandler();
 	BallPickupHandler();
 	BallPassingHandler(DeltaSeconds);
+
+	APlayerState* MyPlayerState = GetPlayerState<APlayerState>();
+	if (MyPlayerState)
+	{
+		float Ping = MyPlayerState->ExactPing;
+		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Red, FString::Printf(TEXT("Ping is: %f"), Ping));
+	}
 }
 
 void AController2D::BeginPlay()
@@ -49,6 +60,15 @@ void AController2D::PassServerRPCFunction_Implementation()
 		// Schedule the detachment to occur after a small delay
 		// GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AController2D::DeferredDetachBall);
 
+		if (HasAuthority())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Server"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Client"));
+		}
+
 		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		BallActor->IsAttached = false;
 		HoldingPlayer->IsHolding = false;
@@ -78,7 +98,7 @@ void AController2D::BallPickupHandler()
 			{
 				HoldingPlayer = ActivePlayer;
 				HoldingPlayer->IsHolding = true;
-				BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+				BallActor->AttachToActor(HoldingPlayer, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 				// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
 				// but less of a priority since
@@ -107,7 +127,7 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 		{
 			// TODO: This should be moved to OnOverlapBegin - inefficient to constantly check an array of overlap actors
 			TArray<AActor*> OverlapActors;
-			NonHoldingPlayer->BallHolder->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+			NonHoldingPlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 			if (!OverlapActors.IsEmpty())
 			{
 
@@ -120,14 +140,14 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 				NonHoldingPlayer = TempPlayer;
 				HoldingPlayer->IsHolding = true;
 				HoldingPlayer->RemoveBallArrivingWidget();
-				BallActor->AttachToComponent(HoldingPlayer->BallHolder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+				BallActor->AttachToActor(HoldingPlayer, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				BallActor->IsMoving = false;
 
 				BallActor->ForceNetUpdate();
 			}
 			else
 			{
-				FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->BallHolder->GetComponentLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
+				FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), NonHoldingPlayer->GetActorLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
 				BallActor->SetActorLocation(NewLocation);
 			}
 		}

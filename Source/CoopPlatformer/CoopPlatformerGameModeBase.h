@@ -16,6 +16,7 @@ class COOPPLATFORMER_API ACoopPlatformerGameModeBase : public AGameModeBase
 	
 public:
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 protected:
 	
