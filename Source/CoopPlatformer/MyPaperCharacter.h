@@ -111,6 +111,9 @@ public:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHolding, BlueprintReadWrite, Category = "Debug")
 	bool IsHolding;
 
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_ReplicatedJumpMaxCount, BlueprintReadWrite, Category = "Debug")
+	int ReplicatedJumpMaxCount;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool MovementEnabled;
 
@@ -138,6 +141,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_IsHolding();
+
+	UFUNCTION()
+	void OnRep_ReplicatedJumpMaxCount();
 
 	UFUNCTION()
 	void ResetJumpAbility();

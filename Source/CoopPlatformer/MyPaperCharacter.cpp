@@ -37,6 +37,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	JumpApexGravityScale = 0.5f;
 
 	ControlRotation = FRotator::ZeroRotator;
+	ReplicatedJumpMaxCount = JumpMaxCount;
 
 
 
@@ -161,22 +162,26 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 
 void AMyPaperCharacter::ResetJumpAbility()
 {
-	// Resets the jump ability if the player is in the air
-	// For catching the ball mid-air and getting a jump reset
-	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
-	//IsHolding = true;
+	if (HasAuthority())
+	{
+		// Resets the jump ability if the player is in the air
+		// For catching the ball mid-air and getting a jump reset
+		EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
+		// IsHolding = true;
 
-	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
-	JumpMaxCount = 2;
+		if (NewMovementMode == EMovementMode::MOVE_Walking) return;
+		ReplicatedJumpMaxCount = 2;
+	}
 }
 
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
-	// Once the player lands, reset anything gained while the player was in the air (jump reset)
-	Super::Landed(Hit);
-	JumpMaxCount = 1;
-	GetCharacterMovement()->GravityScale = BaseGravityScale;
-	Jumping = false;
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Landed");
+		// Once the player lands, reset anything gained while the player was in the air (jump reset)
+		Super::Landed(Hit);
+		JumpMaxCount = 1;
+		GetCharacterMovement()->GravityScale = BaseGravityScale;
+		Jumping = false;
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
@@ -283,9 +288,16 @@ void AMyPaperCharacter::OnRep_IsHolding()
 	RemoveBallArrivingWidget();
 }
 
+void AMyPaperCharacter::OnRep_ReplicatedJumpMaxCount()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke here");
+	JumpMaxCount = ReplicatedJumpMaxCount;
+}
+
 void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMyPaperCharacter, IsHolding);
+	DOREPLIFETIME(AMyPaperCharacter, ReplicatedJumpMaxCount);
 }
