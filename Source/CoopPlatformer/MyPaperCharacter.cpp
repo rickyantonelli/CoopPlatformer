@@ -37,9 +37,6 @@ AMyPaperCharacter::AMyPaperCharacter()
 	JumpApexGravityScale = 0.5f;
 
 	ControlRotation = FRotator::ZeroRotator;
-
-
-
 }
 
 void AMyPaperCharacter::BeginPlay()
@@ -164,10 +161,12 @@ void AMyPaperCharacter::ResetJumpAbility()
 	// Resets the jump ability if the player is in the air
 	// For catching the ball mid-air and getting a jump reset
 	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
-	//IsHolding = true;
 
 	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
-	JumpMaxCount = 2;
+
+	// We want to allow the players a theoretical possibility to jump as much as they want
+	// So increment by one, rather than just setting to 2
+	JumpMaxCount += 1;
 }
 
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
