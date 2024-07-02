@@ -238,6 +238,32 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 	}
 }
 
+void AController2D::ShiftViewTarget()
+{
+	if (!MyPlayer || !OtherPlayer)
+	{
+		for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
+		{
+			APlayerController* ActivePlayerController = ActivePlayer->GetLocalViewingPlayerController();
+			if (ActivePlayerController == this)
+			{
+				MyPlayer = ActivePlayer;
+
+			}
+			else
+			{
+				OtherPlayer = ActivePlayer;
+			}
+		}
+	}
+	SetViewTargetWithBlend(OtherPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+}
+
+void AController2D::RevertViewTarget()
+{
+	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+}
+
 void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

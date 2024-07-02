@@ -33,6 +33,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	AMyPaperCharacter* NonHoldingPlayer;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AMyPaperCharacter* MyPlayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AMyPaperCharacter* OtherPlayer;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TArray<AMyPaperCharacter*> ActivePlayers;
 
@@ -50,6 +56,12 @@ public:
 
 	UFUNCTION()
 	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);
+
+	UFUNCTION(BlueprintCallable)
+	void ShiftViewTarget();
+
+	UFUNCTION(BlueprintCallable)
+	void RevertViewTarget();
 
 	void GatherActorsHandler();
 
