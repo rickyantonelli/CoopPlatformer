@@ -39,36 +39,10 @@ void AController2D::OnPassActorActivated(AMyPaperCharacter* PassingPlayer)
 	PassServerRPCFunction();
 }
 
-void AController2D::DeferredDetachBall()
-{
-	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	BallActor->IsAttached = false;
-	HoldingPlayer->IsHolding = false;
-	BallActor->IsMoving = true;
-	BallActor->CanPass = false;
-	BallActor->BeginPassCooldown();
-
-	BallActor->ForceNetUpdate();
-
-	NonHoldingPlayer->BallArrivingClientRPCFunction();
-}
-
 void AController2D::PassServerRPCFunction_Implementation()
 {
 	if (BallActor && BallActor->CanPass && BallActor->NoPassCooldown && HoldingPlayer && NonHoldingPlayer && BallActor->GetAttachParentActor() == HoldingPlayer)
 	{
-		// Schedule the detachment to occur after a small delay
-		// GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AController2D::DeferredDetachBall);
-
-		if (HasAuthority())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Server"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Client"));
-		}
-
 		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		BallActor->IsAttached = false;
 		HoldingPlayer->IsHolding = false;

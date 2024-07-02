@@ -197,7 +197,6 @@ void AMyPaperCharacter::Jump()
 	{
 		Super::Jump();
 	}
-	
 }
 
 void AMyPaperCharacter::StopJumping()

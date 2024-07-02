@@ -25,19 +25,13 @@ AKeyActor::AKeyActor()
 void AKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	/*if (LockActor)
-	{
-		LockActor->SetReplicates(true);
-	}*/
-	
 }
 
 void AKeyActor::Tick(float DeltaTime)
 {
 	// TODO: Change this from GetOverlappingActors() to OnOverlapBegin()
 	Super::Tick(DeltaTime);
-	if (Locked && LockActor) // only check if the key is locked
+	if (Locked && LockedActor) // only check if the key is locked
 	{
 		TArray<AActor*> OverlapActors;
 		GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
@@ -45,11 +39,11 @@ void AKeyActor::Tick(float DeltaTime)
 		{
 			for (AActor* AA : OverlapActors)
 			{
-				if (AA->ActorHasTag("Ball") && LockActor)
+				if (AA->ActorHasTag("Ball") && LockedActor)
 				{
 					// we've found the ball actor lets do the logic
 					Locked = false; // set this to false so that we dont check overlaps anymore since it's already been unlocked
-					UStaticMeshComponent* LockMesh = LockActor->GetComponentByClass<UStaticMeshComponent>();
+					UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
 					if (LockMesh)
 					{
 						LockMesh->SetVisibility(false);
