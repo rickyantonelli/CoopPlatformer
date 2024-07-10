@@ -121,6 +121,9 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 			Path = FString::Printf(TEXT("%s?listen"), *GameMapPath);
 		}
 
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Successfuly created server");
+		UE_LOG(LogTemp, Warning, TEXT("Successfuly created server"));
+
 		GetWorld()->ServerTravel(Path); // moves the server to a new level - `?listen` means as a listen server
 	}
 }
@@ -163,10 +166,14 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 
 		if (CorrectResult)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Successfully found - joining");
+			UE_LOG(LogTemp, Warning, TEXT("Successfully found - joining"));
 			SessionInterface->JoinSession(0, MySessionName, *CorrectResult);
 		}
 		else
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Unsuccessful join but we found results");
+			UE_LOG(LogTemp, Warning, TEXT("Unsuccessful join but we found results"));
 			// we are not joining the server
 			ServerNameToFind = "";
 			ServerJoinDel.Broadcast(false);
@@ -174,6 +181,8 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 	}
 	else
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Unsuccessful join but no results");
+		UE_LOG(LogTemp, Warning, TEXT("Unsuccessful join but no results"));
 		// we are not joining the server
 		ServerJoinDel.Broadcast(false);
 	}
