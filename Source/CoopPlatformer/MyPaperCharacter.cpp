@@ -118,6 +118,9 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		//Passing
 		EnhancedInputComponent->BindAction(PassAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Pass);
 
+		//Dashing
+		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Dash);
+
 	}
 
 }
@@ -155,6 +158,11 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 	{
 		OnPassActivated.Broadcast(this);
 	}
+}
+
+void AMyPaperCharacter::Dash(const FInputActionValue& Value)
+{
+	return;
 }
 
 void AMyPaperCharacter::ResetJumpAbility()

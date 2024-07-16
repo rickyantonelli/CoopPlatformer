@@ -44,6 +44,9 @@ protected:
 	/** Called for passing input */
 	void Pass(const FInputActionValue& Value);
 
+	/** Called for dashing input */
+	void Dash(const FInputActionValue& Value);
+
 public:
 	/** Override for Tick*/
 	virtual void Tick(float DeltaTime) override;
@@ -111,6 +114,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PassAction;
 
+	/** The action to bind to player dashing*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DashAction;
+
 	/** The class of the widget that notifies the player of the ball's arrival */
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
@@ -158,6 +165,10 @@ public:
 	/** Whether the player has an input available to jump. This is so that the player has to press jump every time they want to, not hold it down */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool HasJumpInput;
+
+	/** Whether the player can dash*/
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool CanDash;
 
 	/** The normal gravity scale, so that we can revert back to this after getting out of an apex */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")

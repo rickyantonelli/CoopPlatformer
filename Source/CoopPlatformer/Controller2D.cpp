@@ -5,9 +5,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameUserSettings.h"
 #include "MyPlayerState.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 #include "CoopPlatformerGameModeBase.h"
+
+AController2D::AController2D()
+{
+}
 
 void AController2D::Tick(float DeltaSeconds)
 {
@@ -28,6 +34,34 @@ void AController2D::Tick(float DeltaSeconds)
 void AController2D::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UGameUserSettings* UserSettings = GEngine->GetGameUserSettings();
+	if (UserSettings)
+	{
+		int settingQuality = 2;
+		UserSettings->SetViewDistanceQuality(settingQuality);
+		UserSettings->SetAntiAliasingQuality(settingQuality);
+		UserSettings->SetShadowQuality(settingQuality);
+		UserSettings->SetPostProcessingQuality(settingQuality);
+		UserSettings->SetTextureQuality(settingQuality);
+		UserSettings->SetVisualEffectQuality(settingQuality);
+		UserSettings->SetFoliageQuality(settingQuality);
+		UserSettings->SetShadingQuality(settingQuality);
+		UserSettings->SetGlobalIlluminationQuality(settingQuality);
+		UserSettings->SetReflectionQuality(settingQuality);
+
+		UserSettings->ApplySettings(true);
+
+		UE_LOG(LogTemp, Log, TEXT("Resolution Quality: %f"), UserSettings->GetResolutionScaleNormalized());
+		UE_LOG(LogTemp, Log, TEXT("View Distance Quality: %d"), UserSettings->GetViewDistanceQuality());
+		UE_LOG(LogTemp, Log, TEXT("Anti-Aliasing Quality: %d"), UserSettings->GetAntiAliasingQuality());
+		UE_LOG(LogTemp, Log, TEXT("Shadow Quality: %d"), UserSettings->GetShadowQuality());
+		UE_LOG(LogTemp, Log, TEXT("Post-Process Quality: %d"), UserSettings->GetPostProcessingQuality());
+		UE_LOG(LogTemp, Log, TEXT("Texture Quality: %d"), UserSettings->GetTextureQuality());
+		UE_LOG(LogTemp, Log, TEXT("Effects Quality: %d"), UserSettings->GetVisualEffectQuality());
+		UE_LOG(LogTemp, Log, TEXT("Foliage Quality: %d"), UserSettings->GetFoliageQuality());
+		UE_LOG(LogTemp, Log, TEXT("Shading Quality: %d"), UserSettings->GetShadingQuality());
+	}
 
 	PlayersSet = false;
 }

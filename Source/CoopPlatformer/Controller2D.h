@@ -29,6 +29,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	/** Default constructor for AController2D - Applies User Settings on construction*/
+	AController2D();
+
 	/** Override for Tick*/
 	virtual void Tick(float DeltaSeconds) override;
 
