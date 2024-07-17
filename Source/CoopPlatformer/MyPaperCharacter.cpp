@@ -28,6 +28,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	Jumping = false;
 	DevInfiniteJump = false;
 	HasJumpInput = true;
+	CanDash = true;
 
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
@@ -36,6 +37,8 @@ AMyPaperCharacter::AMyPaperCharacter()
 	DevJumpResetTimer = 0.5f;
 	JumpApexTimer = 0.2f;
 	JumpApexGravityScale = 0.5f;
+	DashSpeed = 2.0f;
+	DashDuration = 1.0f;
 
 	ControlRotation = FRotator::ZeroRotator;
 }
@@ -162,7 +165,27 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 
 void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 {
-	return;
+	if (!CanDash) return;
+
+	if (!IsDashing)
+	{
+		// TODO:
+		// Input actions need to span up and down so that we can expose dash directions
+		// Need a FVector that we can store as the last vector from movement
+		// Need a move released action that will revert the stored FVector to zero
+		// In dash, use the stored FVector if it is not zero
+		// If it is zero, just use GetActorForwardVector()
+	 
+		IsDashing = true;
+		FVector DashDir = GetActorForwardVector() * DashSpeed;
+		// FVector DashDir = GetMovementInput();
+		
+		LaunchCharacter(DashDir, true, true);
+
+		// Schedule StopDashing to be called after DashDuration
+		FTimerHandle TimerHandler;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {IsDashing = false; }, DashDuration, false);
+	}
 }
 
 void AMyPaperCharacter::ResetJumpAbility()

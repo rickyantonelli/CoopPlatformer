@@ -146,6 +146,14 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float JumpApexGravityScale;
 
+	/** The time that the dash should occur for */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float DashDuration;
+
+	/** The speed of the dash */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float DashSpeed;
+
 	/** Whether the player is holding the ball */
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHolding, BlueprintReadWrite, Category = "Debug")
 	bool IsHolding;
@@ -169,6 +177,10 @@ public:
 	/** Whether the player can dash*/
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool CanDash;
+
+	/** Whether the player is dashing*/
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool IsDashing;
 
 	/** The normal gravity scale, so that we can revert back to this after getting out of an apex */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
