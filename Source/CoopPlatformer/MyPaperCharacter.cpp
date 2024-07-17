@@ -28,7 +28,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	Jumping = false;
 	DevInfiniteJump = false;
 	HasJumpInput = true;
-	CanDash = true;
+	CanDash = false;
 
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
@@ -41,6 +41,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	DashDuration = 1.0f;
 
 	ControlRotation = FRotator::ZeroRotator;
+	DashDirection = FVector::ZeroVector;
 }
 
 void AMyPaperCharacter::BeginPlay()
@@ -133,22 +134,29 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 	if (MovementEnabled)
 	{
 		// input is a Vector2D
-		FVector MovementVector = Value.Get<FVector>();
+		FVector2D MovementVector = Value.Get<FVector2D>();
+
+		const FVector ForwardDirection = GetActorForwardVector();
+		const FVector RightDirection = GetActorUpVector();
 
 		if (Controller != nullptr)
 		{
 			// Standard left and right movement
-			if (MovementVector.X > 0)
+			if (MovementVector.X >= 0)
 			{
 				ControlRotation.Yaw = 0;
 				GetController()->SetControlRotation(ControlRotation);
 				AddMovementInput(GetActorForwardVector(), MovementVector.X);
+
+				DashDirection = (ForwardDirection * MovementVector.X) + (RightDirection * MovementVector.Y);
 			}
 			else
 			{
 				ControlRotation.Yaw = 180;
 				GetController()->SetControlRotation(ControlRotation);
 				AddMovementInput(GetActorForwardVector(), -MovementVector.X);
+
+				DashDirection = (ForwardDirection * -MovementVector.X) + (RightDirection * MovementVector.Y);
 			}
 		}
 	}
@@ -169,20 +177,21 @@ void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 
 	if (!IsDashing)
 	{
-		// TODO:
-		// Input actions need to span up and down so that we can expose dash directions
-		// Need a FVector that we can store as the last vector from movement
-		// Need a move released action that will revert the stored FVector to zero
-		// In dash, use the stored FVector if it is not zero
-		// If it is zero, just use GetActorForwardVector()
-	 
 		IsDashing = true;
-		FVector DashDir = GetActorForwardVector() * DashSpeed;
-		// FVector DashDir = GetMovementInput();
-		
-		LaunchCharacter(DashDir, true, true);
+		FVector DashDir;
 
-		// Schedule StopDashing to be called after DashDuration
+		if (DashDirection == FVector::ZeroVector)
+		{
+			DashDir = GetActorForwardVector();
+		}
+		else
+		{
+			DashDir = DashDirection;
+		}
+
+		DashDir.Normalize();
+		LaunchCharacter(DashDir * DashSpeed, true, true);
+
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {IsDashing = false; }, DashDuration, false);
 	}
@@ -205,6 +214,7 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
 	// Once the player lands, reset anything gained while the player was in the air (jump reset)
 	Super::Landed(Hit);
+	CanDash = false;
 	JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	Jumping = false;
@@ -297,6 +307,17 @@ void AMyPaperCharacter::RemoveBallArrivingWidget()
 	{
 		BallArrivingWidget->RemoveFromParent();
 	}
+}
+
+void AMyPaperCharacter::ApplyDashToken()
+{
+	// ensure that we are in the air
+	EMovementMode PlayerMovementMode = GetCharacterMovement()->MovementMode;
+
+	if (PlayerMovementMode == EMovementMode::MOVE_Walking) return;
+
+	CanDash = true;
+
 }
 
 void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()

@@ -244,6 +244,12 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 			}
 		}
 	}
+
+	if (OtherActor->ActorHasTag("Dash"))
+	{
+		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
+		PlayerCharacterActor->ApplyDashToken();
+	}
 }
 
 void AController2D::ShiftViewTarget()

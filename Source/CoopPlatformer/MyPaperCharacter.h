@@ -190,6 +190,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	FVector SpawnLocation;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	FVector DashDirection;
+
 	/** Delegate for the ball being passed - which is picked up by the player controlller and called on the server */
 	UPROPERTY(BlueprintAssignable)
 	FBallPassActivated OnPassActivated;
@@ -223,5 +226,8 @@ public:
 	/** Removes the ball arriving widget once the player has caught the ball */
 	UFUNCTION()
 	void RemoveBallArrivingWidget();
+
+	UFUNCTION()
+	void ApplyDashToken();
 
 };
