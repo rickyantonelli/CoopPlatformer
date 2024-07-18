@@ -175,7 +175,7 @@ public:
 	bool HasJumpInput;
 
 	/** Whether the player can dash*/
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanDash;
 
 	/** Whether the player is dashing*/

@@ -339,4 +339,5 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMyPaperCharacter, IsHolding);
+	DOREPLIFETIME(AMyPaperCharacter, CanDash);
 }

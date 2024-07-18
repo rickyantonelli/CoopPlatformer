@@ -18,11 +18,6 @@ ACheckpoint::ACheckpoint()
 	TriggerMesh->SetIsReplicated(true);
 	TriggerMesh->SetCollisionProfileName(FName("OverlapAllDynamic"));
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(RootComp); 
-	Mesh->SetIsReplicated(true);
-	Mesh->SetCollisionProfileName(FName("OverlapAllDynamic"));
-
 	CanBeCollected = true;
 	Tags.Add("Checkpoint");
 	

@@ -43,10 +43,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	UStaticMeshComponent* TriggerMesh;
 
-	/** The static mesh for the checkpoint */
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
-
 	/** Array of characters that tracks whether a player has overlapped the checkpoint */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	TArray<AMyPaperCharacter*> CheckpointedPlayers;

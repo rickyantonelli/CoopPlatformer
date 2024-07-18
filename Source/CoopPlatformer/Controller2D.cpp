@@ -10,6 +10,7 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "CoopPlatformerGameModeBase.h"
+#include "DashToken.h"
 
 AController2D::AController2D()
 {
@@ -249,7 +250,13 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 	{
 		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
 		PlayerCharacterActor->ApplyDashToken();
+
+		ADashToken* DashToken = Cast<ADashToken>(OtherActor);
+		DashToken->CollectDash();
 	}
+
+
+
 }
 
 void AController2D::ShiftViewTarget()
