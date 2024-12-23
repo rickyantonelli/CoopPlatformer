@@ -28,6 +28,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	Jumping = false;
 	DevInfiniteJump = false;
 	HasJumpInput = true;
+	// Dash prototype - holding off for now
 	CanDash = false;
 
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
@@ -123,7 +124,8 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(PassAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Pass);
 
 		//Dashing
-		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Dash);
+		// Dash prototype - holding off for now
+		// EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Dash);
 
 	}
 
@@ -148,7 +150,8 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 				GetController()->SetControlRotation(ControlRotation);
 				AddMovementInput(GetActorForwardVector(), MovementVector.X);
 
-				DashDirection = (ForwardDirection * MovementVector.X) + (RightDirection * MovementVector.Y);
+				// Dash prototype - holding off for now
+				// DashDirection = (ForwardDirection * MovementVector.X) + (RightDirection * MovementVector.Y);
 			}
 			else
 			{
@@ -156,7 +159,8 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 				GetController()->SetControlRotation(ControlRotation);
 				AddMovementInput(GetActorForwardVector(), -MovementVector.X);
 
-				DashDirection = (ForwardDirection * -MovementVector.X) + (RightDirection * MovementVector.Y);
+				// Dash prototype - holding off for now
+				// DashDirection = (ForwardDirection * -MovementVector.X) + (RightDirection * MovementVector.Y);
 			}
 		}
 	}
@@ -173,10 +177,12 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 
 void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 {
+	// Dash prototype - holding off for now
 	if (!CanDash) return;
 
 	if (!IsDashing)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Dashing");
 		IsDashing = true;
 		FVector DashDir;
 
@@ -214,7 +220,8 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 {
 	// Once the player lands, reset anything gained while the player was in the air (jump reset)
 	Super::Landed(Hit);
-	CanDash = false;
+	// Dash prototype - holding off for now
+	// CanDash = false;
 	JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	Jumping = false;

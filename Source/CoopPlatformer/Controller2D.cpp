@@ -20,7 +20,11 @@ void AController2D::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	GatherActorsHandler();
+	if (!PlayersSet || !BallActor)
+	{
+		// sets the arrays for the players and the ballactor object - so once these are set we never need to check or call again
+		GatherActorsHandler();
+	}
 	BallPickupHandler();
 	BallPassingHandler(DeltaSeconds);
 
@@ -36,6 +40,8 @@ void AController2D::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Apply the user settings we want as default
+	// Eventually this will go away
 	UGameUserSettings* UserSettings = GEngine->GetGameUserSettings();
 	if (UserSettings)
 	{
@@ -53,6 +59,7 @@ void AController2D::BeginPlay()
 
 		UserSettings->ApplySettings(true);
 
+		// Some debugging to ensure the settings were correctly set
 		UE_LOG(LogTemp, Log, TEXT("Resolution Quality: %f"), UserSettings->GetResolutionScaleNormalized());
 		UE_LOG(LogTemp, Log, TEXT("View Distance Quality: %d"), UserSettings->GetViewDistanceQuality());
 		UE_LOG(LogTemp, Log, TEXT("Anti-Aliasing Quality: %d"), UserSettings->GetAntiAliasingQuality());
@@ -246,14 +253,15 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		}
 	}
 
-	if (OtherActor->ActorHasTag("Dash"))
-	{
-		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-		PlayerCharacterActor->ApplyDashToken();
+	// Dash prototype - holding off for now
+	//if (OtherActor->ActorHasTag("Dash"))
+	//{
+	//	AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
+	//	PlayerCharacterActor->ApplyDashToken();
 
-		ADashToken* DashToken = Cast<ADashToken>(OtherActor);
-		DashToken->CollectDash();
-	}
+	//	ADashToken* DashToken = Cast<ADashToken>(OtherActor);
+	//	DashToken->CollectDash();
+	//}
 
 
 
