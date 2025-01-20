@@ -7,8 +7,7 @@
 #include "MyPaperCharacter.h"
 #include "BallActor.h"
 #include "Checkpoint.h"
-
-
+#include "CoopPlatformerGameModeBase.h"
 #include "Controller2D.generated.h"
 
 /**
@@ -40,34 +39,34 @@ public:
 
 	/** The player that is holding the ball */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
-	AMyPaperCharacter* HoldingPlayer;
+	TObjectPtr<AMyPaperCharacter> HoldingPlayer;
 
 	/** The player that is not holding the ball - required for passing between players */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
-	AMyPaperCharacter* NonHoldingPlayer;
+	TObjectPtr<AMyPaperCharacter> NonHoldingPlayer;
 
 	/** The player that this controller is responsible for - required for camera shifting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AMyPaperCharacter* MyPlayer;
+	TObjectPtr<AMyPaperCharacter> MyPlayer;
 
 	/** The other player that is not the player that this controller is responsible for - required for camera shifting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AMyPaperCharacter* OtherPlayer;
+	TObjectPtr<AMyPaperCharacter> OtherPlayer;
 
 	/** Array of active players - to avoid having to constantly get all actors of class and casting */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
-	TArray<AMyPaperCharacter*> ActivePlayers;
+	TArray<TObjectPtr<AMyPaperCharacter>> ActivePlayers;
 
 	/** The ball actor that the players pass back and forth */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
-	ABallActor* BallActor;
+	TObjectPtr<ABallActor> BallActor;
 
 	/** 
 	* Receives delegate for when the player passes the ball 
 	* @param PassingPlayer: The player that passed the ball
 	*/
 	UFUNCTION()
-	void OnPassActorActivated(AMyPaperCharacter* PassingPlayer);
+	void OnPassActorActivated();
 
 	/** Server RPC for passing */
 	UFUNCTION(Server, Reliable, BlueprintCallable)

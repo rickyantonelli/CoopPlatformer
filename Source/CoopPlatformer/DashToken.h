@@ -31,11 +31,11 @@ public:
 
 	/** The root component of the pressure plate actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp;
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The pressure plate's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	UPROPERTY(EditAnywhere, Category = "Customizable")
 	float RespawnTimer;

@@ -29,21 +29,21 @@ public:
 
 	/** The root component of the movable actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp;
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The first point that the actor moves to */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UArrowComponent* Point1;
+	TObjectPtr<UArrowComponent> Point1;
 
 	/** The second point that the actor moves to */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UArrowComponent* Point2;
+	TObjectPtr<UArrowComponent> Point2;
 
 	/** The movable actor's static mesh */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	/** Component that transports the actor back and forth */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UTransporter* Transporter;
+	TObjectPtr<UTransporter> Transporter;
 };

@@ -16,7 +16,7 @@
 #include "MyPaperCharacter.generated.h"
 
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBallPassActivated, AMyPaperCharacter*, PassingPlayer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
 
 /**
  * The PaperCharacter class is the player class for the game - holds a variety of responsibilities
@@ -88,35 +88,35 @@ public:
 
 	/** The capsule component for the player to handle collision*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Capsule, meta = (AllowPrivateAccess = "true"))
-	UCapsuleComponent* Capsule;
+	TObjectPtr<UCapsuleComponent> Capsule;
 
 	/** The camera component for the player*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* Camera;
+	TObjectPtr<UCameraComponent> Camera;
 
 	/** The default mapping context for the player */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext;
+	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
 	/** The action to bind to jump */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
+	TObjectPtr<UInputAction> JumpAction;
 	
 	/** The action to bind to when jump is released - for allowing flexibility in jump height */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpReleaseAction;
+	TObjectPtr<UInputAction> JumpReleaseAction;
 
 	/** The action to bind to lateral movement */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
+	TObjectPtr<UInputAction> MoveAction;
 
 	/** The action to bind to passing of the ball */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* PassAction;
+	TObjectPtr<UInputAction> PassAction;
 
 	/** The action to bind to player dashing*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* DashAction;
+	TObjectPtr<UInputAction> DashAction;
 
 	/** The class of the widget that notifies the player of the ball's arrival */
 	UPROPERTY(EditAnywhere, Category = "UI")
@@ -201,7 +201,7 @@ public:
 	FRotator ControlRotation;
 
 	/** The the widget that notifies the player of the ball's arrival */
-	UUserWidget* BallArrivingWidget;
+	TObjectPtr<UUserWidget> BallArrivingWidget;
 
 	/** When server changes IsHolding */
 	UFUNCTION()

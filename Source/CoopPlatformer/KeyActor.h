@@ -26,15 +26,15 @@ public:
 
 	/** The actor that the key will unlock on overlap with the ball */
 	UPROPERTY(EditAnywhere, Category = "Customizable")
-	AActor* LockedActor;
+	TObjectPtr<AActor> LockedActor;
 
 	/** The root component of the key actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp;
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The key's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
 	bool Locked;

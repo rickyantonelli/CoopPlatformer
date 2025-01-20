@@ -19,15 +19,15 @@ public:
 
 	/** The actor that will be enabled once the trigger happens */
 	UPROPERTY(EditAnywhere, Category = "Customizable")
-	AActor* EnableActor;
+	TObjectPtr<AActor> EnableActor;
 
 	/** The actor that will be disabled once the trigger happens */
 	UPROPERTY(EditAnywhere, Category = "Customizable")
-	AActor* DisableActor;
+	TObjectPtr<AActor> DisableActor;
 
 	/** The player actors in the map */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	TArray<AActor*> PlayerActors;
+	TArray<TObjectPtr<AActor>> PlayerActors;
 
 	/** The amount of actors that need to enter the collision area for things to trigger */
 	UPROPERTY(EditAnywhere, Category = "Customizable")

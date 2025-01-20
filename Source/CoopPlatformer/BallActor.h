@@ -37,15 +37,15 @@ public:
 
 	/** The root component of the ball actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp;
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The capsule component for the ball*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UCapsuleComponent* Sphere;
+	TObjectPtr<UCapsuleComponent> Sphere;
 
 	/** The ball's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	/** Movement speed for the ball - to be updated in design */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

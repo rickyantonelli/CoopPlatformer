@@ -29,15 +29,15 @@ public:
 
 	/** The root component of the one way platform */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp;
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The platforms's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	/** The box component for handling collision from below*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UBoxComponent* Box;
+	TObjectPtr<UBoxComponent> Box;
 
 	/** When player collides with the box, turns off the player's ECollisionResponse */
 	UFUNCTION()

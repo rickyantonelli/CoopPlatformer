@@ -37,15 +37,15 @@ public:
 
 	/** The root component of the checkpoint */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp; 
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The trigger mesh for the checkpoint */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* TriggerMesh;
+	TObjectPtr<UStaticMeshComponent> TriggerMesh;
 
 	/** Array of characters that tracks whether a player has overlapped the checkpoint */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	TArray<AMyPaperCharacter*> CheckpointedPlayers;
+	TArray<TObjectPtr<AMyPaperCharacter>> CheckpointedPlayers;
 	
 	/** Allows the checkpoint to be collected, only allow a checkpoint to be collected once */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")

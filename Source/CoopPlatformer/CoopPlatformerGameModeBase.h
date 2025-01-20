@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BallActor.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/GameModeBase.h"
 #include "CoopPlatformerGameModeBase.generated.h"
+
 
 /**
  * The base game mode for Nova
@@ -27,6 +30,23 @@ public:
 	*/
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
+	/** Required for replicated variables - required for passing between players */
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+
+public:
+
+	/** Array of active players - to avoid having to constantly get all actors of class and casting */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	TArray<APlayerController*> ActiveControllers;
+
+	/** The ball actor that the players pass back and forth */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	ABallActor* BallActor;
+
 protected:
+	/** Override for BeginPlay*/
+	virtual void BeginPlay() override;
 	
 };

@@ -40,6 +40,17 @@ void AController2D::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Get the ball actor, which is stored in the game mode
+	// The ball just exists in each level, so it should always be there in a level
+	AGameModeBase* MyGameMode = GetWorld()->GetAuthGameMode();
+	ACoopPlatformerGameModeBase* MyGameModeCoop = Cast<ACoopPlatformerGameModeBase>(MyGameMode);
+
+	// TODO: Make this a check() later, cause we want a crash here if the ball doesn't exist
+	if (MyGameModeCoop && MyGameModeCoop->BallActor)
+	{
+		BallActor = MyGameModeCoop->BallActor;
+	}
+
 	// Apply the user settings we want as default
 	// Eventually this will go away
 	UGameUserSettings* UserSettings = GEngine->GetGameUserSettings();
@@ -75,7 +86,7 @@ void AController2D::BeginPlay()
 }
 
 
-void AController2D::OnPassActorActivated(AMyPaperCharacter* PassingPlayer)
+void AController2D::OnPassActorActivated()
 {
 	// delegate received from the player
 	PassServerRPCFunction();
@@ -203,16 +214,6 @@ void AController2D::GatherActorsHandler()
 			}
 		}
 		PlayersSet = true;
-	}
-	// TODO: can just move this to BeginPlay() whenever since the ball is just an object in the level
-	if (!BallActor)
-	{
-		TArray<AActor*> BallActors;
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Ball", BallActors);
-		if (!BallActors.IsEmpty())
-		{
-			BallActor = Cast<ABallActor>(BallActors[0]);
-		}
 	}
 }
 

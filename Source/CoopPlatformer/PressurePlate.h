@@ -23,19 +23,19 @@ protected:
 public:	
 	/** The root component of the pressure plate actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	USceneComponent* RootComp;
+	TObjectPtr<USceneComponent> RootComp;
 
 	/** The trigger mesh component of the pressure plate actor - which sits just above the static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* TriggerMesh;
+	TObjectPtr<UStaticMeshComponent> TriggerMesh;
 
 	/** The pressure plate's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	/** The actor that is influenced by the pressure plate change */
 	UPROPERTY(EditAnywhere, Category = "Customizable")
-	AActor* PressurePlatedActor;
+	TObjectPtr<AActor> PressurePlatedActor;
 
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()

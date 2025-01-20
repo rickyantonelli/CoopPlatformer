@@ -171,7 +171,7 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
 	if (IsHolding && MovementEnabled && IsLocallyControlled())
 	{
-		OnPassActivated.Broadcast(this);
+		OnPassActivated.Broadcast();
 	}
 }
 
