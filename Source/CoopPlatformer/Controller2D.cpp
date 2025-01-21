@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameUserSettings.h"
+#include "GameFramework/GameStateBase.h"
 #include "MyPlayerState.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
@@ -25,15 +26,24 @@ void AController2D::Tick(float DeltaSeconds)
 		// sets the arrays for the players and the ballactor object - so once these are set we never need to check or call again
 		GatherActorsHandler();
 	}
-	BallPickupHandler();
+	// BallPickupHandler();
 	BallPassingHandler(DeltaSeconds);
 
-	APlayerState* MyPlayerState = GetPlayerState<APlayerState>();
+	/*APlayerState* MyPlayerState = GetPlayerState<APlayerState>();
 	if (MyPlayerState)
 	{
 		float Ping = MyPlayerState->ExactPing;
 		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Red, FString::Printf(TEXT("Ping is: %f"), Ping));
-	}
+	}*/
+
+	//AGameModeBase* MyGameMode = GetWorld()->GetAuthGameMode();
+	//ACoopPlatformerGameModeBase* MyGameModeCoop = Cast<ACoopPlatformerGameModeBase>(MyGameMode);
+	//if (MyGameModeCoop)
+	//{
+	//	// GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Red, FString::Printf(TEXT("Ping is: %f"), MyGameModeCoop->ActivePlayers.Num()));
+	//	int32 NumPlayers = MyGameModeCoop->ActivePlayers.Num();
+	//	UE_LOG(LogTemp, Log, TEXT("Number of players: %d"), NumPlayers);
+	//}
 }
 
 void AController2D::BeginPlay()
@@ -114,34 +124,34 @@ void AController2D::BallPickupHandler()
 	// This only will get called once per level - when the ball is not being held by anyone yet
 
 	// TODO: A lot of checks here and there is likely redundancy
-	if (HasAuthority() && BallActor && !BallActor->IsAttached && !BallActor->IsMoving && ActivePlayers.Num() == 2)
-	{
-		// set up an array of actors
-		for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
-		{
-			TArray<AActor*> OverlapActors;
-			if (ActivePlayer) ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-			if (!OverlapActors.IsEmpty())
-			{
-				HoldingPlayer = ActivePlayer;
-				HoldingPlayer->IsHolding = true;
-				BallActor->AttachToActor(HoldingPlayer, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	//if (HasAuthority() && BallActor && !BallActor->IsAttached && !BallActor->IsMoving && ActivePlayers.Num() == 2)
+	//{
+	//	// set up an array of actors
+	//	for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
+	//	{
+	//		TArray<AActor*> OverlapActors;
+	//		if (ActivePlayer) ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+	//		if (!OverlapActors.IsEmpty())
+	//		{
+	//			HoldingPlayer = ActivePlayer;
+	//			HoldingPlayer->IsHolding = true;
+	//			BallActor->AttachToActor(HoldingPlayer, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
-				// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
-				// but less of a priority since
-				for (AMyPaperCharacter* APlayerActor : ActivePlayers)
-				{
-					if (APlayerActor == HoldingPlayer) continue;
-					else
-					{
-						NonHoldingPlayer = APlayerActor;
-					}
-				}
-				BallActor->CanPass = true;
-				BallActor->IsAttached = true;
-			}
-		}
-	}
+	//			// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
+	//			// but less of a priority since
+	//			for (AMyPaperCharacter* APlayerActor : ActivePlayers)
+	//			{
+	//				if (APlayerActor == HoldingPlayer) continue;
+	//				else
+	//				{
+	//					NonHoldingPlayer = APlayerActor;
+	//				}
+	//			}
+	//			BallActor->CanPass = true;
+	//			BallActor->IsAttached = true;
+	//		}
+	//	}
+	//}
 }
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
@@ -219,6 +229,40 @@ void AController2D::GatherActorsHandler()
 
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
+	// ball pickup handling
+	if (OtherActor->ActorHasTag("Ball") && HasAuthority())
+	{
+		if (BallActor && !BallActor->IsAttached && !BallActor->IsMoving && ActivePlayers.Num() == 2)
+		{
+			// set up an array of actors
+			for (AMyPaperCharacter* ActivePlayer : ActivePlayers)
+			{
+				TArray<AActor*> OverlapActors;
+				if (ActivePlayer) ActivePlayer->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
+				if (!OverlapActors.IsEmpty())
+				{
+					HoldingPlayer = ActivePlayer;
+					HoldingPlayer->IsHolding = true;
+					BallActor->AttachToActor(HoldingPlayer, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+					// TODO: Probably inefficient to loop through the array just to assign the NonHoldingPlayer
+					// but less of a priority since
+					for (AMyPaperCharacter* APlayerActor : ActivePlayers)
+					{
+						if (APlayerActor == HoldingPlayer) continue;
+						else
+						{
+							NonHoldingPlayer = APlayerActor;
+						}
+					}
+					BallActor->CanPass = true;
+					BallActor->IsAttached = true;
+				}
+			}
+		}
+	}
+
+
 	// death handling
 	if (OtherActor->ActorHasTag("Death"))
 	{

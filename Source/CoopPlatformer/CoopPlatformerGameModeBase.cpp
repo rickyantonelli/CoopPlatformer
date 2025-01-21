@@ -13,7 +13,7 @@ void ACoopPlatformerGameModeBase::BeginPlay()
 	// Store the ball actor here
 	TArray<AActor*> BallActors;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Ball", BallActors);
-	if (!BallActors.IsEmpty())
+	if (!BallActors.IsEmpty() && HasAuthority())
 	{
 		BallActor = Cast<ABallActor>(BallActors[0]);
 	}
@@ -43,6 +43,21 @@ void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 	ActiveControllers.Add(NewPlayer);
 
+	if (NewPlayer && HasAuthority() && !PlayersFull)
+	{
+		ACharacter* PlayerCharacter = Cast<ACharacter>(NewPlayer->GetPawn());
+		if (PlayerCharacter)
+		{
+			AMyPaperCharacter* PaperPlayerCharacter = Cast<AMyPaperCharacter>(PlayerCharacter);
+			if (PaperPlayerCharacter) 
+			{
+				UE_LOG(LogTemp, Log, TEXT("Player added: %s"), *PaperPlayerCharacter->GetName());
+				ActivePlayers.Add(PaperPlayerCharacter);
+				if (ActivePlayers.Num() == 2) PlayersFull = true;
+			}
+		}
+	}
+
 }
 
 void ACoopPlatformerGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -51,6 +66,7 @@ void ACoopPlatformerGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePro
 
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, ActiveControllers);
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, BallActor);
+	DOREPLIFETIME(ACoopPlatformerGameModeBase, ActivePlayers);
 
 }
 

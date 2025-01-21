@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BallActor.h"
+#include "MyPaperCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameModeBase.h"
 #include "CoopPlatformerGameModeBase.generated.h"
@@ -41,9 +42,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TArray<APlayerController*> ActiveControllers;
 
+	/** Array of active players - to avoid having to constantly get all actors of class and casting */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	TArray<AMyPaperCharacter*> ActivePlayers;
+
 	/** The ball actor that the players pass back and forth */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	ABallActor* BallActor;
+
+	/** Whether the ball is ready to be passed*/
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	bool PlayersFull = false;
 
 protected:
 	/** Override for BeginPlay*/
