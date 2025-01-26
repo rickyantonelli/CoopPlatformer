@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "BallActor.h"
 #include "MyPaperCharacter.h"
+#include "MyGameStateBase.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameModeBase.h"
 #include "CoopPlatformerGameModeBase.generated.h"

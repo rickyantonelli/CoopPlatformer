@@ -12,6 +12,7 @@ AMyPaperCharacter::AMyPaperCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SetReplicates(true);
+	bReplicates = true;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -171,7 +172,12 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
 	if (IsHolding && MovementEnabled && IsLocallyControlled())
 	{
+		UE_LOG(LogTemp, Log, TEXT("PASSING"));
 		OnPassActivated.Broadcast();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Getting pass but no inputt valid"));
 	}
 }
 

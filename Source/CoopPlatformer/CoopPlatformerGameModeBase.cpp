@@ -43,17 +43,19 @@ void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 	ActiveControllers.Add(NewPlayer);
 
+	AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
+
 	if (NewPlayer && HasAuthority() && !PlayersFull)
 	{
 		ACharacter* PlayerCharacter = Cast<ACharacter>(NewPlayer->GetPawn());
 		if (PlayerCharacter)
 		{
 			AMyPaperCharacter* PaperPlayerCharacter = Cast<AMyPaperCharacter>(PlayerCharacter);
-			if (PaperPlayerCharacter) 
+			if (PaperPlayerCharacter && MyGameState) 
 			{
 				UE_LOG(LogTemp, Log, TEXT("Player added: %s"), *PaperPlayerCharacter->GetName());
-				ActivePlayers.Add(PaperPlayerCharacter);
-				if (ActivePlayers.Num() == 2) PlayersFull = true;
+				MyGameState->ActivePlayers.Add(PaperPlayerCharacter);
+				if (MyGameState->ActivePlayers.Num() == 2) PlayersFull = true;
 			}
 		}
 	}
