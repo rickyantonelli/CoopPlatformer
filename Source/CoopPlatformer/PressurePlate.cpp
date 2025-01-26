@@ -2,6 +2,7 @@
 
 
 #include "PressurePlate.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APressurePlate::APressurePlate()
@@ -31,16 +32,22 @@ void APressurePlate::BeginPlay()
 	TriggerMesh->OnComponentBeginOverlap.AddDynamic(this, &APressurePlate::OnBoxCollision);
 	TriggerMesh->OnComponentEndOverlap.AddDynamic(this, &APressurePlate::OnBoxCollisionEnd);
 
-	TriggerMesh->SetVisibility(false);
-	//if (PressurePlatedActor)
-	//{
-	//	//PressurePlatedActor->SetReplicateMovement(true);
-	//	PressurePlatedActor->SetReplicates(true);
-	//}
+	if (HasAuthority())
+	{
+		TriggerMesh->SetVisibility(false);
+	}
+}
+
+void APressurePlate::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APressurePlate, Activated);
 }
 
 void APressurePlate::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+
 	if (PressurePlatedActor == nullptr) return;
 	UStaticMeshComponent* DoorMesh = PressurePlatedActor->GetComponentByClass<UStaticMeshComponent>();
 	if (DoorMesh == nullptr) return;
@@ -60,8 +67,10 @@ void APressurePlate::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 		DoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 
-	
-	Activated = true;
+	if (HasAuthority())
+	{
+		Activated = true;
+	}
 }
 
 void APressurePlate::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -85,7 +94,6 @@ void APressurePlate::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent,
 		DoorMesh->SetVisibility(true);
 		DoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
-	
 }
 
 

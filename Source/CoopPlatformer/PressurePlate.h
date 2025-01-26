@@ -20,6 +20,9 @@ protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
 
+	/** Required for replicated variables - required for passing between players */
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:	
 	/** The root component of the pressure plate actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
@@ -46,7 +49,7 @@ public:
 	void OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	/** Whether the pressure plate is activated */
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Debug")
 	bool Activated;
 
 };
