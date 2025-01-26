@@ -45,10 +45,9 @@ void AController2D::BeginPlay()
 	// The ball just exists in each level, so it should always be there in a level
 
 	// TODO: Make this a check() later, cause we want a crash here if the ball doesn't exist
-	if (HasAuthority())
+	if (HasAuthority() && MyGameStateCoop && MyGameStateCoop->BallActor)
 	{
-		check(MyGameModeCoop && MyGameModeCoop->BallActor)
-		BallActor = MyGameModeCoop->BallActor;
+		BallActor = MyGameStateCoop->BallActor;
 	}
 
 	// Apply the user settings we want as default

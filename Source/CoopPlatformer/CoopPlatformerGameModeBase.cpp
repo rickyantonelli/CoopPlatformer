@@ -13,9 +13,10 @@ void ACoopPlatformerGameModeBase::BeginPlay()
 	// Store the ball actor here
 	TArray<AActor*> BallActors;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Ball", BallActors);
-	if (!BallActors.IsEmpty() && HasAuthority())
+	AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
+	if (!BallActors.IsEmpty() && HasAuthority() && MyGameState)
 	{
-		BallActor = Cast<ABallActor>(BallActors[0]);
+		MyGameState->BallActor = Cast<ABallActor>(BallActors[0]);
 	}
 }
 
