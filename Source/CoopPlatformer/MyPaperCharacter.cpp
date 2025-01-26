@@ -172,12 +172,7 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
 	if (IsHolding && MovementEnabled && IsLocallyControlled())
 	{
-		UE_LOG(LogTemp, Log, TEXT("PASSING"));
 		OnPassActivated.Broadcast();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Getting pass but no inputt valid"));
 	}
 }
 
@@ -211,15 +206,18 @@ void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 
 void AMyPaperCharacter::ResetJumpAbility()
 {
-	// Resets the jump ability if the player is in the air
-	// For catching the ball mid-air and getting a jump reset
-	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
+	if (HasAuthority())
+	{
+		// Resets the jump ability if the player is in the air
+		// For catching the ball mid-air and getting a jump reset
+		EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
 
-	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
+		if (NewMovementMode == EMovementMode::MOVE_Walking) return;
 
-	// We want to allow the players a theoretical possibility to jump as much as they want
-	// So increment by one, rather than just setting to 2
-	JumpMaxCount += 1;
+		// We want to allow the players a theoretical possibility to jump as much as they want
+		// So increment by one, rather than just setting to 2
+		JumpMaxCount += 1;
+	}
 }
 
 void AMyPaperCharacter::Landed(const FHitResult& Hit)
@@ -228,7 +226,7 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 	// Dash prototype - holding off for now
 	// CanDash = false;
-	JumpMaxCount = 1;
+	if (HasAuthority()) JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	Jumping = false;
 }
@@ -270,7 +268,7 @@ void AMyPaperCharacter::OnJumped_Implementation()
 	Super::OnJumped_Implementation();
 	HasJumpInput = false;
 	Jumping = true;
-	GetCharacterMovement()->GravityScale = BaseGravityScale;
+	// GetCharacterMovement()->GravityScale = BaseGravityScale;
 	if (DevInfiniteJump)
 	{
 		// For solo testing, just gives a large amount of jumps so you can test without passing
@@ -353,4 +351,5 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 
 	DOREPLIFETIME(AMyPaperCharacter, IsHolding);
 	DOREPLIFETIME(AMyPaperCharacter, CanDash);
+	DOREPLIFETIME(AMyPaperCharacter, JumpMaxCount);
 }

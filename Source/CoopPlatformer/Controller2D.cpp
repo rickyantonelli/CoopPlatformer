@@ -94,13 +94,11 @@ void AController2D::OnPossess(APawn* InPawn)
 
 void AController2D::OnRep_ActivePlayers()
 {
-	UE_LOG(LogTemp, Log, TEXT("Replicated"));
 	// ActivePlayers.Swap(0, 1);
 }
 
 void AController2D::OnPassActorActivated()
 {
-	UE_LOG(LogTemp, Log, TEXT("Passing"));
 	// delegate received from the player
 	PassServerRPCFunction();
 }
