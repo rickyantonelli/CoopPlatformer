@@ -8,7 +8,16 @@
 #include "BallActor.h"
 #include "Checkpoint.h"
 #include "CoopPlatformerGameModeBase.h"
+#include "MyGameStateBase.h"
 #include "Controller2D.generated.h"
+
+// Define the enum class 
+UENUM(BlueprintType)
+enum class EHoldingState : uint8
+{
+	HoldingPlayer = 0 UMETA(DisplayName = "Holding Player"),
+	NonHoldingPlayer = 1 UMETA(DisplayName = "Non-Holding Player")
+};
 
 /**
  * The player controller class, which handles a variety of responsibilities:
@@ -53,13 +62,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<AMyPaperCharacter> OtherPlayer;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr< ACoopPlatformerGameModeBase> MyGameModeCoop;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<AMyGameStateBase> MyGameStateCoop;
+
 	/** Array of active players - to avoid having to constantly get all actors of class and casting */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_ActivePlayers)
 	TArray<TObjectPtr<AMyPaperCharacter>> ActivePlayers;
 
 	/** The ball actor that the players pass back and forth */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TObjectPtr<ABallActor> BallActor;
+
+	UFUNCTION()
+	void OnRep_ActivePlayers();
 
 	/** 
 	* Receives delegate for when the player passes the ball 
@@ -87,12 +105,11 @@ public:
 	/** Gathers all actors into variables */
 	void GatherActorsHandler();
 
-	/** Handles picking up of the ball, when it has yet to be picked up before */
-	void BallPickupHandler();
-
 	/** Handles passing of the ball between players */
 	void BallPassingHandler(float DeltaSeconds);
 
 	/** Enforces that we aren't gathering players over again once we have gathered both */
 	bool PlayersSet;
+
+	void ServerModifyReplicatedArray();
 };

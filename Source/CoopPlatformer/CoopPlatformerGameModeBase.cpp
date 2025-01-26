@@ -13,9 +13,10 @@ void ACoopPlatformerGameModeBase::BeginPlay()
 	// Store the ball actor here
 	TArray<AActor*> BallActors;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Ball", BallActors);
-	if (!BallActors.IsEmpty() && HasAuthority())
+	AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
+	if (!BallActors.IsEmpty() && HasAuthority() && MyGameState)
 	{
-		BallActor = Cast<ABallActor>(BallActors[0]);
+		MyGameState->BallActor = Cast<ABallActor>(BallActors[0]);
 	}
 }
 
@@ -43,17 +44,19 @@ void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 	ActiveControllers.Add(NewPlayer);
 
+	AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
+
 	if (NewPlayer && HasAuthority() && !PlayersFull)
 	{
 		ACharacter* PlayerCharacter = Cast<ACharacter>(NewPlayer->GetPawn());
 		if (PlayerCharacter)
 		{
 			AMyPaperCharacter* PaperPlayerCharacter = Cast<AMyPaperCharacter>(PlayerCharacter);
-			if (PaperPlayerCharacter) 
+			if (PaperPlayerCharacter && MyGameState) 
 			{
 				UE_LOG(LogTemp, Log, TEXT("Player added: %s"), *PaperPlayerCharacter->GetName());
-				ActivePlayers.Add(PaperPlayerCharacter);
-				if (ActivePlayers.Num() == 2) PlayersFull = true;
+				MyGameState->ActivePlayers.Add(PaperPlayerCharacter);
+				if (MyGameState->ActivePlayers.Num() == 2) PlayersFull = true;
 			}
 		}
 	}
