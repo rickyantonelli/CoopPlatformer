@@ -36,8 +36,6 @@ protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
 
-	virtual void OnPossess(APawn* InPawn) override;
-
 public:
 	/** Default constructor for AController2D - Applies User Settings on construction*/
 	AController2D();

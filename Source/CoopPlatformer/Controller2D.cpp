@@ -84,12 +84,6 @@ void AController2D::BeginPlay()
 	PlayersSet = false;
 }
 
-void AController2D::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-
-}
-
 
 void AController2D::OnRep_ActivePlayers()
 {
@@ -178,7 +172,7 @@ void AController2D::GatherActorsHandler()
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
 	// ball pickup handling
-	if (OtherActor->ActorHasTag("Ball") && HasAuthority() && !BallActor->IsAttached)
+	if (OtherActor->ActorHasTag("Ball") && HasAuthority() && BallActor && !BallActor->IsAttached)
 	{
 		if (BallActor && !BallActor->IsAttached && !BallActor->IsMoving && MyGameStateCoop->ActivePlayers.Num() == 2)
 		{
