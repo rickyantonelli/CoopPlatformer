@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BallActor.h"
 #include "GameFramework/Actor.h"
 #include "KeyActor.generated.h"
 
@@ -19,10 +20,6 @@ public:
 	/** Required for replicated variables - required for passing between players */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-protected:
-	/** Override for BeginPlay*/
-	virtual void BeginPlay() override;
-
 public:
 	/** Override for Tick*/
 	virtual void Tick(float DeltaTime) override;
@@ -35,13 +32,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<USceneComponent> RootComp;
 
-	/** The key's static mesh*/
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Mesh;
-
-	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()
-	void OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void TriggerUnlock();
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Debug")
