@@ -23,7 +23,7 @@ void AKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AKeyActor, Locked);
-	DOREPLIFETIME(AKeyActor, LockedActor);
+	DOREPLIFETIME(AKeyActor, LockedActors);
 }
 
 void AKeyActor::Tick(float DeltaTime)

@@ -17,16 +17,15 @@ public:
 	/** Default constructor for AKeyActor - Sets components, replication, and initializes variables*/
 	AKeyActor();
 
-	/** Required for replicated variables - required for passing between players */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	/** Override for Tick*/
 	virtual void Tick(float DeltaTime) override;
 
-	/** The actor that the key will unlock on overlap with the ball */
-	UPROPERTY(Replicated, EditAnywhere, Category = "Customizable")
-	TObjectPtr<AActor> LockedActor;
+	/** Array of active players - to avoid having to constantly get all actors of class and casting */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	TArray<AActor*> LockedActors;
 
 	/** The root component of the key actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)

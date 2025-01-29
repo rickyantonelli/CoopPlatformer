@@ -16,6 +16,8 @@ class COOPPLATFORMER_API APassKeyActor : public AKeyActor
 
 public:
 	APassKeyActor();
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 protected:
 	/** Override for BeginPlay*/

@@ -15,6 +15,11 @@ APassKeyActor::APassKeyActor()
 	Mesh->SetIsReplicated(true);
 }
 
+void APassKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
 void APassKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
@@ -24,30 +29,16 @@ void APassKeyActor::BeginPlay()
 
 void APassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("Ball"))
+	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0)
 	{
-		if (Locked && LockedActor) // only check if the key is locked
+		for (AActor* LockedActor : LockedActors)
 		{
-			TArray<AActor*> OverlapActors;
-			GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-			if (!OverlapActors.IsEmpty())
+			if (HasAuthority()) Locked = false; // set this to false so that we dont check overlaps anymore since it's already been unlocked
+			UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
+			if (LockMesh)
 			{
-				for (AActor* AA : OverlapActors)
-				{
-					if (AA->ActorHasTag("Ball") && LockedActor)
-					{
-						// we've found the ball actor lets do the logic
-						if (HasAuthority()) Locked = false; // set this to false so that we dont check overlaps anymore since it's already been unlocked
-						UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
-						if (LockMesh)
-						{
-							LockMesh->SetVisibility(false);
-							LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-						}
-						// no need to keep looping 
-						break;
-					}
-				}
+				LockMesh->SetVisibility(false);
+				LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 		}
 	}
