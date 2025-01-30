@@ -11,6 +11,8 @@
 #include "MyGameStateBase.h"
 #include "Controller2D.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallCaughtActivated);
+
 // Define the enum class 
 UENUM(BlueprintType)
 enum class EHoldingState : uint8
@@ -76,6 +78,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TObjectPtr<ABallActor> BallActor;
 
+	/** Delegate for the ball being passed - which is picked up by the player controlller and called on the server */
+	UPROPERTY(BlueprintAssignable)
+	FBallCaughtActivated OnCaughtActivated;
+
 	UFUNCTION()
 	void OnRep_ActivePlayers();
 
@@ -98,6 +104,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShiftViewTarget();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnCaughtActivated();
+
 	/** Reverts the player's view target back to itself */
 	UFUNCTION(BlueprintCallable)
 	void RevertViewTarget();
@@ -111,5 +120,5 @@ public:
 	/** Enforces that we aren't gathering players over again once we have gathered both */
 	bool PlayersSet;
 
-	void ServerModifyReplicatedArray();
+	void ServerApplyBallCaught();
 };

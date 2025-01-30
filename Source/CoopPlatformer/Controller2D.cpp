@@ -126,7 +126,7 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 		if (!OverlapActors.IsEmpty())
 		{
 			// The ball has arrived at the NonHoldingPlayer
-			ServerModifyReplicatedArray();
+			ServerApplyBallCaught();
 		}
 		else
 		{
@@ -136,10 +136,11 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 	}
 }
 
-void AController2D::ServerModifyReplicatedArray()
+void AController2D::ServerApplyBallCaught()
 {
 	if (HasAuthority())
 	{
+		// Apply all the needed things when a ball is caught - reset jump, swap array positions, set variables, attachment
 		MyGameStateCoop->ActivePlayers[1]->ResetJumpAbility(); // resets the jump for the player if they are in mid-air (core mechanic)
 		BallActor->CanPass = true;
 		BallActor->IsAttached = true;
@@ -148,6 +149,9 @@ void AController2D::ServerModifyReplicatedArray()
 		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingWidget();
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		BallActor->IsMoving = false;
+
+		// Broadcast that the ball was caught
+		MulticastOnCaughtActivated();
 	}
 }
 
@@ -261,6 +265,11 @@ void AController2D::ShiftViewTarget()
 		}
 	}
 	SetViewTargetWithBlend(OtherPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+}
+
+void AController2D::MulticastOnCaughtActivated_Implementation()
+{
+	OnCaughtActivated.Broadcast();
 }
 
 void AController2D::RevertViewTarget()

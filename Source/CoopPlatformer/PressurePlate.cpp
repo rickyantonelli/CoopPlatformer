@@ -41,14 +41,35 @@ void APressurePlate::BeginPlay()
 void APressurePlate::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(APressurePlate, Activated);
 }
 
 void APressurePlate::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 
-	if (PressurePlatedActor == nullptr) return;
+	if (HasAuthority())
+	{
+		if (PressurePlatedActor == nullptr) return;
+		MulticastStepOn();
+	}
+}
+
+void APressurePlate::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (HasAuthority())
+	{
+		if (PressurePlatedActor == nullptr) return;
+
+		// Need to get overlappingactors instead of just checking OtherActor because we could have both players on the plate
+		TArray<AActor*> OverlappingActors;
+		TriggerMesh->GetOverlappingActors(OverlappingActors);
+		if (OverlappingActors.Num() > 0) return;
+
+		MulticastStepOff();
+	}
+}
+
+void APressurePlate::MulticastStepOn_Implementation()
+{
 	UStaticMeshComponent* DoorMesh = PressurePlatedActor->GetComponentByClass<UStaticMeshComponent>();
 	if (DoorMesh == nullptr) return;
 
@@ -67,20 +88,11 @@ void APressurePlate::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 		DoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 
-	if (HasAuthority())
-	{
-		Activated = true;
-	}
+	Activated = true;
 }
 
-void APressurePlate::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void APressurePlate::MulticastStepOff_Implementation()
 {
-	if (PressurePlatedActor == nullptr) return;
-
-	TArray<AActor*> OverlappingActors;
-	TriggerMesh->GetOverlappingActors(OverlappingActors);
-	if (OverlappingActors.Num() > 0) return;
-
 	UStaticMeshComponent* DoorMesh = PressurePlatedActor->GetComponentByClass<UStaticMeshComponent>();
 	if (DoorMesh == nullptr) return;
 

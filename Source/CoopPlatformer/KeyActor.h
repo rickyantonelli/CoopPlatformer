@@ -31,10 +31,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<USceneComponent> RootComp;
 
-	UFUNCTION()
-	void TriggerUnlock();
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastTriggerUnlock();
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
-	UPROPERTY(Replicated, VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool Locked;
 };

@@ -6,8 +6,6 @@
 
 AKeyActor::AKeyActor()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
 	bReplicates = true;
 	SetReplicateMovement(true);
 
@@ -22,7 +20,6 @@ void AKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AKeyActor, Locked);
 	DOREPLIFETIME(AKeyActor, LockedActors);
 }
 
@@ -31,8 +28,8 @@ void AKeyActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AKeyActor::TriggerUnlock()
+void AKeyActor::MulticastTriggerUnlock_Implementation()
 {
-
+	//
 }
 

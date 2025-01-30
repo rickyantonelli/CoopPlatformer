@@ -4,21 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "KeyActor.h"
-#include "PassKeyActor.generated.h"
+#include "Controller2D.h"
+#include "SamePassKeyActor.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class COOPPLATFORMER_API APassKeyActor : public AKeyActor
+class COOPPLATFORMER_API ASamePassKeyActor : public AKeyActor
 {
 	GENERATED_BODY()
 
 public:
-	APassKeyActor();
+	ASamePassKeyActor();
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
+	/** Override for Tick*/
+	virtual void Tick(float DeltaSeconds) override;
+
 protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
@@ -26,11 +30,18 @@ protected:
 	virtual void MulticastTriggerUnlock_Implementation() override;
 
 public:
-	/** The key's static mesh*/
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Replicated)
-	TObjectPtr<UStaticMeshComponent> Mesh;
-
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()
 	void OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnBallCaught();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TArray<UStaticMeshComponent*> KeyMeshes;
+
+private:
+	UPROPERTY(VisibleAnywhere, Replicated)
+	TArray<UPrimitiveComponent*> OverlappedMeshes;
+	
 };
