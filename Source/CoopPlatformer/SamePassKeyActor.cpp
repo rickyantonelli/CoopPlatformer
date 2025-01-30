@@ -76,6 +76,9 @@ void ASamePassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent,
 
 void ASamePassKeyActor::OnBallCaught()
 {
-	UE_LOG(LogTemp, Log, TEXT("CAUGHT BROADCAST"));
-	OverlappedMeshes.Empty();
+	// Only care to do this if we still need to unlock this
+	if (Locked)
+	{
+		OverlappedMeshes.Empty();
+	}
 }
