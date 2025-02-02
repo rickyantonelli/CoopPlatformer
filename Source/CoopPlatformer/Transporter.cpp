@@ -1,6 +1,7 @@
 // Copyright Ricky Antonelli
 
 #include "Transporter.h"
+#include "Net/UnrealNetwork.h"
 
 UTransporter::UTransporter()
 {
@@ -50,6 +51,25 @@ void UTransporter::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 			EndPoint = Temp;
 		}
 	}
+	else
+	{
+		FVector CurrentLocation = MyOwner->GetActorLocation();
+		FVector TargetLocation = EndPoint;
+		if (!CurrentLocation.Equals(TargetLocation))
+		{
+			FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, MoveSpeed);
+			MyOwner->SetActorLocation(NewLocation);
+		}
+	}
+
+}
+
+void UTransporter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTransporter, StartPoint);
+	DOREPLIFETIME(UTransporter, EndPoint);
 
 }
 

@@ -7,6 +7,7 @@
 #include "Components/ArrowComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "MyPaperCharacter.h"
 #include "Transporter.h"
 #include "MovableActor.generated.h"
 
