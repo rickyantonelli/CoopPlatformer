@@ -10,7 +10,7 @@ APassKeyActor::APassKeyActor()
 	bReplicates = true;
 	SetReplicateMovement(true);
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
 	Mesh->SetIsReplicated(true);
 }

@@ -33,7 +33,7 @@ public:
 
 	/** The pressure plate's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	TObjectPtr<UBoxComponent> BoxMesh;
 
 	UFUNCTION()
 	void OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

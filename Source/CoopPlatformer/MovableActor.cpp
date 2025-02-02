@@ -20,7 +20,7 @@ AMovableActor::AMovableActor()
 	Point2->SetupAttachment(RootComp);
 	Point2->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
 	Mesh->SetIsReplicated(true);
 

@@ -18,11 +18,6 @@ ABallActor::ABallActor()
 	Sphere->SetIsReplicated(true);
 	Sphere->SetCollisionProfileName(FName("OverlapAllDynamic"));
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(RootComp);
-	Mesh->SetIsReplicated(true);
-	Mesh->SetCollisionProfileName(FName("OverlapAllDynamic")); // for now lets set this to no collision
-
 	BallMovementSpeed = 100.0f; // to be tweaked in the engine
 	PassCooldownDuration = 0.5f;
 

@@ -16,9 +16,9 @@ ASpringActor::ASpringActor()
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(RootComp);
-	Mesh->SetIsReplicated(true);
+	BoxMesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
+	BoxMesh->SetupAttachment(RootComp);
+	BoxMesh->SetIsReplicated(true);
 
 	LaunchPower = 1000;
 
@@ -29,7 +29,7 @@ void ASpringActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	Mesh->OnComponentBeginOverlap.AddDynamic(this, &ASpringActor::OnBoxCollision);
+	BoxMesh->OnComponentBeginOverlap.AddDynamic(this, &ASpringActor::OnBoxCollision);
 }
 
 // Called every frame

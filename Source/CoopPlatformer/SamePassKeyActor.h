@@ -38,7 +38,7 @@ public:
 	void OnBallCaught();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TArray<UStaticMeshComponent*> KeyMeshes;
+	TArray<UBoxComponent*> KeyMeshes;
 
 private:
 	UPROPERTY(VisibleAnywhere, Replicated)

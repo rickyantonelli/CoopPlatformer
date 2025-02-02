@@ -36,7 +36,7 @@ void ASamePassKeyActor::BeginPlay()
 	// Mesh->OnComponentBeginOverlap.AddDynamic(this, &ASamePassKeyActor::OnBoxCollision);
 	for (UActorComponent* Component : GetComponents())
 	{
-		UStaticMeshComponent* MeshComponent = Cast<UStaticMeshComponent>(Component);
+		UBoxComponent* MeshComponent = Cast<UBoxComponent>(Component);
 		if (MeshComponent)
 		{
 			KeyMeshes.Add(MeshComponent);
@@ -56,6 +56,9 @@ void ASamePassKeyActor::MulticastTriggerUnlock_Implementation()
 	Locked = false;
 	for (AActor* LockedActor : LockedActors)
 	{
+		// TODO: We need to set this to whatever component we think the "doors" will be in the future
+		// For now they are static meshes so they stay this way
+
 		 // set this to false so that we dont check overlaps anymore since it's already been unlocked
 		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
 		if (LockMesh)
@@ -70,6 +73,7 @@ void ASamePassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent,
 {
 	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent) && HasAuthority())
 	{
+		UE_LOG(LogTemp, Log, TEXT("COLLISION DETECTED"));
 		OverlappedMeshes.Add(OverlappedComponent);
 	}
 }

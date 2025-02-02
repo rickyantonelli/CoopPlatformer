@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/ArrowComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
 #include "Transporter.h"
 #include "MovableActor.generated.h"
 
@@ -40,10 +41,10 @@ public:
 	TObjectPtr<UArrowComponent> Point2;
 
 	/** The movable actor's static mesh */
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UBoxComponent> Mesh;
 
 	/** Component that transports the actor back and forth */
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTransporter> Transporter;
 };

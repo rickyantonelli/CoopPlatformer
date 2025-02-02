@@ -21,7 +21,7 @@ void ATimerKeyActor::BeginPlay()
 
 	for (UActorComponent* Component : GetComponents())
 	{
-		UStaticMeshComponent* MeshComponent = Cast<UStaticMeshComponent>(Component);
+		UBoxComponent* MeshComponent = Cast<UBoxComponent>(Component);
 		if (MeshComponent)
 		{
 			KeyMeshes.Add(MeshComponent);
