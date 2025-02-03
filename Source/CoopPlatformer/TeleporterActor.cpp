@@ -15,11 +15,11 @@ ATeleporterActor::ATeleporterActor()
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
 
-	TPMesh1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TPMesh1"));
+	TPMesh1 = CreateDefaultSubobject<UBoxComponent>(TEXT("TPMesh1"));
 	TPMesh1->SetupAttachment(RootComp);
 	TPMesh1->SetIsReplicated(true);
 
-	TPMesh2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TPMesh2"));
+	TPMesh2 = CreateDefaultSubobject<UBoxComponent>(TEXT("TPMesh2"));
 	TPMesh2->SetupAttachment(RootComp);
 	TPMesh2->SetIsReplicated(true);
 
