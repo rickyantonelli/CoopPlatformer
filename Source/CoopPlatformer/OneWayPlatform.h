@@ -33,11 +33,11 @@ public:
 
 	/** The platforms's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	TObjectPtr<UBoxComponent> Mesh;
 
 	/** The box component for handling collision from below*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UBoxComponent> Box;
+	TObjectPtr<UBoxComponent> OverlapBox;
 
 	/** When player collides with the box, turns off the player's ECollisionResponse */
 	UFUNCTION()

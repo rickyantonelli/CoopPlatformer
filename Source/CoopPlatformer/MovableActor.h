@@ -8,7 +8,6 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "MyPaperCharacter.h"
-#include "Transporter.h"
 #include "MovableActor.generated.h"
 
 /** MovableActor is the class for movable platforms */
@@ -29,6 +28,9 @@ public:
 	/** Override for Tick*/
 	virtual void Tick(float DeltaTime) override;
 
+	/** Required for replicated variables */
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/** The root component of the movable actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<USceneComponent> RootComp;
@@ -45,7 +47,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UBoxComponent> Mesh;
 
-	/** Component that transports the actor back and forth */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TObjectPtr<UTransporter> Transporter;
+	UPROPERTY(EditAnywhere, Replicated)
+	FVector StartPoint;
+
+	/** The point that the actor should move towards */
+	UPROPERTY(EditAnywhere, Replicated)
+	FVector EndPoint;
+
+	/** How quickly the actor will move towards its EndPoint */
+	UPROPERTY(EditAnywhere, Category = "Customizable")
+	float MoveSpeed;
 };

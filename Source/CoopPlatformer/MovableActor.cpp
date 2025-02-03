@@ -1,6 +1,7 @@
 // Copyright Ricky Antonelli
 
 #include "MovableActor.h"
+#include "Net/UnrealNetwork.h"
 
 AMovableActor::AMovableActor()
 {
@@ -24,8 +25,7 @@ AMovableActor::AMovableActor()
 	Mesh->SetupAttachment(RootComp);
 	Mesh->SetIsReplicated(true);
 
-	Transporter = CreateDefaultSubobject<UTransporter>(TEXT("Transporter"));
-
+	MoveSpeed = 100.0f; // just a default value, this is customizable
 }
 
 void AMovableActor::BeginPlay()
@@ -33,14 +33,49 @@ void AMovableActor::BeginPlay()
 	Super::BeginPlay();
 
 	// set points for the transporter to keep track of, and the transporter component will do the moving of the object
-	FVector StartPoint = GetActorLocation() + Point1->GetRelativeLocation();
-	FVector EndPoint = GetActorLocation() + Point2->GetRelativeLocation();
-
-	Transporter->SetPoints(StartPoint, EndPoint);
+	StartPoint = GetActorLocation() + Point1->GetRelativeLocation();
+	EndPoint = GetActorLocation() + Point2->GetRelativeLocation();
 }
 
 void AMovableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// move from point to point every frame
+	if (HasAuthority()) // authority because we only want the server to do this
+	{
+		FVector CurrentLocation = GetActorLocation();
+		FVector TargetLocation = EndPoint;
+		if (!CurrentLocation.Equals(TargetLocation))
+		{
+			FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, MoveSpeed);
+			SetActorLocation(NewLocation);
+		}
+		else
+		{
+			// if the current location is at the TargetLocation, flip the start and end point so that we go the other way
+			FVector Temp = StartPoint;
+			StartPoint = EndPoint;
+			EndPoint = Temp;
+		}
+	}
+	else
+	{
+		FVector CurrentLocation = GetActorLocation();
+		FVector TargetLocation = EndPoint;
+		if (!CurrentLocation.Equals(TargetLocation))
+		{
+			FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, MoveSpeed);
+			SetActorLocation(NewLocation);
+		}
+	}
+
+}
+
+void AMovableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMovableActor, StartPoint);
+	DOREPLIFETIME(AMovableActor, EndPoint);
 }
