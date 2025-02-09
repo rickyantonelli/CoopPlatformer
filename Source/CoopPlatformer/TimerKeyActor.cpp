@@ -40,21 +40,6 @@ void ATimerKeyActor::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 }
 
-void ATimerKeyActor::MulticastTriggerUnlock_Implementation()
-{
-	Locked = false;
-	for (AActor* LockedActor : LockedActors)
-	{
-		// set this to false so that we dont check overlaps anymore since it's already been unlocked
-		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
-		if (LockMesh)
-		{
-			LockMesh->SetVisibility(false);
-			LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-	}
-}
-
 void ATimerKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent) && HasAuthority())

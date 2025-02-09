@@ -23,8 +23,6 @@ protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
 
-	virtual void MulticastTriggerUnlock_Implementation() override;
-
 public:
 	/** The key's static mesh*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated)
