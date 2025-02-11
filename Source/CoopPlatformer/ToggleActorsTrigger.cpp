@@ -19,40 +19,10 @@ void AToggleActorsTrigger::OnOverlapBegin(AActor* TriggerBoxActor, AActor* Other
 			if (PlayerActors.Num() >= TriggerAmount) CanTrigger = true;
 		}
 
-		if (CanTrigger)
+		if (CanTrigger && HasAuthority())
 		{
-			// this is meant to take an actor, and perform an action on all its children
-			TArray<AActor*> EnableAttachedActors;
-			EnableActor->GetAttachedActors(EnableAttachedActors);
-			if (!EnableAttachedActors.IsEmpty())
-			{
-				for (AActor* AttachedActor : EnableAttachedActors)
-				{
-					// turn on the meshes for all actors that are to be enabled
-					UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
-					if (ActorMesh)
-					{
-						ActorMesh->SetVisibility(true);
-						ActorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					}
-				}
-			}
-
-			TArray<AActor*> DisableAttachedActors;
-			DisableActor->GetAttachedActors(DisableAttachedActors);
-			if (!DisableAttachedActors.IsEmpty())
-			{
-				for (AActor* AttachedActor : DisableAttachedActors)
-				{
-					// turn off the meshes for all actors that are to be disabled
-					UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
-					if (ActorMesh)
-					{
-						ActorMesh->SetVisibility(false);
-						ActorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-					}
-				}
-			}
+			MulticastEnableActors();
+			MulticastDisableActors();
 		}
 	}
 }
@@ -63,6 +33,45 @@ void AToggleActorsTrigger::OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherAc
 	if (OtherActor->ActorHasTag("Player") && PlayerActors.Find(OtherActor) != -1)
 	{
 		PlayerActors.Remove(OtherActor);
+	}
+}
+
+void AToggleActorsTrigger::MulticastDisableActors_Implementation()
+{
+	TArray<AActor*> DisableAttachedActors;
+	DisableActor->GetAttachedActors(DisableAttachedActors);
+	if (!DisableAttachedActors.IsEmpty())
+	{
+		for (AActor* AttachedActor : DisableAttachedActors)
+		{
+			// turn off the meshes for all actors that are to be disabled
+			UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
+			if (ActorMesh)
+			{
+				ActorMesh->SetVisibility(false);
+				ActorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		}
+	}
+}
+
+void AToggleActorsTrigger::MulticastEnableActors_Implementation()
+{
+	// this is meant to take an actor, and perform an action on all its children
+	TArray<AActor*> EnableAttachedActors;
+	EnableActor->GetAttachedActors(EnableAttachedActors);
+	if (!EnableAttachedActors.IsEmpty())
+	{
+		for (AActor* AttachedActor : EnableAttachedActors)
+		{
+			// turn on the meshes for all actors that are to be enabled
+			UStaticMeshComponent* ActorMesh = AttachedActor->GetComponentByClass<UStaticMeshComponent>();
+			if (ActorMesh)
+			{
+				ActorMesh->SetVisibility(true);
+				ActorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			}
+		}
 	}
 }
 

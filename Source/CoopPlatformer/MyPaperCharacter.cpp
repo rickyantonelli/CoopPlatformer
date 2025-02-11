@@ -67,20 +67,6 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// debugging for a persistent bug we've been encountering
-	// this will hang around for a bit, just to ensure the bug is fixed
-	if (!IsHolding)
-	{
-		TArray<AActor*> ChildActors;
-		GetAllChildActors(ChildActors);
-		for (AActor* ChildActor : ChildActors)
-		{
-			if (ChildActor->ActorHasTag("Ball"))
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "It broke here");
-			}
-		}
-	}
 
 	// if we ever get to a frame where we are jumping but also have 0 z velocity (vertical) then stop the jump
 	// this stops us from sticking to the ceiling because we've hit the top but are holding jump
@@ -236,6 +222,7 @@ bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 	// overriding to see if we are within coyote time, if not just use Super
 	if (WithinCoyoteTime && !Jumping)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Coyote jumping"));
 		return true;
 	}
 
@@ -248,6 +235,14 @@ void AMyPaperCharacter::Jump()
 	if (MovementEnabled && HasJumpInput)
 	{
 		Super::Jump();
+		if (WithinCoyoteTime)
+		{
+			//
+		}
+		else
+		{
+			//
+		}
 	}
 }
 
