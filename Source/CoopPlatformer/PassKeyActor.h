@@ -25,7 +25,7 @@ protected:
 
 public:
 	/** The key's static mesh*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UBoxComponent> Mesh;
 
 	/** When the player collides, disables or enables the PressurePlated Actor */

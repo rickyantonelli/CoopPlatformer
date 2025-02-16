@@ -21,6 +21,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:
 	UPROPERTY(EditAnywhere, Category = "Customizable")
 	TObjectPtr<AActor> EnableActor;
 
@@ -33,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable")
 	bool EnableChoice;
 
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	bool bUnlocked;
+
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	TArray<TObjectPtr<AActor>> PlayerActors;
 
@@ -43,9 +49,9 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherActor);
 
-	UFUNCTION(Reliable, NetMulticast)
+	UFUNCTION(NetMulticast, Reliable)
 	void MulticastDisableActor();
 
-	UFUNCTION(Reliable, NetMulticast)
+	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEnableActor();
 };
