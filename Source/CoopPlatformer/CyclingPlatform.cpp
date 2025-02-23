@@ -8,11 +8,9 @@ void ACyclingPlatform::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// move from point to point every frame
-	FVector CurrentLocation = GetActorLocation();
-	FVector TargetLocation = EndPoint;
-	if (!CurrentLocation.Equals(TargetLocation))
+	if (!GetActorLocation().Equals(EndPoint))
 	{
-		FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, MoveSpeed);
+		FVector NewLocation = FMath::VInterpConstantTo(GetActorLocation(), EndPoint, DeltaTime, MoveSpeed);
 		SetActorLocation(NewLocation);
 	}
 	else

@@ -33,8 +33,8 @@ void AMovableActor::BeginPlay()
 	Super::BeginPlay();
 
 	// set points for the transporter to keep track of, and the transporter component will do the moving of the object
-	StartPoint = GetActorLocation() + Point1->GetRelativeLocation();
-	EndPoint = GetActorLocation() + Point2->GetRelativeLocation();
+	StartPoint = Point1->GetComponentLocation();
+	EndPoint = Point2->GetComponentLocation();
 }
 
 void AMovableActor::Tick(float DeltaTime)
