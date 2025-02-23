@@ -45,6 +45,12 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherActor);
 
+	UFUNCTION(Reliable, NetMulticast)
+	void MulticastDisableActors();
+
+	UFUNCTION(Reliable, NetMulticast)
+	void MulticastEnableActors();
+
 protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;

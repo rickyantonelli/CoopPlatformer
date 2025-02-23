@@ -36,7 +36,7 @@ void ASamePassKeyActor::BeginPlay()
 	// Mesh->OnComponentBeginOverlap.AddDynamic(this, &ASamePassKeyActor::OnBoxCollision);
 	for (UActorComponent* Component : GetComponents())
 	{
-		UStaticMeshComponent* MeshComponent = Cast<UStaticMeshComponent>(Component);
+		UBoxComponent* MeshComponent = Cast<UBoxComponent>(Component);
 		if (MeshComponent)
 		{
 			KeyMeshes.Add(MeshComponent);
@@ -48,21 +48,6 @@ void ASamePassKeyActor::BeginPlay()
 	if (MyController)
 	{
 		MyController->OnCaughtActivated.AddDynamic(this, &ASamePassKeyActor::OnBallCaught);
-	}
-}
-
-void ASamePassKeyActor::MulticastTriggerUnlock_Implementation()
-{
-	Locked = false;
-	for (AActor* LockedActor : LockedActors)
-	{
-		 // set this to false so that we dont check overlaps anymore since it's already been unlocked
-		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
-		if (LockMesh)
-		{
-			LockMesh->SetVisibility(false);
-			LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
 	}
 }
 

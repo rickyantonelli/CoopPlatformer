@@ -1,6 +1,7 @@
 // Copyright Ricky Antonelli
 
 #include "MovableActor.h"
+#include "Net/UnrealNetwork.h"
 
 AMovableActor::AMovableActor()
 {
@@ -20,12 +21,11 @@ AMovableActor::AMovableActor()
 	Point2->SetupAttachment(RootComp);
 	Point2->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
 	Mesh->SetIsReplicated(true);
 
-	Transporter = CreateDefaultSubobject<UTransporter>(TEXT("Transporter"));
-
+	MoveSpeed = 100.0f; // just a default value, this is customizable
 }
 
 void AMovableActor::BeginPlay()
@@ -33,15 +33,19 @@ void AMovableActor::BeginPlay()
 	Super::BeginPlay();
 
 	// set points for the transporter to keep track of, and the transporter component will do the moving of the object
-	FVector StartPoint = GetActorLocation() + Point1->GetRelativeLocation();
-	FVector EndPoint = GetActorLocation() + Point2->GetRelativeLocation();
-
-	Transporter->SetPoints(StartPoint, EndPoint);
+	StartPoint = Point1->GetComponentLocation();
+	EndPoint = Point2->GetComponentLocation();
 }
 
 void AMovableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
+void AMovableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMovableActor, StartPoint);
+	DOREPLIFETIME(AMovableActor, EndPoint);
+}

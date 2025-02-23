@@ -23,12 +23,10 @@ protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
 
-	virtual void MulticastTriggerUnlock_Implementation() override;
-
 public:
 	/** The key's static mesh*/
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Replicated)
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UBoxComponent> Mesh;
 
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()

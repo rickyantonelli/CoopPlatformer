@@ -9,28 +9,28 @@ AOneWayPlatform::AOneWayPlatform()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
-
+	
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
 
 	// this one way platform has a Mesh and a Box
 	// the Mesh is your standard mesh, the Box sits below the mesh to be able to identify collision from below
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
 	Mesh->SetIsReplicated(true);
 	Mesh->SetCollisionProfileName("OneWayPlatform");
 
-	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
-	Box->SetupAttachment(RootComp);
-	Box->SetIsReplicated(true);
+	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+	OverlapBox->SetupAttachment(RootComp);
+	OverlapBox->SetIsReplicated(true);
 }
 
 void AOneWayPlatform::BeginPlay()
 {
 	Super::BeginPlay();
-	Box->OnComponentBeginOverlap.AddDynamic(this, &AOneWayPlatform::OnBoxCollision);
-	Box->OnComponentEndOverlap.AddDynamic(this, &AOneWayPlatform::OnBoxCollisionEnd);
+	OverlapBox->OnComponentBeginOverlap.AddDynamic(this, &AOneWayPlatform::OnBoxCollision);
+	OverlapBox->OnComponentEndOverlap.AddDynamic(this, &AOneWayPlatform::OnBoxCollisionEnd);
 }
 
 void AOneWayPlatform::Tick(float DeltaTime)

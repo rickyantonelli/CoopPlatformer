@@ -24,12 +24,15 @@ public:
 	/** Override for TickComponent*/
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/** Required for replicated variables */
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/** The point that the actor should start from */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Replicated)
 	FVector StartPoint;
 
 	/** The point that the actor should move towards */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Replicated)
 	FVector EndPoint;
 	
 	/** How quickly the actor will move towards its EndPoint */

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/BoxComponent.h"
 #include "TeleporterActor.generated.h"
 
 UCLASS()
@@ -29,11 +30,11 @@ public:
 
 	/** The key's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> TPMesh1;
+	TObjectPtr<UBoxComponent> TPMesh1;
 
 	/** The key's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> TPMesh2;
+	TObjectPtr<UBoxComponent> TPMesh2;
 
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()

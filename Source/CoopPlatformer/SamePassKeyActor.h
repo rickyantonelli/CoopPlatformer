@@ -27,8 +27,6 @@ protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
 
-	virtual void MulticastTriggerUnlock_Implementation() override;
-
 public:
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()
@@ -38,7 +36,7 @@ public:
 	void OnBallCaught();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TArray<UStaticMeshComponent*> KeyMeshes;
+	TArray<UBoxComponent*> KeyMeshes;
 
 private:
 	UPROPERTY(VisibleAnywhere, Replicated)

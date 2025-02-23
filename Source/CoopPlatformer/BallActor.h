@@ -43,10 +43,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<UCapsuleComponent> Sphere;
 
-	/** The ball's static mesh*/
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Mesh;
-
 	/** Movement speed for the ball - to be updated in design */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float BallMovementSpeed;
