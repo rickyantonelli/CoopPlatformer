@@ -6,63 +6,43 @@
 
 AEnemyCharacter::AEnemyCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	SetReplicates(true);
 	bReplicates = true;
+	SetReplicateMovement(true);
 
 	// the enemy health, we dont need to keep track of a damage amount since it will always be 1
 	Health = 5;
 	// whether we can damage the enemy - we want this because we dont want damage to be applied multiple times in short frames
 	CanDamage = true;
+	// cooldown for ball passes
+	CooldownTimer = 1;
 
-	Point1 = CreateDefaultSubobject<UArrowComponent>(TEXT("Point1"));
-	Point1->SetupAttachment(GetRootComponent());
-	Point1->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
-
-	Point2 = CreateDefaultSubobject<UArrowComponent>(TEXT("Point2"));
-	Point2->SetupAttachment(GetRootComponent());
-	Point2->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
-
+	GetCapsuleComponent()->SetIsReplicated(true);
 	MoveSpeed = 100.0f;
 }
 
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	this->OnActorBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnOverlapBegin);
-	StartPoint = GetActorLocation() + Point1->GetRelativeLocation();
-	EndPoint = GetActorLocation() + Point2->GetRelativeLocation();
+
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (Capsule)
+	{
+		Capsule->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnComponentOverlap);
+	}
+
+	//AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
+	//if (MyController)
+	//{
+	//	MyController->OnCaughtActivated.AddDynamic(this, &AEnemyCharacter::OnBallCaught);
+	//}
 }
 
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (HasAuthority())
-	{
-		FVector CurrentLocation = GetActorLocation();
-		FVector TargetLocation = EndPoint;
-		if (!CurrentLocation.Equals(TargetLocation))
-		{
-			FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, MoveSpeed);
-			SetActorLocation(NewLocation);
-		}
-		else
-		{
-			// if the current location is at the TargetLocation, flip the start and end point so that we go the other way
-			FVector Temp = StartPoint;
-			StartPoint = EndPoint;
-			EndPoint = Temp;
-		}
-	}
-	else
-	{
-		FVector CurrentLocation = GetActorLocation();
-		FVector TargetLocation = EndPoint;
-		if (!CurrentLocation.Equals(TargetLocation))
-		{
-			FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, MoveSpeed);
-			SetActorLocation(NewLocation);
-		}
-	}
 }
 
 void AEnemyCharacter::Patrol()
@@ -72,24 +52,25 @@ void AEnemyCharacter::Patrol()
 
 }
 
-void AEnemyCharacter::OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor)
+void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Ball") && CanDamage && HasAuthority())
 	{
+		UE_LOG(LogTemp, Log, TEXT("APPLYING DAMAGE"));
 		Health -= 1;
 		CanDamage = false;
+		FTimerHandle TimerHandler;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanDamage = true; }, CooldownTimer, false);
 		if (Health <= 0) MulticastApplyDeath();
 	}
 }
 
-void AEnemyCharacter::OnOverlapEnd(AActor* PlayerActor, AActor* OtherActor)
+void AEnemyCharacter::OnBallCaught()
 {
 	// for now as soon as overlap ends, we will restore the CanDamage - but tbd if this is the right approach
-	if (OtherActor->ActorHasTag("Ball") && HasAuthority())
-	{
-		CanDamage = true;
-	}
+	CanDamage = true;
 }
+
 
 void AEnemyCharacter::MulticastApplyDeath_Implementation()
 {

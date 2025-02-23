@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PaperZDCharacter.h"
+#include "Controller2D.h"
 #include "Components/ArrowComponent.h"
 #include "EnemyCharacter.generated.h"
 
@@ -32,6 +33,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float MoveSpeed;
 
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float CooldownTimer;
+
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanDamage;
 
@@ -39,26 +43,11 @@ public:
 	virtual void Patrol();
 
 	UFUNCTION()
-	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);
+	void OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnOverlapEnd(AActor* PlayerActor, AActor* OtherActor);
+	void OnBallCaught();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastApplyDeath();
-
-	/** The first point that the actor moves to */
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UArrowComponent> Point1;
-
-	/** The second point that the actor moves to */
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UArrowComponent> Point2;
-
-	UPROPERTY(EditAnywhere, Replicated)
-	FVector StartPoint;
-
-	/** The point that the actor should move towards */
-	UPROPERTY(EditAnywhere, Replicated)
-	FVector EndPoint;
 };

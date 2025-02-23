@@ -55,7 +55,6 @@ void ASamePassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent,
 {
 	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent) && HasAuthority())
 	{
-		UE_LOG(LogTemp, Log, TEXT("COLLISION DETECTED"));
 		OverlappedMeshes.Add(OverlappedComponent);
 	}
 }
