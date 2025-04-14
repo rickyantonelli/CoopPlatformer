@@ -6,7 +6,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 
-AMyPaperCharacter::AMyPaperCharacter()
+AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UNovaCharacterMovementComponent>(AMyPaperCharacter::CharacterMovementComponentName))
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -74,7 +75,6 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 	{
 		if (GetCharacterMovement()->Velocity.Z == 0) StopJumping();
 	}
-
 }
 
 void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)

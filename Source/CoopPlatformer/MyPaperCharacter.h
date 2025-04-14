@@ -13,6 +13,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "PaperCharacter.h"
+#include "NovaCharacterMovementComponent.h"
 #include "MyPaperCharacter.generated.h"
 
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
@@ -32,7 +33,7 @@ class COOPPLATFORMER_API AMyPaperCharacter : public APaperCharacter
 
 public:
 	/** Default constructor for AMyPaperCharacter - Sets components, replication, and initializes variables*/
-	AMyPaperCharacter();
+	AMyPaperCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	/** Override for BeginPlay*/
