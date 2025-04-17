@@ -204,17 +204,23 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		if (PlayerCharacterActor)
 		{
 			// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
-			if (PlayerCharacterActor)
+			UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
+			if (MyCharacterMovement)
 			{
-				UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
-				if (MyCharacterMovement)
-				{
-					// reset the movement to zero so that the momentum doesn't continue when the player respawns
-					MyCharacterMovement->Velocity = FVector::ZeroVector;
-				}
-				PlayerCharacterActor->SetActorLocation(PlayerCharacterActor->SpawnLocation);
-				PlayerCharacterActor->OnDeath();
+				// reset the movement to zero so that the momentum doesn't continue when the player respawns
+				MyCharacterMovement->Velocity = FVector::ZeroVector;
 			}
+			PlayerCharacterActor->SetActorLocation(PlayerCharacterActor->SpawnLocation);
+			PlayerCharacterActor->OnDeath();
+		}
+	}
+
+	if (OtherActor->ActorHasTag("FullDeath"))
+	{
+		// this tag implies a death type that requires a full reset (kills both players)
+		if (HasAuthority())
+		{
+			MulticastKillBothPlayers();
 		}
 	}
 
@@ -231,6 +237,8 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 			}
 		}
 	}
+
+
 
 	// Dash prototype - holding off for now
 	//if (OtherActor->ActorHasTag("Dash"))
@@ -272,6 +280,17 @@ void AController2D::MulticastOnCaughtActivated_Implementation()
 	OnCaughtActivated.Broadcast();
 }
 
+void AController2D::MulticastKillBothPlayers_Implementation()
+{
+	// trigger death for both players
+	for (AMyPaperCharacter* ActivePlayer : MyGameStateCoop->ActivePlayers)
+	{
+		ActivePlayer->SetActorLocation(ActivePlayer->SpawnLocation);
+		ActivePlayer->OnDeath();
+	}
+	OnResetActivated.Broadcast();
+}
+
 void AController2D::RevertViewTarget()
 {
 	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
@@ -281,8 +300,6 @@ void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AController2D, HoldingPlayer);
-	DOREPLIFETIME(AController2D, NonHoldingPlayer);
 	DOREPLIFETIME(AController2D, BallActor);
 
 	FDoRepLifetimeParams Params;

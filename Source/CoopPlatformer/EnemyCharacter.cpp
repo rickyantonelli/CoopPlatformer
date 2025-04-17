@@ -33,11 +33,11 @@ void AEnemyCharacter::BeginPlay()
 		Capsule->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnComponentOverlap);
 	}
 
-	//AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
-	//if (MyController)
-	//{
-	//	MyController->OnCaughtActivated.AddDynamic(this, &AEnemyCharacter::OnBallCaught);
-	//}
+	AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
+	if (MyController)
+	{
+		MyController->OnResetActivated.AddDynamic(this, &AEnemyCharacter::OnResetActivated);
+	}
 }
 
 void AEnemyCharacter::Tick(float DeltaTime)
@@ -65,10 +65,11 @@ void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponen
 	}
 }
 
-void AEnemyCharacter::OnBallCaught()
+void AEnemyCharacter::OnResetActivated()
 {
-	// for now as soon as overlap ends, we will restore the CanDamage - but tbd if this is the right approach
-	CanDamage = true;
+	// the players are resetting, so we should reset as well
+	// obviously long term this should not just be `set the health back to a constant`
+	Health = 5;
 }
 
 

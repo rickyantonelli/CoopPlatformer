@@ -12,6 +12,7 @@
 #include "Controller2D.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallCaughtActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerResetActivated);
 
 // Define the enum class 
 UENUM(BlueprintType)
@@ -48,14 +49,6 @@ public:
 	/** Required for replicated variables - required for passing between players */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	/** The player that is holding the ball */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
-	TObjectPtr<AMyPaperCharacter> HoldingPlayer;
-
-	/** The player that is not holding the ball - required for passing between players */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
-	TObjectPtr<AMyPaperCharacter> NonHoldingPlayer;
-
 	/** The player that this controller is responsible for - required for camera shifting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<AMyPaperCharacter> MyPlayer;
@@ -82,6 +75,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FBallCaughtActivated OnCaughtActivated;
 
+	UPROPERTY(BlueprintAssignable)
+	FPlayerResetActivated OnResetActivated;
+
 	UFUNCTION()
 	void OnRep_ActivePlayers();
 
@@ -106,6 +102,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastOnCaughtActivated();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastKillBothPlayers();
 
 	/** Reverts the player's view target back to itself */
 	UFUNCTION(BlueprintCallable)
