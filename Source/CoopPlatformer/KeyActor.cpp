@@ -3,6 +3,7 @@
 
 #include "KeyActor.h"
 #include "PaperSpriteComponent.h"
+#include "Controller2D.h"
 #include "Net/UnrealNetwork.h"
 
 AKeyActor::AKeyActor()
@@ -15,6 +16,8 @@ AKeyActor::AKeyActor()
 
 	Locked = true;
 
+	// We want most things to be non-resettable - aka they stay unlocked
+	bCanReset = false;
 }
 
 void AKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -24,9 +27,33 @@ void AKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(AKeyActor, LockedActors);
 }
 
+void AKeyActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (bCanReset)
+	{
+		AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
+		if (MyController)
+		{
+			MyController->OnResetActivated.AddDynamic(this, &AKeyActor::OnResetActivated);
+		}
+	}
+}
+
 void AKeyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AKeyActor::OnResetActivated()
+{
+	// when the reset is activated, turn all the LockedActors back to locked, and set Locked bool back
+	// this needs to be a multicast, so here all we do is fire that multicast from the server
+	if (HasAuthority())
+	{
+		MulticastTriggerReset();
+	}
 }
 
 void AKeyActor::MulticastTriggerUnlock_Implementation()
@@ -57,6 +84,33 @@ void AKeyActor::MulticastTriggerUnlock_Implementation()
 			if (LockSprite)
 			{
 				LockSprite->SetVisibility(false);
+			}
+		}
+	}
+}
+
+void AKeyActor::MulticastTriggerReset_Implementation()
+{
+	Locked = true;
+	for (AActor* LockedActor : LockedActors)
+	{
+		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
+		if (LockMesh)
+		{
+			LockMesh->SetVisibility(true);
+			LockMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		else
+		{
+			UBoxComponent* LockBox = LockedActor->GetComponentByClass<UBoxComponent>();
+			UPaperSpriteComponent* LockSprite = LockedActor->GetComponentByClass<UPaperSpriteComponent>();
+			if (LockBox)
+			{
+				LockBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			}
+			if (LockSprite)
+			{
+				LockSprite->SetVisibility(true);
 			}
 		}
 	}

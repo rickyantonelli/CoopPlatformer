@@ -19,6 +19,9 @@ public:
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+protected:
+	virtual void BeginPlay() override;
+
 public:
 	/** Override for Tick*/
 	virtual void Tick(float DeltaTime) override;
@@ -34,7 +37,16 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastTriggerUnlock();
 
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastTriggerReset();
+
 	/** If the key is locked or not, when unlocked stop checking for overlap */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool Locked;
+
+	UPROPERTY(EditAnywhere)
+	bool bCanReset;
+
+	UFUNCTION()
+	void OnResetActivated();
 };

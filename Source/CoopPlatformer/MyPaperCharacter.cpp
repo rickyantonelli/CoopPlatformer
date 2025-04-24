@@ -326,6 +326,46 @@ void AMyPaperCharacter::ApplyDashToken()
 
 }
 
+void AMyPaperCharacter::MulticastPauseGame_Implementation(UUserWidget* myWidget)
+{
+	// UGameplayStatics::SetGamePaused(GetWorld(), true);
+	checkf(PauseMenuOverlayWidgetClass, TEXT("Pause Menu Overlay Widget class uninitialized"));
+	PauseMenuWidget = CreateWidget<UUserWidget>(GetWorld(), PauseMenuOverlayWidgetClass);
+	PauseMenuWidget->AddToViewport();
+	APlayerController* myController = GetWorld()->GetFirstPlayerController();
+	if (myController)
+	{
+		myController->SetPause(true);
+		myController->bShowMouseCursor = true;
+		FInputModeUIOnly InputMode;
+		myController->SetInputMode(InputMode);
+	}
+
+}
+
+void AMyPaperCharacter::MulticastResumeGame_Implementation(UUserWidget* myWidget=nullptr)
+{
+	APlayerController* myController = GetWorld()->GetFirstPlayerController();
+	if (myController)
+	{
+		myController->bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		myController->SetInputMode(InputMode);
+		myController->SetPause(false);
+		if (PauseMenuWidget && PauseMenuWidget->IsInViewport())
+		{
+			PauseMenuWidget->RemoveFromParent();
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("NO CONTROLLER!!!"))
+	}
+	// get rid of menus, then unpause
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+}
+
 void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 {
 	// RPC to display the Ball Arriving widget when a ball is on its way to the player

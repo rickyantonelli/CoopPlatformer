@@ -123,6 +123,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
 
+	/** The class of the widget that notifies the player of the ball's arrival */
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget> PauseMenuOverlayWidgetClass;
+
 	/** How long a player should have their movement turned off for after death */
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DeathDuration;
@@ -204,6 +208,9 @@ public:
 	/** The the widget that notifies the player of the ball's arrival */
 	TObjectPtr<UUserWidget> BallArrivingWidget;
 
+	/** The the widget that notifies the player of the ball's arrival */
+	TObjectPtr<UUserWidget> PauseMenuWidget;
+
 	/** When server changes IsHolding */
 	UFUNCTION()
 	void OnRep_IsHolding();
@@ -230,5 +237,11 @@ public:
 
 	UFUNCTION()
 	void ApplyDashToken();
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void MulticastPauseGame(UUserWidget* myWidget);
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void MulticastResumeGame(UUserWidget* myWidget);
 
 };
