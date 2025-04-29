@@ -95,6 +95,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> Camera;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperFlipbookComponent> SpriteComp;
+
 	/** The default mapping context for the player */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
@@ -183,6 +186,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanDash;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Debug")
+	bool bFirstPlayer;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	FRotator ControlRotation;
+
 	/** Whether the player is dashing*/
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool IsDashing;
@@ -198,12 +207,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	FVector DashDirection;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	FVector OriginalFlipbookScale;
+
 	/** Delegate for the ball being passed - which is picked up by the player controlller and called on the server */
 	UPROPERTY(BlueprintAssignable)
 	FBallPassActivated OnPassActivated;
-
-	/** The rotation on movement, which we set to zero in the constructor */
-	FRotator ControlRotation;
 
 	/** The the widget that notifies the player of the ball's arrival */
 	TObjectPtr<UUserWidget> BallArrivingWidget;
@@ -243,5 +252,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void MulticastResumeGame(UUserWidget* myWidget);
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void MulticastRotatePlayer();
 
 };

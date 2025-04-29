@@ -42,6 +42,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastTimerExpired();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastYellowKey(UPaperSpriteComponent* SpriteComp);
+
 private:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TArray<UPrimitiveComponent*> OverlappedMeshes;

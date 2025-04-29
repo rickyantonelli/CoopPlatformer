@@ -31,6 +31,8 @@ void AKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GetComponents<UPaperSpriteComponent>(SpriteComps);
+
 	if (bCanReset)
 	{
 		AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
@@ -44,6 +46,17 @@ void AKeyActor::BeginPlay()
 void AKeyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AKeyActor::MulticastRedKey_Implementation()
+{
+	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
+	{
+		if (SpriteComp)
+		{
+			SpriteComp->SetSprite(RedKey);
+		}
+	}
 }
 
 void AKeyActor::OnResetActivated()
@@ -87,6 +100,15 @@ void AKeyActor::MulticastTriggerUnlock_Implementation()
 			}
 		}
 	}
+
+	// Set the keys to green
+	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
+	{
+		if (SpriteComp)
+		{
+			SpriteComp->SetSprite(GreenKey);
+		}
+	}
 }
 
 void AKeyActor::MulticastTriggerReset_Implementation()
@@ -112,6 +134,14 @@ void AKeyActor::MulticastTriggerReset_Implementation()
 			{
 				LockSprite->SetVisibility(true);
 			}
+		}
+	}
+	// Set the keys back to red
+	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
+	{
+		if (SpriteComp)
+		{
+			SpriteComp->SetSprite(RedKey);
 		}
 	}
 }

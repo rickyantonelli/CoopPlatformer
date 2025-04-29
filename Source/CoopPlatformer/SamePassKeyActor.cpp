@@ -56,7 +56,15 @@ void ASamePassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent,
 	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent) && HasAuthority())
 	{
 		OverlappedMeshes.Add(OverlappedComponent);
+		UPaperSpriteComponent* SpriteComponent;
+		SpriteComponent = Cast<UPaperSpriteComponent>(OverlappedComponent->GetChildComponent(0));
+		if (SpriteComponent) MulticastYellowKey(SpriteComponent);
 	}
+}
+
+void ASamePassKeyActor::MulticastYellowKey_Implementation(UPaperSpriteComponent* SpriteComp)
+{
+	SpriteComp->SetSprite(YellowKey);
 }
 
 void ASamePassKeyActor::OnBallCaught()
@@ -65,5 +73,9 @@ void ASamePassKeyActor::OnBallCaught()
 	if (Locked)
 	{
 		OverlappedMeshes.Empty();
+	}
+	if (HasAuthority())
+	{
+		MulticastRedKey();
 	}
 }

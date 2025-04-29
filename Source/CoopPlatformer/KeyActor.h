@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BallActor.h"
+#include "PaperSpriteComponent.h"
 #include "GameFramework/Actor.h"
 #include "KeyActor.generated.h"
 
@@ -34,11 +35,27 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<USceneComponent> RootComp;
 
+	/** The root component of the key actor */
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TArray<UPaperSpriteComponent*> SpriteComps;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperSprite> YellowKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperSprite> RedKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperSprite> GreenKey;
+
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastTriggerUnlock();
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastTriggerReset();
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRedKey();
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")

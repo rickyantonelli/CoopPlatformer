@@ -57,6 +57,10 @@ void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
 				UE_LOG(LogTemp, Log, TEXT("Player added: %s"), *PaperPlayerCharacter->GetName());
 				MyGameState->ActivePlayers.Add(PaperPlayerCharacter);
 				if (MyGameState->ActivePlayers.Num() == 2) PlayersFull = true;
+				else
+				{
+					PaperPlayerCharacter->bFirstPlayer = true;
+				}
 			}
 		}
 	}
