@@ -253,7 +253,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void MulticastResumeGame(UUserWidget* myWidget);
 
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void MulticastRotatePlayer();
+	UFUNCTION(Server, Reliable)
+	void ServerFlipPlayer(FVector2D MovementVector);
 
 };

@@ -3,6 +3,7 @@
 
 #include "KeyActor.h"
 #include "PaperSpriteComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Controller2D.h"
 #include "Net/UnrealNetwork.h"
 
@@ -108,6 +109,12 @@ void AKeyActor::MulticastTriggerUnlock_Implementation()
 		{
 			SpriteComp->SetSprite(GreenKey);
 		}
+	}
+
+	// Play the completed sound
+	if (CompletedSound)
+	{
+		UGameplayStatics::PlaySound2D(this, CompletedSound);
 	}
 }
 

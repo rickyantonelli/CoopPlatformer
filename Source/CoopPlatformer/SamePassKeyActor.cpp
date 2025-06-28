@@ -23,7 +23,7 @@ void ASamePassKeyActor::Tick(float DeltaSeconds)
 {
 	if (OverlappedMeshes.Num() == KeyMeshes.Num())
 	{
-		if (HasAuthority()) MulticastTriggerUnlock();
+		if (HasAuthority() && Locked) MulticastTriggerUnlock();
 	}
 
 	Super::Tick(DeltaSeconds);
@@ -43,17 +43,11 @@ void ASamePassKeyActor::BeginPlay()
 			MeshComponent->OnComponentBeginOverlap.AddDynamic(this, &ASamePassKeyActor::OnBoxCollision);
 		}
 	}
-
-	AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
-	if (MyController)
-	{
-		MyController->OnCaughtActivated.AddDynamic(this, &ASamePassKeyActor::OnBallCaught);
-	}
 }
 
 void ASamePassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent) && HasAuthority())
+	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent))
 	{
 		OverlappedMeshes.Add(OverlappedComponent);
 		UPaperSpriteComponent* SpriteComponent;
@@ -73,9 +67,6 @@ void ASamePassKeyActor::OnBallCaught()
 	if (Locked)
 	{
 		OverlappedMeshes.Empty();
-	}
-	if (HasAuthority())
-	{
 		MulticastRedKey();
 	}
 }

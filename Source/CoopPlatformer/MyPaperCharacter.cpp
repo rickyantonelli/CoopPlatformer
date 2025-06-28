@@ -168,7 +168,15 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 
 			if (SpriteComp)
 			{
-				SpriteComp->SetRelativeScale3D(OriginalFlipbookScale * FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
+				if (HasAuthority())
+				{
+					SpriteComp->SetRelativeScale3D(OriginalFlipbookScale * FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
+				}
+				else
+				{
+					// server rpc
+					ServerFlipPlayer(MovementVector);
+				}
 			}
 			AddMovementInput(GetActorForwardVector(), MovementVector.X);
 		}
@@ -346,9 +354,9 @@ void AMyPaperCharacter::ApplyDashToken()
 
 }
 
-void AMyPaperCharacter::MulticastRotatePlayer_Implementation()
+void AMyPaperCharacter::ServerFlipPlayer_Implementation(FVector2D MovementVector)
 {
-	//
+	SpriteComp->SetRelativeScale3D(OriginalFlipbookScale * FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
 }
 
 void AMyPaperCharacter::MulticastPauseGame_Implementation(UUserWidget* myWidget)
@@ -397,7 +405,7 @@ void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 	checkf(BallArrivingOverlayWidgetClass, TEXT("Ball Arriving Overlay Widget class uninitialized"));
 	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
 
-	BallArrivingWidget->AddToViewport();
+	if (BallArrivingWidget) BallArrivingWidget->AddToViewport();
 }
 
 void AMyPaperCharacter::OnRep_IsHolding()

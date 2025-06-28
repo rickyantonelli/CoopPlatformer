@@ -8,6 +8,8 @@
 #include "GameFramework/Actor.h"
 #include "KeyActor.generated.h"
 
+class USoundBase;
+
 /** KeyActor is the class that is activated by interaction with the BallActor */
 UCLASS()
 class COOPPLATFORMER_API AKeyActor : public AActor
@@ -47,6 +49,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperSprite> GreenKey;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<USoundBase> CompletedSound;
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastTriggerUnlock();

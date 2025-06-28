@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameUserSettings.h"
 #include "GameFramework/GameStateBase.h"
+#include "SamePassKeyActor.h"
 #include "MyPlayerState.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
@@ -81,13 +82,19 @@ void AController2D::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("Shading Quality: %d"), UserSettings->GetShadingQuality());
 	}
 
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASamePassKeyActor::StaticClass(), FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		ASamePassKeyActor* KeyActor = Cast<ASamePassKeyActor>(Actor);
+		if (KeyActor)
+		{
+			OnCaughtActivated.AddDynamic(KeyActor, &ASamePassKeyActor::OnBallCaught);
+			UE_LOG(LogTemp, Log, TEXT("Bound OnCaughtActivated to %s"), *KeyActor->GetName());
+		}
+	}
+
 	PlayersSet = false;
-}
-
-
-void AController2D::OnRep_ActivePlayers()
-{
-	// ActivePlayers.Swap(0, 1);
 }
 
 void AController2D::OnPassActorActivated()
@@ -110,6 +117,7 @@ void AController2D::PassServerRPCFunction_Implementation()
 		BallActor->ForceNetUpdate();
 
 		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
+		MulticastPlayPassSound();
 	}
 }
 
@@ -238,8 +246,6 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		}
 	}
 
-
-
 	// Dash prototype - holding off for now
 	//if (OtherActor->ActorHasTag("Dash"))
 	//{
@@ -249,9 +255,6 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 	//	ADashToken* DashToken = Cast<ADashToken>(OtherActor);
 	//	DashToken->CollectDash();
 	//}
-
-
-
 }
 
 void AController2D::ShiftViewTarget()
@@ -291,6 +294,15 @@ void AController2D::MulticastKillBothPlayers_Implementation()
 	OnResetActivated.Broadcast();
 }
 
+void AController2D::MulticastPlayPassSound_Implementation()
+{
+	// Play the completed sound on all clients
+	if (PassSound)
+	{
+		UGameplayStatics::PlaySound2D(this, PassSound);
+	}
+}
+
 void AController2D::RevertViewTarget()
 {
 	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
@@ -301,8 +313,4 @@ void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AController2D, BallActor);
-
-	FDoRepLifetimeParams Params;
-	Params.Condition = COND_None;
-	DOREPLIFETIME_WITH_PARAMS_FAST(AController2D, ActivePlayers, Params);
 }

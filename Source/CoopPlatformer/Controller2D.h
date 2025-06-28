@@ -14,6 +14,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallCaughtActivated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerResetActivated);
 
+class USoundBase;
+
 // Define the enum class 
 UENUM(BlueprintType)
 enum class EHoldingState : uint8
@@ -63,10 +65,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<AMyGameStateBase> MyGameStateCoop;
 
-	/** Array of active players - to avoid having to constantly get all actors of class and casting */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_ActivePlayers)
-	TArray<TObjectPtr<AMyPaperCharacter>> ActivePlayers;
-
 	/** The ball actor that the players pass back and forth */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TObjectPtr<ABallActor> BallActor;
@@ -78,8 +76,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FPlayerResetActivated OnResetActivated;
 
-	UFUNCTION()
-	void OnRep_ActivePlayers();
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<USoundBase> PassSound;
 
 	/** 
 	* Receives delegate for when the player passes the ball 
@@ -105,6 +103,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastKillBothPlayers();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayPassSound();
 
 	/** Reverts the player's view target back to itself */
 	UFUNCTION(BlueprintCallable)
