@@ -39,6 +39,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanDamage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	TArray<AActor*> LockedActors;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	TArray<AActor*> UnlockedActors;
+
 	UFUNCTION()
 	virtual void Patrol();
 
@@ -50,4 +56,10 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastApplyDeath();
+
+	UFUNCTION()
+	void DisableActors();
+
+	UFUNCTION()
+	void EnableActors();
 };

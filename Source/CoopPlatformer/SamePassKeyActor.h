@@ -38,6 +38,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TArray<UBoxComponent*> KeyMeshes;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastYellowKey(UPaperSpriteComponent* SpriteComp);
+
 private:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TArray<UPrimitiveComponent*> OverlappedMeshes;

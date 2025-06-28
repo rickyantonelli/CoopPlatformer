@@ -2,6 +2,7 @@
 
 
 #include "EnemyCharacter.h"
+#include "PaperSpriteComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AEnemyCharacter::AEnemyCharacter()
@@ -72,10 +73,69 @@ void AEnemyCharacter::OnResetActivated()
 	Health = 5;
 }
 
+void AEnemyCharacter::DisableActors()
+{
+	// Disable Actors
+	for (AActor* LockedActor : LockedActors)
+	{
+		// set this to false so that we dont check overlaps anymore since it's already been unlocked
+		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
+		if (LockMesh)
+		{
+			LockMesh->SetVisibility(false);
+			LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		else
+		{
+			UBoxComponent* LockBox = LockedActor->GetComponentByClass<UBoxComponent>();
+			UPaperSpriteComponent* LockSprite = LockedActor->GetComponentByClass<UPaperSpriteComponent>();
+			if (LockBox)
+			{
+				LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+			if (LockSprite)
+			{
+				LockSprite->SetVisibility(false);
+
+			}
+		}
+	}
+}
+
+void AEnemyCharacter::EnableActors()
+{
+	// Enable Actors
+	for (AActor* UnlockedActor : UnlockedActors)
+	{
+		// set this to false so that we dont check overlaps anymore since it's already been unlocked
+		UStaticMeshComponent* LockMesh = UnlockedActor->GetComponentByClass<UStaticMeshComponent>();
+		if (LockMesh)
+		{
+			LockMesh->SetVisibility(true);
+			LockMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		else
+		{
+			UBoxComponent* LockBox = UnlockedActor->GetComponentByClass<UBoxComponent>();
+			UPaperSpriteComponent* LockSprite = UnlockedActor->GetComponentByClass<UPaperSpriteComponent>();
+			if (LockBox)
+			{
+				LockBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			}
+			if (LockSprite)
+			{
+				LockSprite->SetVisibility(true);
+			}
+		}
+	}
+}
+
 
 void AEnemyCharacter::MulticastApplyDeath_Implementation()
 {
 	Destroy();
+	DisableActors();
+	EnableActors();
 }
 
 void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

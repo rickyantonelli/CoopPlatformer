@@ -31,6 +31,17 @@ void APassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AAc
 {
 	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0)
 	{
-		if (HasAuthority()) MulticastTriggerUnlock();
+		if (HasAuthority())
+		{
+			MulticastTriggerUnlock();
+	/*		UPaperSpriteComponent* SpriteComponent;
+			SpriteComponent = Cast<UPaperSpriteComponent>(OverlappedComponent->GetChildComponent(0));
+			if (SpriteComponent) MulticastYellowKey(SpriteComponent);*/
+		}
 	}
+}
+
+void APassKeyActor::MulticastYellowKey_Implementation(UPaperSpriteComponent* SpriteComp)
+{
+	SpriteComp->SetSprite(YellowKey);
 }

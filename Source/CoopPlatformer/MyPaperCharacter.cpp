@@ -2,6 +2,8 @@
 
 #include "MyPaperCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "PaperSpriteComponent.h"
+#include "PaperFlipbookComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
@@ -32,6 +34,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	HasJumpInput = true;
 	// Dash prototype - holding off for now
 	CanDash = false;
+	bFirstPlayer = false;
 
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
@@ -61,6 +64,10 @@ void AMyPaperCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	// Get the sprite component
+	SpriteComp = FindComponentByClass<UPaperFlipbookComponent>();
+	OriginalFlipbookScale = SpriteComp->GetRelativeScale3D();
 
 }
 
@@ -130,25 +137,48 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 
 		if (Controller != nullptr)
 		{
-			// Standard left and right movement
-			if (MovementVector.X >= 0)
-			{
-				ControlRotation.Yaw = 0;
-				GetController()->SetControlRotation(ControlRotation);
-				AddMovementInput(GetActorForwardVector(), MovementVector.X);
+			//// Standard left and right movement
+			//if (MovementVector.X >= 0)
+			//{
+			//	ControlRotation.Yaw = 0;
+			//	GetController()->SetControlRotation(ControlRotation);
+			//	if (SpriteComp)
+			//	{
+			//		SpriteComp->SetRelativeScale3D(FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
+			//	}
+			//	AddMovementInput(GetActorForwardVector(), MovementVector.X);
 
-				// Dash prototype - holding off for now
-				// DashDirection = (ForwardDirection * MovementVector.X) + (RightDirection * MovementVector.Y);
-			}
-			else
-			{
-				ControlRotation.Yaw = 180;
-				GetController()->SetControlRotation(ControlRotation);
-				AddMovementInput(GetActorForwardVector(), -MovementVector.X);
+			//	// Dash prototype - holding off for now
+			//	// DashDirection = (ForwardDirection * MovementVector.X) + (RightDirection * MovementVector.Y);
+			//}
+			//else
+			//{
+			//	ControlRotation.Yaw = 180;
+			//	if (SpriteComp)
+			//	{
+			//		SpriteComp->SetRelativeScale3D(FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
+			//	}
+			//	GetController()->SetControlRotation(ControlRotation);
+			//	AddMovementInput(GetActorForwardVector(), -MovementVector.X);
 
-				// Dash prototype - holding off for now
-				// DashDirection = (ForwardDirection * -MovementVector.X) + (RightDirection * MovementVector.Y);
+			//	// Dash prototype - holding off for now
+			//	// DashDirection = (ForwardDirection * -MovementVector.X) + (RightDirection * MovementVector.Y);
+			//}
+						// Standard left and right movement
+
+			if (SpriteComp)
+			{
+				if (HasAuthority())
+				{
+					SpriteComp->SetRelativeScale3D(OriginalFlipbookScale * FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
+				}
+				else
+				{
+					// server rpc
+					ServerFlipPlayer(MovementVector);
+				}
 			}
+			AddMovementInput(GetActorForwardVector(), MovementVector.X);
 		}
 	}
 }
@@ -235,14 +265,6 @@ void AMyPaperCharacter::Jump()
 	if (MovementEnabled && HasJumpInput)
 	{
 		Super::Jump();
-		if (WithinCoyoteTime)
-		{
-			//
-		}
-		else
-		{
-			//
-		}
 	}
 }
 
@@ -282,6 +304,12 @@ void AMyPaperCharacter::OnDeath()
 		MovementEnabled = false;
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {MovementEnabled = true; }, DeathDuration, false);
+	}
+	if (SpriteComp && HasAuthority())
+	{
+		SpriteComp->SetVisibility(false);
+		FTimerHandle TimerHandler2;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler2, [&]() {SpriteComp->SetVisibility(true);}, DeathDuration, false);
 	}
 }
 
@@ -326,13 +354,58 @@ void AMyPaperCharacter::ApplyDashToken()
 
 }
 
+void AMyPaperCharacter::ServerFlipPlayer_Implementation(FVector2D MovementVector)
+{
+	SpriteComp->SetRelativeScale3D(OriginalFlipbookScale * FVector(MovementVector.X >= 0 ? 1.f : -1.f, 1.f, 1.f));
+}
+
+void AMyPaperCharacter::MulticastPauseGame_Implementation(UUserWidget* myWidget)
+{
+	// UGameplayStatics::SetGamePaused(GetWorld(), true);
+	checkf(PauseMenuOverlayWidgetClass, TEXT("Pause Menu Overlay Widget class uninitialized"));
+	PauseMenuWidget = CreateWidget<UUserWidget>(GetWorld(), PauseMenuOverlayWidgetClass);
+	PauseMenuWidget->AddToViewport();
+	APlayerController* myController = GetWorld()->GetFirstPlayerController();
+	if (myController)
+	{
+		myController->SetPause(true);
+		myController->bShowMouseCursor = true;
+		FInputModeUIOnly InputMode;
+		myController->SetInputMode(InputMode);
+	}
+
+}
+
+void AMyPaperCharacter::MulticastResumeGame_Implementation(UUserWidget* myWidget=nullptr)
+{
+	APlayerController* myController = GetWorld()->GetFirstPlayerController();
+	if (myController)
+	{
+		myController->bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		myController->SetInputMode(InputMode);
+		myController->SetPause(false);
+		if (PauseMenuWidget && PauseMenuWidget->IsInViewport())
+		{
+			PauseMenuWidget->RemoveFromParent();
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("NO CONTROLLER!!!"))
+	}
+	// get rid of menus, then unpause
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+}
+
 void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 {
 	// RPC to display the Ball Arriving widget when a ball is on its way to the player
 	checkf(BallArrivingOverlayWidgetClass, TEXT("Ball Arriving Overlay Widget class uninitialized"));
 	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
 
-	BallArrivingWidget->AddToViewport();
+	if (BallArrivingWidget) BallArrivingWidget->AddToViewport();
 }
 
 void AMyPaperCharacter::OnRep_IsHolding()
@@ -347,4 +420,6 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	DOREPLIFETIME(AMyPaperCharacter, IsHolding);
 	DOREPLIFETIME(AMyPaperCharacter, CanDash);
 	DOREPLIFETIME(AMyPaperCharacter, JumpMaxCount);
+	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
+	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);
 }

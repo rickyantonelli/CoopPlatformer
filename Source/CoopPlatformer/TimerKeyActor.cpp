@@ -52,12 +52,27 @@ void ATimerKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 		}
 
 		OverlappedMeshes.Add(OverlappedComponent);
+		UPaperSpriteComponent* SpriteComponent;
+		SpriteComponent = Cast<UPaperSpriteComponent>(OverlappedComponent->GetChildComponent(0));
+		if (SpriteComponent) MulticastYellowKey(SpriteComponent);
 	}
+}
+
+void ATimerKeyActor::MulticastYellowKey_Implementation(UPaperSpriteComponent* SpriteComp)
+{
+	SpriteComp->SetSprite(YellowKey);
 }
 
 void ATimerKeyActor::MulticastTimerExpired_Implementation()
 {
 	if (Locked) OverlappedMeshes.Empty();
+	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
+	{
+		if (SpriteComp)
+		{
+			SpriteComp->SetSprite(RedKey);
+		}
+	}
 }
 
 void ATimerKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
