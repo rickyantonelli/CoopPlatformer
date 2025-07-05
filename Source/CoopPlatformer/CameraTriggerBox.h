@@ -26,7 +26,11 @@ public:
 	void OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherActor);
 
 	UPROPERTY(EditAnywhere)
-	float SpringArmDistance = 250.0f;
+	float SpringArmOffset = 0.0f;
 
-	float OriginalSpringArmDistance = 250.0f;
+	UPROPERTY(EditAnywhere)
+	float XOffset = 0.0f;
+
+	UPROPERTY(EditAnywhere)
+	float ZOffset = 0.0f;
 };
