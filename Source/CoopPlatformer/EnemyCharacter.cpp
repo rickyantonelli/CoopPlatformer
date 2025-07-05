@@ -3,6 +3,7 @@
 
 #include "EnemyCharacter.h"
 #include "PaperSpriteComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 AEnemyCharacter::AEnemyCharacter()
@@ -62,7 +63,9 @@ void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponen
 		CanDamage = false;
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanDamage = true; }, CooldownTimer, false);
-		if (Health <= 0) MulticastApplyDeath();
+		MulticastApplyDeath();
+
+
 	}
 }
 
@@ -133,9 +136,17 @@ void AEnemyCharacter::EnableActors()
 
 void AEnemyCharacter::MulticastApplyDeath_Implementation()
 {
-	Destroy();
-	DisableActors();
-	EnableActors();
+	if (DamageSound)
+	{
+		UGameplayStatics::PlaySound2D(this, DamageSound);
+	}
+
+	if (Health <= 0)
+	{
+		Destroy();
+		DisableActors();
+		EnableActors();
+	}
 }
 
 void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

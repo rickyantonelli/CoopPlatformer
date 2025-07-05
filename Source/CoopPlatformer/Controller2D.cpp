@@ -278,6 +278,11 @@ void AController2D::ShiftViewTarget()
 	SetViewTargetWithBlend(OtherPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
 }
 
+void AController2D::RevertViewTarget()
+{
+	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+}
+
 void AController2D::MulticastOnCaughtActivated_Implementation()
 {
 	OnCaughtActivated.Broadcast();
@@ -301,11 +306,6 @@ void AController2D::MulticastPlayPassSound_Implementation()
 	{
 		UGameplayStatics::PlaySound2D(this, PassSound);
 	}
-}
-
-void AController2D::RevertViewTarget()
-{
-	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
 }
 
 void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
