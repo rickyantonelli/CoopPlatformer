@@ -8,6 +8,8 @@
 #include "Components/ArrowComponent.h"
 #include "EnemyCharacter.generated.h"
 
+class USoundBase;
+
 /**
  * 
  */
@@ -62,4 +64,7 @@ public:
 
 	UFUNCTION()
 	void EnableActors();
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<USoundBase> DamageSound;
 };
