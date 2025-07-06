@@ -63,6 +63,7 @@ void ABallActor::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(ABallActor, IsMoving);
 	DOREPLIFETIME(ABallActor, IsAttached);
 	DOREPLIFETIME(ABallActor, CanPass);
+	DOREPLIFETIME(ABallActor, BallMovementSpeed);
 }
 
 

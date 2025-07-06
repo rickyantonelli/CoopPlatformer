@@ -44,7 +44,7 @@ public:
 	TObjectPtr<UCapsuleComponent> Sphere;
 
 	/** Movement speed for the ball - to be updated in design */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, Replicated, EditAnywhere)
 	float BallMovementSpeed;
 
 	/** Cooldown for passing the ball - which stops players from resetting jump quickly and flying */
