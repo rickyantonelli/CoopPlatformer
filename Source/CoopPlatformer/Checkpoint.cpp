@@ -51,8 +51,22 @@ void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 			{
 				CheckpointedActor->SpawnLocation = GetActorLocation();
 				CanBeCollected = false;
+				if (HasAuthority())
+				{
+					// visually turn off the checkpoint
+					MulticastCheckpointUnlocked();
+				}
 			}
 		}
+	}
+}
+
+void ACheckpoint::MulticastCheckpointUnlocked_Implementation()
+{
+	UStaticMeshComponent* LockSprite = GetComponentByClass<UStaticMeshComponent>();
+	if (LockSprite)
+	{
+		LockSprite->SetVisibility(false);
 	}
 }
 

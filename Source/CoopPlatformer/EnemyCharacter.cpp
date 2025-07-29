@@ -3,6 +3,7 @@
 
 #include "EnemyCharacter.h"
 #include "PaperSpriteComponent.h"
+#include "PaperFlipbookComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -12,6 +13,7 @@ AEnemyCharacter::AEnemyCharacter()
 
 	SetReplicates(true);
 	bReplicates = true;
+	bAlwaysRelevant = true;
 	SetReplicateMovement(true);
 
 	// the enemy health, we dont need to keep track of a damage amount since it will always be 1
@@ -56,16 +58,14 @@ void AEnemyCharacter::Patrol()
 
 void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("Ball") && CanDamage && HasAuthority())
+	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && CanDamage)
 	{
 		UE_LOG(LogTemp, Log, TEXT("APPLYING DAMAGE"));
 		Health -= 1;
 		CanDamage = false;
+		MulticastApplyDeath(Health);
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanDamage = true; }, CooldownTimer, false);
-		MulticastApplyDeath();
-
-
 	}
 }
 
@@ -81,7 +81,6 @@ void AEnemyCharacter::DisableActors()
 	// Disable Actors
 	for (AActor* LockedActor : LockedActors)
 	{
-		// set this to false so that we dont check overlaps anymore since it's already been unlocked
 		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
 		if (LockMesh)
 		{
@@ -110,7 +109,6 @@ void AEnemyCharacter::EnableActors()
 	// Enable Actors
 	for (AActor* UnlockedActor : UnlockedActors)
 	{
-		// set this to false so that we dont check overlaps anymore since it's already been unlocked
 		UStaticMeshComponent* LockMesh = UnlockedActor->GetComponentByClass<UStaticMeshComponent>();
 		if (LockMesh)
 		{
@@ -133,19 +131,18 @@ void AEnemyCharacter::EnableActors()
 	}
 }
 
-
-void AEnemyCharacter::MulticastApplyDeath_Implementation()
+void AEnemyCharacter::MulticastApplyDeath_Implementation(int32 NewHealth)
 {
 	if (DamageSound)
 	{
 		UGameplayStatics::PlaySound2D(this, DamageSound);
 	}
 
-	if (Health <= 0)
+	if (NewHealth <= 0)
 	{
-		Destroy();
 		DisableActors();
 		EnableActors();
+		Destroy();
 	}
 }
 
@@ -154,4 +151,6 @@ void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AEnemyCharacter, Health);
 	DOREPLIFETIME(AEnemyCharacter, CanDamage);
+	DOREPLIFETIME(AEnemyCharacter, LockedActors);
+	DOREPLIFETIME(AEnemyCharacter, UnlockedActors);
 }

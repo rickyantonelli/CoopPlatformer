@@ -57,7 +57,7 @@ public:
 	void OnResetActivated();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastApplyDeath();
+	void MulticastApplyDeath(int32 NewHealth);
 
 	UFUNCTION()
 	void DisableActors();

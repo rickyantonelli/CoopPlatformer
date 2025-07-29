@@ -9,11 +9,16 @@
 void ACameraTriggerBox::BeginPlay()
 {
 	Super::BeginPlay();
-	OnActorBeginOverlap.AddDynamic(this, &ACameraTriggerBox::OnOverlapBegin);
-	OnActorEndOverlap.AddDynamic(this, &ACameraTriggerBox::OnOverlapEnd);
+
+	UBoxComponent* CollisionComp = Cast<UBoxComponent>(GetCollisionComponent());
+	if (CollisionComp)
+	{
+		CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ACameraTriggerBox::OnOverlapBegin);
+		CollisionComp->OnComponentEndOverlap.AddDynamic(this, &ACameraTriggerBox::OnOverlapEnd);
+	}
 }
 
-void ACameraTriggerBox::OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherActor)
+void ACameraTriggerBox::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
@@ -52,7 +57,7 @@ void ACameraTriggerBox::OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherAct
 	}
 }
 
-void ACameraTriggerBox::OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherActor)
+void ACameraTriggerBox::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{

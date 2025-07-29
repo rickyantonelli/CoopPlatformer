@@ -50,4 +50,7 @@ public:
 	/** Allows the checkpoint to be collected, only allow a checkpoint to be collected once */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool CanBeCollected;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastCheckpointUnlocked();
 };

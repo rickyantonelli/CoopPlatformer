@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include <Components/BoxComponent.h>
+#include "PaperSpriteComponent.h"
 #include "PressurePlate.generated.h"
 
 /** PressurePlate is the class that allows players to step on a pressure plate and enable/disable another actor */
@@ -30,15 +32,18 @@ public:
 
 	/** The trigger mesh component of the pressure plate actor - which sits just above the static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> TriggerMesh;
+	TObjectPtr<UBoxComponent> TriggerMesh;
 
 	/** The pressure plate's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	TObjectPtr<UPaperSpriteComponent> Mesh;
 
 	/** The actor that is influenced by the pressure plate change */
-	UPROPERTY(EditAnywhere, Category = "Customizable")
+	UPROPERTY(EditAnywhere, Category = "Custom")
 	TObjectPtr<AActor> PressurePlatedActor;
+
+	UPROPERTY(EditAnywhere, Category = "Custom")
+	float OffsetAmount;
 
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()
@@ -54,8 +59,5 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastStepOn();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastStepOff();
 
 };

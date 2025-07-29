@@ -21,8 +21,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	/** The root component of the key actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
@@ -45,6 +43,15 @@ public:
 	bool CanTeleport;
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
-	UPROPERTY(EditAnywhere, Category = "Debug")
+	UPROPERTY(EditAnywhere, Category = "Custom")
 	float TeleportCooldown;
+
+	/** How much camera lag should be offset when teleporting, for a smoother feel */
+	UPROPERTY(EditAnywhere, Category = "Custom")
+	float CameraLagOffset;
+
+	UPROPERTY(EditAnywhere, Category = "Custom")
+	float CameraLagTime;
+
+
 };

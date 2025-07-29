@@ -34,9 +34,6 @@ void APassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AAc
 		if (HasAuthority())
 		{
 			MulticastTriggerUnlock();
-	/*		UPaperSpriteComponent* SpriteComponent;
-			SpriteComponent = Cast<UPaperSpriteComponent>(OverlappedComponent->GetChildComponent(0));
-			if (SpriteComponent) MulticastYellowKey(SpriteComponent);*/
 		}
 	}
 }
