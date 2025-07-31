@@ -49,6 +49,7 @@ void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 			// once we get to two players in the array then we are good to move the checkpoint for both players
 			for (AMyPaperCharacter* CheckpointedActor : CheckpointedPlayers)
 			{
+				if (!CheckpointedActor) continue;
 				CheckpointedActor->SpawnLocation = GetActorLocation();
 				CanBeCollected = false;
 				if (HasAuthority())

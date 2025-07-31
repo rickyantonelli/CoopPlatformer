@@ -118,7 +118,10 @@ public:
 	void BallPassingHandler(float DeltaSeconds);
 
 	/** Enforces that we aren't gathering players over again once we have gathered both */
-	bool PlayersSet;
+	bool PlayersSet = false;
 
 	void ServerApplyBallCaught();
+
+	UFUNCTION(BlueprintCallable)
+	void ValidatePass(AMyPaperCharacter* NewPlayer);
 };

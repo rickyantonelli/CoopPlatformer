@@ -20,51 +20,64 @@ void ACoopPlatformerGameModeBase::BeginPlay()
 	}
 }
 
-AActor* ACoopPlatformerGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
-{
-	// ensures that player's dont start on the same start point
-	TArray<AActor*> StartActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), StartActors);
-	for (AActor* Actor : StartActors)
-	{
-		if (!Actor->ActorHasTag("Taken"))
-		{
-			APlayerStart* StartActor = Cast<APlayerStart>(Actor);
-			StartActor->Tags.Add("Taken");
-			return StartActor;
-		}
-	}
-
-	return Super::ChoosePlayerStart(Player);
-}
-
 void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	ActiveControllers.Add(NewPlayer);
+	if (!ActiveControllers.Contains(NewPlayer))
+	{
+		ActiveControllers.Add(NewPlayer);
+	}
 
 	AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
 
-	if (NewPlayer && HasAuthority() && !PlayersFull)
+	if (!PlayersFull)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Player Reconnect"));
 		ACharacter* PlayerCharacter = Cast<ACharacter>(NewPlayer->GetPawn());
 		if (PlayerCharacter)
 		{
 			AMyPaperCharacter* PaperPlayerCharacter = Cast<AMyPaperCharacter>(PlayerCharacter);
-			if (PaperPlayerCharacter && MyGameState) 
+			if (PaperPlayerCharacter && MyGameState)
 			{
 				UE_LOG(LogTemp, Log, TEXT("Player added: %s"), *PaperPlayerCharacter->GetName());
-				MyGameState->ActivePlayers.Add(PaperPlayerCharacter);
-				if (MyGameState->ActivePlayers.Num() == 2) PlayersFull = true;
+
+
+				if (!MyGameState->ActivePlayers.Contains(PaperPlayerCharacter))
+				{
+					MyGameState->ActivePlayers.Add(PaperPlayerCharacter);
+				}
+
+
+				if (ActiveControllers.Num() == 2) PlayersFull = true;
 				else
 				{
 					PaperPlayerCharacter->bFirstPlayer = true;
 				}
+
+				OnPlayersChangedActivated.Broadcast(PaperPlayerCharacter);
 			}
 		}
 	}
+}
 
+void ACoopPlatformerGameModeBase::Logout(AController* Exiting)
+{
+	Super::Logout(Exiting);
+	UE_LOG(LogTemp, Log, TEXT("Player Disconnect"));
+	APlayerController* ExitingController = Cast<APlayerController>(Exiting);
+
+	if (ExitingController)
+	{
+		PlayersFull = false;
+		int32 index = ActiveControllers.Find(ExitingController);
+		ActiveControllers.Remove(ExitingController);
+		AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
+		if (MyGameState)
+		{
+			MyGameState->ActivePlayers.RemoveAt(index);
+		}
+	}
 }
 
 void ACoopPlatformerGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -74,6 +87,7 @@ void ACoopPlatformerGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, ActiveControllers);
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, BallActor);
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, ActivePlayers);
+	DOREPLIFETIME(ACoopPlatformerGameModeBase, PlayersFull);
 
 }
 

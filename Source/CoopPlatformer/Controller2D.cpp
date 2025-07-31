@@ -39,6 +39,11 @@ void AController2D::BeginPlay()
 	AGameModeBase* MyGameMode = GetWorld()->GetAuthGameMode();
 	MyGameModeCoop = Cast<ACoopPlatformerGameModeBase>(MyGameMode);
 
+	if (MyGameModeCoop)
+	{
+		MyGameModeCoop->OnPlayersChangedActivated.AddDynamic(this, &AController2D::ValidatePass);
+	}
+
 	// MyGameStateCoop = GetWorld()->GetGameState<AMyPlayerState>();
 	MyGameStateCoop = GetWorld()->GetGameState<AMyGameStateBase>();
 
@@ -105,20 +110,25 @@ void AController2D::OnPassActorActivated()
 
 void AController2D::PassServerRPCFunction_Implementation()
 {
-	if (BallActor && BallActor->CanPass && BallActor->NoPassCooldown && MyGameStateCoop->ActivePlayers[0] && MyGameStateCoop->ActivePlayers[1] && BallActor->GetAttachParentActor() == MyGameStateCoop->ActivePlayers[0])
-	{
-		BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		BallActor->IsAttached = false;
-		MyGameStateCoop->ActivePlayers[0]->IsHolding = false;
-		BallActor->IsMoving = true;
-		BallActor->CanPass = false;
-		BallActor->BeginPassCooldown();
+	if (!BallActor) return;
+	if (!BallActor->CanPass) return;
+	if (!BallActor->NoPassCooldown) return;
+	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
+	//if (!MyGameStateCoop->ActivePlayers[0] || !MyGameStateCoop->ActivePlayers[1]) return;
+	if (!PlayersSet) return;
+	if (BallActor->GetAttachParentActor() != MyGameStateCoop->ActivePlayers[0]) return;
 
-		BallActor->ForceNetUpdate();
+	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	BallActor->IsAttached = false;
+	MyGameStateCoop->ActivePlayers[0]->IsHolding = false;
+	BallActor->IsMoving = true;
+	BallActor->CanPass = false;
+	BallActor->BeginPassCooldown();
 
-		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
-		MulticastPlayPassSound();
-	}
+	BallActor->ForceNetUpdate();
+
+	MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
+	MulticastPlayPassSound();
 }
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
@@ -163,18 +173,41 @@ void AController2D::ServerApplyBallCaught()
 	}
 }
 
+void AController2D::ValidatePass(AMyPaperCharacter* NewPlayer)
+{
+	// TODO: we need a delegate that fires from the game mode whenever we need to re-check activeplayers
+	// basically do a re-validation, ensure there are 2 players
+	// then do some logic to check if one of the 2 players is holding the ball (if so set up the array in the right order)
+	// if no one is holding then set things back to the initial check or whatever
+	if (!NewPlayer->OnPassActivated.IsAlreadyBound(this, &AController2D::OnPassActorActivated))
+	{
+		NewPlayer->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
+	}
+
+	if (!NewPlayer->OnActorBeginOverlap.IsAlreadyBound(this, &AController2D::OnOverlapBegin))
+	{
+		NewPlayer->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+	}
+	MyGameStateCoop->ActivePlayers[1]->SetActorLocation(MyGameStateCoop->ActivePlayers[0]->GetActorLocation());
+}
+
 void AController2D::GatherActorsHandler()
 {
-	TArray<AActor*> PaperActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Player", PaperActors);
-	if (MyGameStateCoop && PaperActors.Num() == 2 && !PlayersSet)
+	if (MyGameStateCoop && MyGameStateCoop->ActivePlayers.Num() == 2 && !PlayersSet)
 	{
 		for (AMyPaperCharacter* Actor : MyGameStateCoop->ActivePlayers)
 		{
 			if (Actor)
 			{
-				Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
-				Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+				if (!Actor->OnPassActivated.IsAlreadyBound(this, &AController2D::OnPassActorActivated))
+				{
+					Actor->OnPassActivated.AddDynamic(this, &AController2D::OnPassActorActivated);
+				}
+
+				if (!Actor->OnActorBeginOverlap.IsAlreadyBound(this, &AController2D::OnOverlapBegin))
+				{
+					Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
+				}
 			}
 		}
 		PlayersSet = true;
@@ -183,25 +216,23 @@ void AController2D::GatherActorsHandler()
 
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, FString::FromInt(MyGameStateCoop->ActivePlayers.Num()));
 	// ball pickup handling
-	if (OtherActor->ActorHasTag("Ball") && HasAuthority() && BallActor && !BallActor->IsAttached)
+	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && BallActor && !BallActor->IsAttached && !BallActor->IsMoving && MyGameStateCoop->ActivePlayers.Num() == 2)
 	{
-		if (BallActor && !BallActor->IsAttached && !BallActor->IsMoving && MyGameStateCoop->ActivePlayers.Num() == 2)
+		AMyPaperCharacter* OverlappingActor = Cast<AMyPaperCharacter>(PlayerActor);
+
+		if (MyGameStateCoop->ActivePlayers[0] != OverlappingActor)
 		{
-			AMyPaperCharacter* OverlappingActor = Cast<AMyPaperCharacter>(PlayerActor);
-
-			if (MyGameStateCoop->ActivePlayers[0] != OverlappingActor)
-			{
-				MyGameStateCoop->ActivePlayers.Swap(0, 1);
-			}
-
-			MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
-
-			BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-
-			BallActor->CanPass = true;
-			BallActor->IsAttached = true;
+			MyGameStateCoop->ActivePlayers.Swap(0, 1);
 		}
+
+		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
+
+		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+		BallActor->CanPass = true;
+		BallActor->IsAttached = true;
 	}
 
 
