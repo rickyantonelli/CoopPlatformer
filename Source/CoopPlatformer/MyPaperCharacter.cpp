@@ -23,18 +23,23 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	
+	DoubleJumpFlipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DoubleJumpEffect"));
+	DoubleJumpFlipbook->SetupAttachment(RootComponent);
 
 	GetCharacterMovement()->bNotifyApex = true;
 
 	IsHolding = false;
 	MovementEnabled = true;
 	WithinCoyoteTime = false;
+	WithinDoubleJumpGrace = false;
 	Jumping = false;
 	DevInfiniteJump = false;
 	HasJumpInput = true;
+	bFirstPlayer = false;
+
 	// Dash prototype - holding off for now
 	CanDash = false;
-	bFirstPlayer = false;
 
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
@@ -45,6 +50,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	JumpApexGravityScale = 0.5f;
 	DashSpeed = 2.0f;
 	DashDuration = 1.0f;
+	DoubleJumpGrace = 0.2f;
 
 	ControlRotation = FRotator::ZeroRotator;
 	DashDirection = FVector::ZeroVector;
@@ -65,9 +71,11 @@ void AMyPaperCharacter::BeginPlay()
 		}
 	}
 
-	// Get the sprite component
-	SpriteComp = FindComponentByClass<UPaperFlipbookComponent>();
-	OriginalFlipbookScale = SpriteComp->GetRelativeScale3D();
+	SpriteComp = GetSprite();
+	if (SpriteComp)
+	{
+		OriginalFlipbookScale = SpriteComp->GetRelativeScale3D();
+	}
 
 }
 
@@ -228,11 +236,26 @@ void AMyPaperCharacter::ResetJumpAbility()
 		// For catching the ball mid-air and getting a jump reset
 		EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
 
-		if (NewMovementMode == EMovementMode::MOVE_Walking) return;
+		if (NewMovementMode == EMovementMode::MOVE_Walking)
+		{
+			// This double jump grace will eliminate the bad feeling when you thought you did your first jump before catching
+			WithinDoubleJumpGrace = true;
+
+			FTimerHandle TimerHandler;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinDoubleJumpGrace = false; }, DoubleJumpGrace, false);
+			return;
+		} 
 
 		// We want to allow the players a theoretical possibility to jump as much as they want
 		// So increment by one, rather than just setting to 2
 		JumpMaxCount += 1;
+
+		// Need to think through if this is enough, or if we actually need to keep track of
+		// something like JumpMaxCount - JumpCurrentCount >= 1
+		if (DoubleJumpFlipbook)
+		{
+			DoubleJumpFlipbook->SetVisibility(true);
+		}
 	}
 }
 
@@ -245,6 +268,10 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 	if (HasAuthority()) JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
 	Jumping = false;
+	if (DoubleJumpFlipbook)
+	{
+		DoubleJumpFlipbook->SetVisibility(false);
+	}
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
@@ -285,6 +312,21 @@ void AMyPaperCharacter::OnJumped_Implementation()
 	Super::OnJumped_Implementation();
 	HasJumpInput = false;
 	Jumping = true;
+
+	if (DoubleJumpFlipbook)
+	{
+		DoubleJumpFlipbook->SetVisibility(false);
+	}
+
+	if (WithinDoubleJumpGrace)
+	{
+		JumpMaxCount += 1;
+		WithinDoubleJumpGrace = false;
+		if (DoubleJumpFlipbook)
+		{
+			DoubleJumpFlipbook->SetVisibility(true);
+		}
+	}
 	// GetCharacterMovement()->GravityScale = BaseGravityScale;
 	if (DevInfiniteJump)
 	{

@@ -98,6 +98,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperFlipbookComponent> SpriteComp;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperFlipbookComponent> DoubleJumpFlipbook;
+
 	/** The default mapping context for the player */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
@@ -138,6 +141,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float CoyoteDuration;
 
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float DoubleJumpGrace;
+
 	/** For testing - allows the dev to infinitely jump instead of passing back and forth to get jump resets */
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	bool DevInfiniteJump;
@@ -173,6 +179,9 @@ public:
 	/** Whether a player is within coyote time and can still jump despite not being grounded */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool WithinCoyoteTime;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool WithinDoubleJumpGrace;
 
 	/** Whether a player is in the act of jumping */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
