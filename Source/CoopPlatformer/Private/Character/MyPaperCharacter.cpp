@@ -315,9 +315,10 @@ void AMyPaperCharacter::OnDeath()
 	}
 	if (SpriteComp && HasAuthority())
 	{
+		bDead = true;
 		SpriteComp->SetVisibility(false);
 		FTimerHandle TimerHandler2;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler2, [&]() {SpriteComp->SetVisibility(true);}, DeathDuration, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler2, [&]() {SpriteComp->SetVisibility(true); bDead = false; }, DeathDuration, false);
 	}
 }
 

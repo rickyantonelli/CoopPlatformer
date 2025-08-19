@@ -36,6 +36,7 @@ void AKeyActor::BeginPlay()
 
 	if (bCanReset)
 	{
+		// TODO: Dont use GetFirstPlayerController as its unreliable
 		AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
 		if (MyController)
 		{

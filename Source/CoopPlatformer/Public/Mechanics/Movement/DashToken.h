@@ -29,11 +29,9 @@ public:
 	UFUNCTION()
 	void SetCollectable();
 
-	/** The root component of the pressure plate actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<USceneComponent> RootComp;
 
-	/** The pressure plate's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> Mesh;
 

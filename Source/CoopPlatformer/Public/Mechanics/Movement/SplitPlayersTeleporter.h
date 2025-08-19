@@ -5,16 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
-#include "TeleporterActor.generated.h"
+#include "SplitPlayersTeleporter.generated.h"
 
 UCLASS()
-class COOPPLATFORMER_API ATeleporterActor : public AActor
+class COOPPLATFORMER_API ASplitPlayersTeleporter : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ATeleporterActor();
+	ASplitPlayersTeleporter();
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,15 +26,23 @@ public:
 	TObjectPtr<USceneComponent> RootComp;
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UBoxComponent> TPMesh1;
+	TObjectPtr<UBoxComponent> Teleporter;
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UBoxComponent> TPMesh2;
+	TObjectPtr<UBoxComponent> P1Teleporter;
 
-	/** When the player collides, disables or enables the PressurePlated Actor */
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UBoxComponent> P2Teleporter;
+
 	UFUNCTION()
-	void OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
+	void OnTeleportDistribute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnTeleportReturn(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void ApplyCameraLag(AActor* PlayerActor);
+
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool CanTeleport;
 
@@ -48,5 +56,5 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Custom")
 	float CameraLagTime;
 
-
+	bool bP1Taken = false;
 };

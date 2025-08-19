@@ -9,5 +9,6 @@ void AMyGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMyGameStateBase, ActivePlayers);
+	// DOREPLIFETIME(AMyGameStateBase, ActiveControllers);
 	DOREPLIFETIME(AMyGameStateBase, BallActor);
 }

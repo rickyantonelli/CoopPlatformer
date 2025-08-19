@@ -18,6 +18,10 @@ class COOPPLATFORMER_API AMyGameStateBase : public AGameStateBase
 	
 public:
 	/** Array of active players - to avoid having to constantly get all actors of class and casting */
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	//TArray<APlayerController*> ActiveControllers;
+
+	/** Array of active players - to avoid having to constantly get all actors of class and casting */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	TArray<AMyPaperCharacter*> ActivePlayers;
 

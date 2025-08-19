@@ -90,4 +90,3 @@ void ACoopPlatformerGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, PlayersFull);
 
 }
-

@@ -124,10 +124,13 @@ void AController2D::PassServerRPCFunction_Implementation()
 	BallActor->CanPass = false;
 	BallActor->BeginPassCooldown();
 
+	// TODO: do we need this?
 	BallActor->ForceNetUpdate();
 
 	MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
 	MulticastPlayPassSound();
+
+	OnPassActivated.Broadcast();
 }
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
@@ -190,6 +193,16 @@ void AController2D::ValidatePass(AMyPaperCharacter* NewPlayer)
 	MyGameStateCoop->ActivePlayers[1]->SetActorLocation(MyGameStateCoop->ActivePlayers[0]->GetActorLocation());
 }
 
+void AController2D::ReturnBallToThrower()
+{
+	// To be called when the ball is in mid air
+	if (HasAuthority() && BallActor->IsMoving)
+	{
+		MyGameStateCoop->ActivePlayers.Swap(0, 1);
+		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
+	}
+}
+
 void AController2D::GatherActorsHandler()
 {
 	if (MyGameStateCoop && MyGameStateCoop->ActivePlayers.Num() == 2 && !PlayersSet)
@@ -240,6 +253,16 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
 		if (PlayerCharacterActor)
 		{
+			if (PlayerCharacterActor->IsHolding)
+			{
+				PassServerRPCFunction();
+			}
+			// send the ball back to the thrower if player dies while ball is on its way
+			else if (BallActor && BallActor->IsMoving && PlayerCharacterActor == MyGameStateCoop->ActivePlayers[1])
+			{
+				ReturnBallToThrower();
+			}
+
 			// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
 			UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
 			if (MyCharacterMovement)

@@ -18,7 +18,7 @@
 
 // TODO: currently no reason for this to need to be dynamic
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwapActivated);
 /**
  * The PaperCharacter class is the player class for the game - holds a variety of responsibilities
  * Player Movement - moving left and right
@@ -198,6 +198,8 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Debug")
 	bool bFirstPlayer;
 
+	bool bDead = false;
+
 	UPROPERTY(VisibleAnywhere, Replicated)
 	FRotator ControlRotation;
 
@@ -217,6 +219,9 @@ public:
 	/** Delegate for the ball being passed - which is picked up by the player controlller and called on the server */
 	UPROPERTY(BlueprintAssignable)
 	FBallPassActivated OnPassActivated;
+
+	UPROPERTY(BlueprintAssignable)
+	FSwapActivated OnSwapActivated;
 
 	/** The the widget that notifies the player of the ball's arrival */
 	TObjectPtr<UUserWidget> BallArrivingWidget;

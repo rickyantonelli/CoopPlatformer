@@ -19,7 +19,7 @@ UCLASS()
 class COOPPLATFORMER_API ACoopPlatformerGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
 public:
 
 	/**

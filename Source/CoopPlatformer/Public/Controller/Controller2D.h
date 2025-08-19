@@ -13,6 +13,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallCaughtActivated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerResetActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPassActivated);
 
 class USoundBase;
 
@@ -76,6 +77,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FPlayerResetActivated OnResetActivated;
 
+	UPROPERTY(BlueprintAssignable)
+	FPlayerResetActivated OnPassActivated;
+
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<USoundBase> PassSound;
 
@@ -124,4 +128,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ValidatePass(AMyPaperCharacter* NewPlayer);
+
+	void ReturnBallToThrower();
 };
