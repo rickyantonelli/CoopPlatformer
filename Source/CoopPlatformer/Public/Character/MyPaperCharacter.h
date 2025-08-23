@@ -19,6 +19,7 @@
 // TODO: currently no reason for this to need to be dynamic
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwapActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCountdownPingActivated);
 /**
  * The PaperCharacter class is the player class for the game - holds a variety of responsibilities
  * Player Movement - moving left and right
@@ -47,6 +48,9 @@ protected:
 
 	/** Called for dashing input */
 	void Dash(const FInputActionValue& Value);
+
+	/** Called for countdown ping input */
+	void CountdownPing(const FInputActionValue& Value);
 
 public:
 	/** Override for Tick*/
@@ -82,6 +86,9 @@ public:
 	/** Client RPC to display a widget notifying the player of a ball's arrival */
 	UFUNCTION(Client, Unreliable, BlueprintCallable)
 	void BallArrivingClientRPCFunction();
+
+	UFUNCTION(Client, Unreliable, BlueprintCallable)
+	void CountdownPingClientRPCFunction();
 
 	/** The player's camera spring arm*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -125,9 +132,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> DashAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> CountdownPingAction;
+
 	/** The class of the widget that notifies the player of the ball's arrival */
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget> CountdownPingOverlayWidgetClass;
 
 	/** The class of the widget that notifies the player of the ball's arrival */
 	UPROPERTY(EditAnywhere, Category = "UI")
@@ -223,8 +236,13 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FSwapActivated OnSwapActivated;
 
+	UPROPERTY(BlueprintAssignable)
+	FCountdownPingActivated OnCountdownPingActivated;
+
 	/** The the widget that notifies the player of the ball's arrival */
 	TObjectPtr<UUserWidget> BallArrivingWidget;
+
+	TObjectPtr<UUserWidget> CountdownWidget;
 
 	/** The the widget that notifies the player of the ball's arrival */
 	TObjectPtr<UUserWidget> PauseMenuWidget;

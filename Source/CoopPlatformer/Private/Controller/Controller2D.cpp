@@ -107,6 +107,11 @@ void AController2D::OnPassActorActivated()
 	PassServerRPCFunction();
 }
 
+void AController2D::OnCountdownPingActivated()
+{
+	CountdownPingServerRPCFunction();
+}
+
 void AController2D::PassServerRPCFunction_Implementation()
 {
 	if (!BallActor) return;
@@ -190,6 +195,12 @@ void AController2D::ValidatePass(AMyPaperCharacter* NewPlayer)
 	{
 		NewPlayer->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
 	}
+
+	if (!NewPlayer->OnCountdownPingActivated.IsAlreadyBound(this, &AController2D::OnCountdownPingActivated))
+	{
+		NewPlayer->OnCountdownPingActivated.AddDynamic(this, &AController2D::OnCountdownPingActivated);
+	}
+
 	MyGameStateCoop->ActivePlayers[1]->SetActorLocation(MyGameStateCoop->ActivePlayers[0]->GetActorLocation());
 }
 
@@ -220,10 +231,22 @@ void AController2D::GatherActorsHandler()
 				{
 					Actor->OnActorBeginOverlap.AddDynamic(this, &AController2D::OnOverlapBegin);
 				}
+
+				if (!Actor->OnCountdownPingActivated.IsAlreadyBound(this, &AController2D::OnCountdownPingActivated))
+				{
+					Actor->OnCountdownPingActivated.AddDynamic(this, &AController2D::OnCountdownPingActivated);
+				}
 			}
 		}
 		PlayersSet = true;
 	}
+}
+
+void AController2D::CountdownPingServerRPCFunction_Implementation()
+{
+	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
+	MyGameStateCoop->ActivePlayers[0]->CountdownPingClientRPCFunction();
+	MyGameStateCoop->ActivePlayers[1]->CountdownPingClientRPCFunction();
 }
 
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)

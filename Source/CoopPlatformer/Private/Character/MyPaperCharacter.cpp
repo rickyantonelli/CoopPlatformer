@@ -128,6 +128,8 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// Dash prototype - holding off for now
 		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Dash);
 
+		EnhancedInputComponent->BindAction(CountdownPingAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::CountdownPing);
+
 	}
 
 }
@@ -184,6 +186,14 @@ void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 		FVector DashDirection = FVector(LastMovementVector.X, 0.f, LastMovementVector.Y).GetSafeNormal();
 
 		DashServerRPCFunction(DashDirection);
+	}
+}
+
+void AMyPaperCharacter::CountdownPing(const FInputActionValue& Value)
+{
+	if (IsLocallyControlled() && IsHolding)
+	{
+		OnCountdownPingActivated.Broadcast();
 	}
 }
 
@@ -424,6 +434,15 @@ void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
 
 	if (BallArrivingWidget) BallArrivingWidget->AddToViewport();
+}
+
+void AMyPaperCharacter::CountdownPingClientRPCFunction_Implementation()
+{
+	// RPC to display the Ball Arriving widget when a ball is on its way to the player
+	checkf(CountdownPingOverlayWidgetClass, TEXT("Ball Arriving Overlay Widget class uninitialized"));
+	CountdownWidget = CreateWidget<UUserWidget>(GetWorld(), CountdownPingOverlayWidgetClass);
+
+	if (CountdownWidget) CountdownWidget->AddToViewport();
 }
 
 void AMyPaperCharacter::OnRep_IsHolding()

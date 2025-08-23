@@ -79,6 +79,7 @@ void AActorTriggerArea::OnOverlapEnd(AActor* TriggerBoxActor, AActor* OtherActor
 
 void AActorTriggerArea::MulticastDisableActor_Implementation()
 {
+	if (!DisableActor) return;
 	UBoxComponent* LockBox = DisableActor->GetComponentByClass<UBoxComponent>();
 	UPaperSpriteComponent* LockSprite = DisableActor->GetComponentByClass<UPaperSpriteComponent>();
 	if (LockBox)

@@ -90,9 +90,15 @@ public:
 	UFUNCTION()
 	void OnPassActorActivated();
 
+	UFUNCTION()
+	void OnCountdownPingActivated();
+
 	/** Server RPC for passing */
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void PassServerRPCFunction();
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void CountdownPingServerRPCFunction();
 
 	/** Overlap begin event, handles checkpoints and player death */
 	UFUNCTION()
