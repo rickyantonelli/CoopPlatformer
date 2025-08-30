@@ -23,6 +23,9 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+
+	Background = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Background"));
+	Background->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	
 	DoubleJumpFlipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DoubleJumpEffect"));
 	DoubleJumpFlipbook->SetupAttachment(RootComponent);
@@ -448,6 +451,20 @@ void AMyPaperCharacter::CountdownPingClientRPCFunction_Implementation()
 void AMyPaperCharacter::OnRep_IsHolding()
 {
 	RemoveBallArrivingWidget();
+}
+
+void AMyPaperCharacter::UpdateCollisionResponses()
+{
+	if (IsHolding)
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel7, ECollisionResponse::ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel8, ECollisionResponse::ECR_Block);
+	}
+	else
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel7, ECollisionResponse::ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel8, ECollisionResponse::ECR_Ignore);
+	}
 }
 
 void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

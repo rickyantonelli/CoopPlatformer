@@ -10,6 +10,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/BoxComponent.h"
+#include "PaperSpriteComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "PaperCharacter.h"
@@ -107,6 +108,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperFlipbookComponent> DoubleJumpFlipbook;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperSpriteComponent> Background;
 
 	/** The default mapping context for the player */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -288,5 +292,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void MulticastApplyFriction(int Friction);
+
+	UFUNCTION()
+	void UpdateCollisionResponses();
 
 };

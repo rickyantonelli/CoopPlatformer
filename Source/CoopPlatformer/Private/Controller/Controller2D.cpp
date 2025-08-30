@@ -125,6 +125,7 @@ void AController2D::PassServerRPCFunction_Implementation()
 	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	BallActor->IsAttached = false;
 	MyGameStateCoop->ActivePlayers[0]->IsHolding = false;
+	MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 	BallActor->IsMoving = true;
 	BallActor->CanPass = false;
 	BallActor->BeginPassCooldown();
@@ -172,6 +173,7 @@ void AController2D::ServerApplyBallCaught()
 		MyGameStateCoop->ActivePlayers.Swap(0,1);
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
 		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingWidget();
+		MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		BallActor->IsMoving = false;
 
@@ -262,6 +264,7 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		}
 
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
+		MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
@@ -334,6 +337,7 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 
 void AController2D::ShiftViewTarget()
 {
+	if (!MyGameStateCoop || MyGameStateCoop->ActivePlayers.Num() != 2) return;
 	if (!MyPlayer || !OtherPlayer)
 	{
 		for (AMyPaperCharacter* ActivePlayer : MyGameStateCoop->ActivePlayers)
@@ -350,11 +354,27 @@ void AController2D::ShiftViewTarget()
 			}
 		}
 	}
+
+	if (!MyPlayer || !OtherPlayer) return;
+
+
+	// TODO: This is fine for a while, but eventually we want to lerp the background over to the other player
+	// then swap the visibility states, then set the background back to the original location
+	// same applies for the revert function below
+
+	MyPlayer->Background->SetVisibility(false);
+	OtherPlayer->Background->SetVisibility(true);
+
 	SetViewTargetWithBlend(OtherPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
 }
 
 void AController2D::RevertViewTarget()
 {
+	if (!MyGameStateCoop || MyGameStateCoop->ActivePlayers.Num() != 2) return;
+	if (!MyPlayer || !OtherPlayer) return;
+
+	MyPlayer->Background->SetVisibility(true);
+	OtherPlayer->Background->SetVisibility(false);
 	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
 }
 
