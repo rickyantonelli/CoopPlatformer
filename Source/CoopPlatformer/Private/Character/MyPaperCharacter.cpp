@@ -40,6 +40,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	DevInfiniteJump = false;
 	HasJumpInput = true;
 	bFirstPlayer = false;
+	bInWallJumpTimer = false;
 
 	// Dash prototype - holding off for now
 	CanDash = false;
@@ -54,8 +55,15 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	DashSpeed = 2.0f;
 	DashDuration = 1.0f;
 	DoubleJumpGrace = 0.2f;
+	WallJumpGravityScale = 0.2f;
+	WallJumpDuration = 0.5f;
+	WallJumpGrace = 0.2f;
+	WallJumpNudge = 150.f;
+	WallJumpBounds = 100.0f;
+	WallJumpMinVelocity = 20.0f;
 
 	ControlRotation = FRotator::ZeroRotator;
+	PreviousVelocity = FVector::ZeroVector;
 }
 
 void AMyPaperCharacter::BeginPlay()
@@ -85,7 +93,7 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
+	PreviousVelocity = GetCharacterMovement()->Velocity;
 	// if we ever get to a frame where we are jumping but also have 0 z velocity (vertical) then stop the jump
 	// this stops us from sticking to the ceiling because we've hit the top but are holding jump
 	if (Jumping)
@@ -163,7 +171,7 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 					ServerFlipPlayer(MovementVector);
 				}
 			}
-			AddMovementInput(GetActorForwardVector(), MovementVector.X);
+			if (bCanXMove) AddMovementInput(GetActorForwardVector(), MovementVector.X);
 		}
 	}
 }
@@ -179,7 +187,6 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 
 void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Log, TEXT("DASH"));
 	// Dash prototype - holding off for now
 	if (!CanDash) return;
 
@@ -258,7 +265,6 @@ bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 	// overriding to see if we are within coyote time, if not just use Super
 	if (WithinCoyoteTime && !Jumping)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Coyote jumping"));
 		return true;
 	}
 
@@ -292,6 +298,11 @@ void AMyPaperCharacter::OnJumped_Implementation()
 	HasJumpInput = false;
 	Jumping = true;
 
+	if (bInWallJumpTimer)
+	{
+		OnWallExit(true);
+	}
+
 	if (DoubleJumpFlipbook)
 	{
 		DoubleJumpFlipbook->SetVisibility(false);
@@ -306,7 +317,7 @@ void AMyPaperCharacter::OnJumped_Implementation()
 			DoubleJumpFlipbook->SetVisibility(true);
 		}
 	}
-	// GetCharacterMovement()->GravityScale = BaseGravityScale;
+
 	if (DevInfiniteJump)
 	{
 		// For solo testing, just gives a large amount of jumps so you can test without passing
@@ -421,10 +432,6 @@ void AMyPaperCharacter::MulticastResumeGame_Implementation(UUserWidget* myWidget
 			PauseMenuWidget->RemoveFromParent();
 		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("NO CONTROLLER!!!"))
-	}
 	// get rid of menus, then unpause
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
 
@@ -467,6 +474,53 @@ void AMyPaperCharacter::UpdateCollisionResponses()
 	}
 }
 
+void AMyPaperCharacter::OnWallHit(bool bLeft)
+{
+	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
+
+	if (NewMovementMode == EMovementMode::MOVE_Walking) return;
+	if (bInWallJumpTimer) return;
+
+	bInWallJumpTimer = true;
+
+	FTimerHandle TimerHandler;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {if (bInWallJumpTimer) OnWallExit(); }, WallJumpDuration, false);
+
+	GetCharacterMovement()->GravityScale = WallJumpGravityScale;
+	GetCharacterMovement()->Velocity = FVector(0.f, 0.f, 0.f);
+	
+	bCanXMove = false;
+	JumpMaxCount += 1;
+	LastWallHitLeft = bLeft;
+}
+
+void AMyPaperCharacter::OnWallExit(bool FromJump)
+{
+	bInWallJumpTimer = false;
+	GetCharacterMovement()->GravityScale = BaseGravityScale;
+	bCanXMove = true;
+
+	if (FromJump)
+	{
+		//if (!IsLocallyControlled()) return;
+
+
+		FVector KickOffVelocity;
+		float KickOffHorizontal = WallJumpNudge; 
+		KickOffVelocity.X = LastWallHitLeft ? KickOffHorizontal : -KickOffHorizontal;
+		KickOffVelocity.Z = 0.f; // just lateral
+
+		LaunchCharacter(KickOffVelocity, true, false);
+
+		return;
+	}
+
+	FTimerHandle TimerHandler;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {if (JumpMaxCount > 1) JumpMaxCount -= 1; }, WallJumpGrace, false);
+}
+
+
+
 void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -477,3 +531,4 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
 	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);
 }
+

@@ -150,6 +150,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> PauseMenuOverlayWidgetClass;
 
+	/*
+	==================================================
+					CUSTOMIZABLE VALUES
+	==================================================
+	*/
+
 	/** How long a player should have their movement turned off for after death */
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DeathDuration;
@@ -185,6 +191,30 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float DashSpeed;
 
+	/** The scale of gravity reduction when attaching to wall for wall jump */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
+	float WallJumpGravityScale;
+
+	/** The length of time to hang for a wall jump */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
+	float WallJumpDuration;
+
+	/** Grace period to allow for a jump after leaving contact with the wall */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
+	float WallJumpGrace;
+
+	/** Slight nudge when jumping off a wall to propel in direction away from wall */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
+	float WallJumpNudge;
+
+	/** Upper and lower bounds to be eligible for a wall jump */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
+	float WallJumpBounds;
+
+	/** The minimum incoming X velocity to allow for wall jumps */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
+	float WallJumpMinVelocity;
+
 	/** Whether the player is holding the ball */
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHolding, BlueprintReadWrite, Category = "Debug")
 	bool IsHolding;
@@ -208,6 +238,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool HasJumpInput;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool bInWallJumpTimer;
+
 	/** Whether the player can dash*/
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanDash;
@@ -217,10 +250,16 @@ public:
 
 	bool bDead = false;
 
+	bool bCanXMove = true;
+
+	bool LastWallHitLeft = true;
+
 	UPROPERTY(VisibleAnywhere, Replicated)
 	FRotator ControlRotation;
 
 	FVector2D LastMovementVector;
+
+	FVector PreviousVelocity;
 
 	/** The normal gravity scale, so that we can revert back to this after getting out of an apex */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
@@ -295,5 +334,11 @@ public:
 
 	UFUNCTION()
 	void UpdateCollisionResponses();
+
+	UFUNCTION()
+	void OnWallHit(bool bLeft);
+
+	UFUNCTION()
+	void OnWallExit(bool FromJump=false);
 
 };

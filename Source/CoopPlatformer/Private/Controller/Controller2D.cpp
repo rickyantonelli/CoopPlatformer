@@ -264,6 +264,7 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		}
 
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
+		MyGameStateCoop->ActivePlayers[0]->ResetJumpAbility();
 		MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
