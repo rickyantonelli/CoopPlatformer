@@ -10,6 +10,7 @@
 #include "Mechanics/Keys/SamePassKeyActor.h"
 #include "Systems/MyPlayerState.h"
 #include "Mechanics/Movement/DashToken.h"
+#include "Mechanics/Movement/FreezeToken.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
@@ -125,7 +126,6 @@ void AController2D::PassServerRPCFunction_Implementation()
 	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	BallActor->IsAttached = false;
 	MyGameStateCoop->ActivePlayers[0]->IsHolding = false;
-	MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 	BallActor->IsMoving = true;
 	BallActor->CanPass = false;
 	BallActor->BeginPassCooldown();
@@ -151,6 +151,11 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 		MyGameStateCoop->ActivePlayers[1]->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
 		if (!OverlapActors.IsEmpty())
 		{
+			if (MyGameStateCoop->ActivePlayers[1]->bPassingThrough == false)
+			{
+				ReturnBallToThrower();
+				return;
+			}
 			// The ball has arrived at the NonHoldingPlayer
 			ServerApplyBallCaught();
 		}
@@ -173,7 +178,6 @@ void AController2D::ServerApplyBallCaught()
 		MyGameStateCoop->ActivePlayers.Swap(0,1);
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
 		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingWidget();
-		MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		BallActor->IsMoving = false;
 
@@ -211,6 +215,11 @@ void AController2D::ReturnBallToThrower()
 	// To be called when the ball is in mid air
 	if (HasAuthority() && BallActor->IsMoving)
 	{
+		//if (BallActor->GetAttachParentActor())
+		//{
+		//	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		//}
+
 		MyGameStateCoop->ActivePlayers.Swap(0, 1);
 		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
 	}
@@ -265,7 +274,6 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
 		MyGameStateCoop->ActivePlayers[0]->ResetJumpAbility();
-		MyGameStateCoop->ActivePlayers[0]->UpdateCollisionResponses();
 
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 

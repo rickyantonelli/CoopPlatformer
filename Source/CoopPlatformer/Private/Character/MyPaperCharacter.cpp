@@ -42,8 +42,10 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	bFirstPlayer = false;
 	bInWallJumpTimer = false;
 
-	// Dash prototype - holding off for now
 	CanDash = false;
+	bCanFreeze = false;
+	bFrozen = false;
+	bPassingThrough = true;
 
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
@@ -64,6 +66,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 
 	ControlRotation = FRotator::ZeroRotator;
 	PreviousVelocity = FVector::ZeroVector;
+	PreFreezeVelocity = FVector::ZeroVector;
 }
 
 void AMyPaperCharacter::BeginPlay()
@@ -135,9 +138,10 @@ void AMyPaperCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		//Passing
 		EnhancedInputComponent->BindAction(PassAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Pass);
 
-		//Dashing
-		// Dash prototype - holding off for now
-		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::Dash);
+		//Extra Action
+		EnhancedInputComponent->BindAction(ExtraAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::ExtraActionPressed);
+		EnhancedInputComponent->BindAction(ExtraActionRelease, ETriggerEvent::Triggered, this, &AMyPaperCharacter::ExtraActionReleased);
+
 
 		EnhancedInputComponent->BindAction(CountdownPingAction, ETriggerEvent::Triggered, this, &AMyPaperCharacter::CountdownPing);
 
@@ -179,24 +183,86 @@ void AMyPaperCharacter::Move(const FInputActionValue& Value)
 
 void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
-	if (IsHolding && MovementEnabled && IsLocallyControlled())
+	if (IsHolding && bPassingThrough && MovementEnabled && IsLocallyControlled())
 	{
 		OnPassActivated.Broadcast();
 	}
 }
 
+void AMyPaperCharacter::ExtraActionPressed(const FInputActionValue& Value)
+{
+	// the game will support multiple types of token pickups
+	// but will never have more than one active at a time
+
+	// TODO: need to have these be server rpcs
+	// still having disconnects with client not seeing what is happening on server
+	// probably need to serverRPC->multicast for these actions
+
+	if (!IsLocallyControlled()) return;
+
+	if (CanDash)
+	{
+		Dash(Value);
+		return;
+	}
+
+	if (bCanFreeze)
+	{
+		if (bInWallJumpTimer) return;
+		if (bFrozen) return;
+		if (GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Walking) return; // can only freeze in air
+
+		PreFreezeVelocity = GetCharacterMovement()->Velocity;
+		FreezeServerRPCFunction(PreFreezeVelocity);
+	}
+}
+
+void AMyPaperCharacter::ExtraActionReleased(const FInputActionValue& Value)
+{
+	if (!IsLocallyControlled()) return;
+	if (bFrozen)
+	{
+
+		UnFreezeServerRPCFunction(PreFreezeVelocity);
+	}
+}
+
 void AMyPaperCharacter::Dash(const FInputActionValue& Value)
 {
-	// Dash prototype - holding off for now
-	if (!CanDash) return;
-
-
 	if (IsLocallyControlled())
 	{
 		FVector DashDirection = FVector(LastMovementVector.X, 0.f, LastMovementVector.Y).GetSafeNormal();
 
 		DashServerRPCFunction(DashDirection);
 	}
+}
+
+void AMyPaperCharacter::FreezeServerRPCFunction_Implementation(FVector FreezeVelo)
+{
+	bCanXMove = false;
+	bCanFreeze = false;
+	bFrozen = true;
+	MulticastFreezePlayer(FreezeVelo);
+}
+
+void AMyPaperCharacter::UnFreezeServerRPCFunction_Implementation(FVector FreezeVelo)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Unfreeze Activated"));
+	bCanXMove = true;
+	bFrozen = false;
+	MulticastUnfreezePlayer(FreezeVelo);
+}
+
+void AMyPaperCharacter::MulticastFreezePlayer_Implementation(FVector FreezeVelo)
+{
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->GravityScale = 0.f;
+}
+
+void AMyPaperCharacter::MulticastUnfreezePlayer_Implementation(FVector FreezeVelo)
+{
+	GetCharacterMovement()->GravityScale = BaseGravityScale;
+	GetCharacterMovement()->Velocity = FreezeVelo;
 }
 
 void AMyPaperCharacter::CountdownPing(const FInputActionValue& Value)
@@ -288,6 +354,7 @@ void AMyPaperCharacter::StopJumping()
 
 void AMyPaperCharacter::JumpReleased()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Jump Released"));
 	// we care about this because we want the player to release the jump button before getting another jump
 	HasJumpInput = true;
 }
@@ -357,14 +424,17 @@ void AMyPaperCharacter::GravityAtApex() const
 {
 	// in order to get a smoother controller, we slightly reduce the gravity scale of the player when they are at a jump apex
 	// for a short amount of time - gives a floating feeling at the top
-	if (Jumping)
-	{
-		GetCharacterMovement()->GravityScale = BaseGravityScale * JumpApexGravityScale;
-		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {GetCharacterMovement()->GravityScale = BaseGravityScale; }, JumpApexTimer, false);
-		
-	}
-	GetCharacterMovement()->bNotifyApex = true;
+	
+
+	// TODO: Reimplement this - it was breaking freeze token
+	//if (Jumping && !bFrozen)
+	//{
+	//	GetCharacterMovement()->GravityScale = BaseGravityScale * JumpApexGravityScale;
+	//	FTimerHandle TimerHandler;
+	//	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {GetCharacterMovement()->GravityScale = BaseGravityScale; }, JumpApexTimer, false);
+	//	
+	//}
+	//GetCharacterMovement()->bNotifyApex = true;
 }
 
 void AMyPaperCharacter::RemoveBallArrivingWidget()
@@ -384,7 +454,12 @@ void AMyPaperCharacter::ApplyDashToken()
 	if (PlayerMovementMode == EMovementMode::MOVE_Walking) return;
 
 	CanDash = true;
+}
 
+
+void AMyPaperCharacter::ApplyFreezeToken()
+{
+	if (HasAuthority()) bCanFreeze = true;
 }
 
 void AMyPaperCharacter::MulticastApplyFriction_Implementation(int Friction)
@@ -460,20 +535,6 @@ void AMyPaperCharacter::OnRep_IsHolding()
 	RemoveBallArrivingWidget();
 }
 
-void AMyPaperCharacter::UpdateCollisionResponses()
-{
-	if (IsHolding)
-	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel7, ECollisionResponse::ECR_Ignore);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel8, ECollisionResponse::ECR_Block);
-	}
-	else
-	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel7, ECollisionResponse::ECR_Block);
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel8, ECollisionResponse::ECR_Ignore);
-	}
-}
-
 void AMyPaperCharacter::OnWallHit(bool bLeft)
 {
 	EMovementMode NewMovementMode = GetCharacterMovement()->MovementMode;
@@ -489,7 +550,7 @@ void AMyPaperCharacter::OnWallHit(bool bLeft)
 	GetCharacterMovement()->GravityScale = WallJumpGravityScale;
 	GetCharacterMovement()->Velocity = FVector(0.f, 0.f, 0.f);
 	
-	bCanXMove = false;
+	if (HasAuthority()) bCanXMove = false;
 	JumpMaxCount += 1;
 	LastWallHitLeft = bLeft;
 }
@@ -498,7 +559,7 @@ void AMyPaperCharacter::OnWallExit(bool FromJump)
 {
 	bInWallJumpTimer = false;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
-	bCanXMove = true;
+	if (HasAuthority()) bCanXMove = true;
 
 	if (FromJump)
 	{
@@ -527,6 +588,10 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 
 	DOREPLIFETIME(AMyPaperCharacter, IsHolding);
 	DOREPLIFETIME(AMyPaperCharacter, CanDash);
+	DOREPLIFETIME(AMyPaperCharacter, bCanFreeze);
+	DOREPLIFETIME(AMyPaperCharacter, bCanXMove);
+	DOREPLIFETIME(AMyPaperCharacter, bFrozen);
+	DOREPLIFETIME(AMyPaperCharacter, bPassingThrough);
 	DOREPLIFETIME(AMyPaperCharacter, JumpMaxCount);
 	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
 	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);

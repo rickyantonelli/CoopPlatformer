@@ -50,6 +50,17 @@ protected:
 	/** Called for dashing input */
 	void Dash(const FInputActionValue& Value);
 
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void FreezeServerRPCFunction(FVector FreezeVelo);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void UnFreezeServerRPCFunction(FVector FreezeVelo);
+
+	/** Called for dashing input */
+	void ExtraActionPressed(const FInputActionValue& Value);
+
+	void ExtraActionReleased(const FInputActionValue& Value);
+
 	/** Called for countdown ping input */
 	void CountdownPing(const FInputActionValue& Value);
 
@@ -134,7 +145,10 @@ public:
 
 	/** The action to bind to player dashing*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> DashAction;
+	TObjectPtr<UInputAction> ExtraAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> ExtraActionRelease;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> CountdownPingAction;
@@ -245,11 +259,22 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool CanDash;
 
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	bool bPassingThrough;
+
+	/** Whether the player can dash*/
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	bool bCanFreeze;
+
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	bool bFrozen;
+
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Debug")
 	bool bFirstPlayer;
 
 	bool bDead = false;
 
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bCanXMove = true;
 
 	bool LastWallHitLeft = true;
@@ -260,6 +285,8 @@ public:
 	FVector2D LastMovementVector;
 
 	FVector PreviousVelocity;
+
+	FVector PreFreezeVelocity;
 
 	/** The normal gravity scale, so that we can revert back to this after getting out of an apex */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
@@ -317,6 +344,9 @@ public:
 	UFUNCTION()
 	void ApplyDashToken();
 
+	UFUNCTION()
+	void ApplyFreezeToken();
+
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void MulticastPauseGame(UUserWidget* myWidget);
 
@@ -332,8 +362,11 @@ public:
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void MulticastApplyFriction(int Friction);
 
-	UFUNCTION()
-	void UpdateCollisionResponses();
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void MulticastFreezePlayer(FVector FreezeVelo);
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void MulticastUnfreezePlayer(FVector FreezeVelo);
 
 	UFUNCTION()
 	void OnWallHit(bool bLeft);
