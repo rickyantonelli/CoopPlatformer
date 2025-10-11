@@ -32,6 +32,8 @@ void ATimerKeyActor::BeginPlay()
 
 void ATimerKeyActor::Tick(float DeltaSeconds)
 {
+	if (!Locked) return;
+
 	if (OverlappedMeshes.Num() == KeyMeshes.Num())
 	{
 		if (HasAuthority()) MulticastTriggerUnlock();

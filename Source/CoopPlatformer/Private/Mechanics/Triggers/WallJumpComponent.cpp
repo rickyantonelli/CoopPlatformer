@@ -45,19 +45,13 @@ void UWallJumpComponent::OnBoxComponentHit(UPrimitiveComponent* HitComponent, AA
 	if (!HittingCharacter) return;
 	if (HittingCharacter->bInWallJumpTimer)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("IN WALL JUMP TIMER!"));
 		return; // already wall jumping
 	}
 
 	if (FMath::Abs(HittingCharacter->PreviousVelocity.X) < HittingCharacter->WallJumpMinVelocity)
 	{
 		// print the velocity, and that its too slow
-		UE_LOG(LogTemp, Warning, TEXT("Too slow! Velocity: %f - need %f"), HittingCharacter->PreviousVelocity.X, HittingCharacter->WallJumpMinVelocity);
 		return; // only trigger if coming in with some X velocity
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Good to go! Velocity: %f - need %f"), HittingCharacter->PreviousVelocity.X, HittingCharacter->WallJumpMinVelocity);
 	}
 
 	const FVector Right = HitComponent->GetForwardVector();
@@ -82,19 +76,13 @@ void UWallJumpComponent::OnTilemapComponentHit(UPrimitiveComponent* HitComponent
 	if (!HittingCharacter) return;
 	if (HittingCharacter->bInWallJumpTimer)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("IN WALL JUMP TIMER!"));
 		return; // already wall jumping
 	}
 
 	if (FMath::Abs(HittingCharacter->PreviousVelocity.X) < HittingCharacter->WallJumpMinVelocity)
 	{
 		// print the velocity, and that its too slow
-		UE_LOG(LogTemp, Warning, TEXT("Too slow! Velocity: %f - need %f"), HittingCharacter->PreviousVelocity.X, HittingCharacter->WallJumpMinVelocity);
 		return; // only trigger if coming in with some X velocity
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Good to go! Velocity: %f - need %f"), HittingCharacter->PreviousVelocity.X, HittingCharacter->WallJumpMinVelocity);
 	}
 
 	const FVector Right = HitComponent->GetForwardVector();
@@ -123,7 +111,6 @@ void UWallJumpComponent::OnTilemapComponentHit(UPrimitiveComponent* HitComponent
 		Params);
 
 	if (bHitGround || bHitCeiling) {
-		UE_LOG(LogTemp, Warning, TEXT("Too close to ground or ceiling for wall jump!"));
 		return;
 	}
 

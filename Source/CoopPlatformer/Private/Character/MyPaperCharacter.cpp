@@ -571,7 +571,7 @@ void AMyPaperCharacter::OnWallExit(bool FromJump)
 		KickOffVelocity.X = LastWallHitLeft ? KickOffHorizontal : -KickOffHorizontal;
 		KickOffVelocity.Z = 0.f; // just lateral
 
-		LaunchCharacter(KickOffVelocity, true, false);
+		if (HasAuthority()) LaunchCharacter(KickOffVelocity, true, false);
 
 		return;
 	}

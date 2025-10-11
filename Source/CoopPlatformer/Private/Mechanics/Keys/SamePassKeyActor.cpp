@@ -21,6 +21,8 @@ void ASamePassKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 void ASamePassKeyActor::Tick(float DeltaSeconds)
 {
+	if (!Locked) return;
+
 	if (OverlappedMeshes.Num() == KeyMeshes.Num())
 	{
 		if (HasAuthority() && Locked) MulticastTriggerUnlock();

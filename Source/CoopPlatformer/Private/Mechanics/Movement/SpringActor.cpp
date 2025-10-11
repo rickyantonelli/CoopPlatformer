@@ -46,7 +46,7 @@ void ASpringActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AAct
 		AMyPaperCharacter* MyCharacter = Cast<AMyPaperCharacter>(OtherActor);
 		if (MyCharacter)
 		{
-			FVector LaunchDirection = FVector(0, 0, 1);
+			FVector LaunchDirection = GetActorUpVector();
 			MyCharacter->LaunchCharacter(LaunchDirection * LaunchPower, false, true);
 		}
 	}
