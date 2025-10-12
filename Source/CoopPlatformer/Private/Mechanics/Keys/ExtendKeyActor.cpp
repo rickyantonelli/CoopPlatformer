@@ -1,10 +1,10 @@
 // Copyright Ricky Antonelli
 
 
-#include "Mechanics/Keys/TimerKeyActor.h"
+#include "Mechanics/Keys/ExtendKeyActor.h"
 #include "Net/UnrealNetwork.h"
 
-ATimerKeyActor::ATimerKeyActor()
+AExtendKeyActor::AExtendKeyActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -15,7 +15,7 @@ ATimerKeyActor::ATimerKeyActor()
 	UnlockTimer = 3.0f;
 }
 
-void ATimerKeyActor::BeginPlay()
+void AExtendKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -25,23 +25,25 @@ void ATimerKeyActor::BeginPlay()
 		if (MeshComponent)
 		{
 			KeyMeshes.Add(MeshComponent);
-			MeshComponent->OnComponentBeginOverlap.AddDynamic(this, &ATimerKeyActor::OnBoxCollision);
+			MeshComponent->OnComponentBeginOverlap.AddDynamic(this, &AExtendKeyActor::OnBoxCollision);
 		}
 	}
 }
 
-void ATimerKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AExtendKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0 && !OverlappedMeshes.Contains(OverlappedComponent) && HasAuthority())
-	{ 
-		if (!InTimer)
-		{
-			// if the timer isn't in action, then start it and mark our bool as true
-			FTimerHandle TimerHandler;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() { if (HasAuthority()) MulticastTimerExpired();  }, UnlockTimer, false);
-
-			InTimer = true;
-		}
+	{
+        if (!InTimer)
+        {
+            GetWorld()->GetTimerManager().SetTimer(UnlockTimerHandle, [&]() { if (HasAuthority()) MulticastTimerExpired(); }, UnlockTimer, false);
+            InTimer = true;
+        }
+        else
+        {
+            GetWorld()->GetTimerManager().ClearTimer(UnlockTimerHandle);
+            GetWorld()->GetTimerManager().SetTimer(UnlockTimerHandle, [&]() { if (HasAuthority()) MulticastTimerExpired(); }, UnlockTimer, false);
+        }
 
 		OverlappedMeshes.Add(OverlappedComponent);
 
@@ -57,12 +59,12 @@ void ATimerKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 	}
 }
 
-void ATimerKeyActor::MulticastYellowKey_Implementation(UPaperSpriteComponent* SpriteComp)
+void AExtendKeyActor::MulticastYellowKey_Implementation(UPaperSpriteComponent* SpriteComp)
 {
 	SpriteComp->SetSprite(YellowKey);
 }
 
-void ATimerKeyActor::MulticastTimerExpired_Implementation()
+void AExtendKeyActor::MulticastTimerExpired_Implementation()
 {
 	if (Locked) OverlappedMeshes.Empty();
 	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
@@ -74,9 +76,9 @@ void ATimerKeyActor::MulticastTimerExpired_Implementation()
 	}
 }
 
-void ATimerKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AExtendKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ATimerKeyActor, OverlappedMeshes);
+	DOREPLIFETIME(AExtendKeyActor, OverlappedMeshes);
 }

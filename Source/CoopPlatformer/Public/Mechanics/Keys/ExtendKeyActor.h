@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Mechanics/Keys/KeyActor.h"
-#include "TimerKeyActor.generated.h"
+#include "ExtendKeyActor.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class COOPPLATFORMER_API ATimerKeyActor : public AKeyActor
+class COOPPLATFORMER_API AExtendKeyActor : public AKeyActor
 {
 	GENERATED_BODY()
 	
 public:
-	ATimerKeyActor();
+	AExtendKeyActor();
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -45,4 +45,6 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TArray<UPrimitiveComponent*> OverlappedMeshes;
+
+	FTimerHandle UnlockTimerHandle;
 };

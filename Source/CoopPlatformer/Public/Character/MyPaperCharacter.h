@@ -171,39 +171,47 @@ public:
 	*/
 
 	/** How long a player should have their movement turned off for after death */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Death")
 	float DeathDuration;
 
 	/** How long coyote time should last - meaning how much error time a player has to still jump after leaving a platform */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Jump")
 	float CoyoteDuration;
 
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Jump")
 	float DoubleJumpGrace;
 
 	/** For testing - allows the dev to infinitely jump instead of passing back and forth to get jump resets */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Cheats")
 	bool DevInfiniteJump;
 
 	/** How frequently the dev can infinite jump */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Cheats")
 	float DevJumpResetTimer;
 
 	/** How long the gravity is reduced at apex on a jump */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Jump")
 	float JumpApexTimer;
 
 	/** The scale of gravity reduction when a player is at apex */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Jump")
 	float JumpApexGravityScale;
 
 	/** The time that the dash should occur for */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Dash")
 	float DashDuration;
 
 	/** The speed of the dash */
-	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Dash")
 	float DashSpeed;
+
+	/** Threshold velo for when to step in and turn off lateral air friction */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Freeze")
+	float FreezeVeloThreshold;
+
+	/** The amount you divide the x velo to calculate how long to turn off friction for */
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Freeze")
+	float FreezeFrictionCalc;
 
 	/** The scale of gravity reduction when attaching to wall for wall jump */
 	UPROPERTY(EditAnywhere, Category = "Customizable Values|Wall Jump")
@@ -360,7 +368,7 @@ public:
 	void DashServerRPCFunction(FVector DashDir);
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void MulticastApplyFriction(int Friction);
+	void MulticastApplyFriction(int Friction, float FrictionTimer);
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void MulticastFreezePlayer(FVector FreezeVelo);

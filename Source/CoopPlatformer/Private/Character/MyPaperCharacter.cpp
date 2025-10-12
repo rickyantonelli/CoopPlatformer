@@ -31,38 +31,48 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	DoubleJumpFlipbook->SetupAttachment(RootComponent);
 
 	GetCharacterMovement()->bNotifyApex = true;
+	BaseGravityScale = GetCharacterMovement()->GravityScale;
 
+	// Misc movement
 	IsHolding = false;
 	MovementEnabled = true;
+	bFirstPlayer = false;
+	bPassingThrough = true;
+
+	// Death
+	DeathDuration = 1.0f;
+
+	// Jumping
 	WithinCoyoteTime = false;
 	WithinDoubleJumpGrace = false;
 	Jumping = false;
 	DevInfiniteJump = false;
 	HasJumpInput = true;
-	bFirstPlayer = false;
-	bInWallJumpTimer = false;
-
-	CanDash = false;
-	bCanFreeze = false;
-	bFrozen = false;
-	bPassingThrough = true;
-
-	BaseGravityScale = GetCharacterMovement()->GravityScale;
-
-	DeathDuration = 1.0f;
 	CoyoteDuration = 0.5f;
 	DevJumpResetTimer = 0.5f;
 	JumpApexTimer = 0.2f;
 	JumpApexGravityScale = 0.5f;
+	DoubleJumpGrace = 0.2f;
+
+	// Dash
+	CanDash = false;
 	DashSpeed = 2.0f;
 	DashDuration = 1.0f;
-	DoubleJumpGrace = 0.2f;
+
+	// Wall Jump
+	bInWallJumpTimer = false;
 	WallJumpGravityScale = 0.2f;
 	WallJumpDuration = 0.5f;
 	WallJumpGrace = 0.2f;
 	WallJumpNudge = 150.f;
 	WallJumpBounds = 100.0f;
 	WallJumpMinVelocity = 20.0f;
+
+	// Freeze
+	bCanFreeze = false;
+	bFrozen = false;
+	FreezeVeloThreshold = 0.0f;
+	FreezeFrictionCalc = 200.0f;
 
 	ControlRotation = FRotator::ZeroRotator;
 	PreviousVelocity = FVector::ZeroVector;
@@ -222,7 +232,6 @@ void AMyPaperCharacter::ExtraActionReleased(const FInputActionValue& Value)
 	if (!IsLocallyControlled()) return;
 	if (bFrozen)
 	{
-
 		UnFreezeServerRPCFunction(PreFreezeVelocity);
 	}
 }
@@ -251,6 +260,16 @@ void AMyPaperCharacter::UnFreezeServerRPCFunction_Implementation(FVector FreezeV
 	bCanXMove = true;
 	bFrozen = false;
 	MulticastUnfreezePlayer(FreezeVelo);
+
+	// if absolute value of freezevelo x is greater than threshold, temporarily turn off lateral friction
+	if (FMath::Abs(FreezeVelo.X) > FreezeVeloThreshold)
+	{
+		// calculate how long to turn off friction for based on current x velocity
+		float FrictionTime = FMath::Clamp(FMath::Abs(FreezeVelo.X) / FreezeFrictionCalc, 0.1f, 1.5f);
+		// print frictiontime and freezevelo x for debugging
+		UE_LOG(LogTemp, Warning, TEXT("Friction Time: %f, FreezeVelo X: %f"), FrictionTime, FreezeVelo.X);
+		MulticastApplyFriction(0, FrictionTime); // Apply zero friction for a short duration
+	}
 }
 
 void AMyPaperCharacter::MulticastFreezePlayer_Implementation(FVector FreezeVelo)
@@ -275,7 +294,7 @@ void AMyPaperCharacter::CountdownPing(const FInputActionValue& Value)
 
 void AMyPaperCharacter::DashServerRPCFunction_Implementation(FVector DashDir)
 {
-	MulticastApplyFriction(0); // Apply zero friction for the dash duration
+	MulticastApplyFriction(0, DashDuration); // Apply zero friction for the dash duration
 	LaunchCharacter(DashDir * DashSpeed, true, true);
 	CanDash = false;
 }
@@ -459,16 +478,19 @@ void AMyPaperCharacter::ApplyDashToken()
 
 void AMyPaperCharacter::ApplyFreezeToken()
 {
-	if (HasAuthority()) bCanFreeze = true;
+	if (HasAuthority())
+	{
+		bCanFreeze = true;
+	}
 }
 
-void AMyPaperCharacter::MulticastApplyFriction_Implementation(int Friction)
+void AMyPaperCharacter::MulticastApplyFriction_Implementation(int Friction, float FrictionTimer)
 {
 	int InitialFriction = GetCharacterMovement()->FallingLateralFriction;
 	GetCharacterMovement()->FallingLateralFriction = Friction;
 
 	FTimerHandle TimerHandler;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, InitialFriction]() {GetCharacterMovement()->FallingLateralFriction = InitialFriction; }, DashDuration, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, InitialFriction]() {GetCharacterMovement()->FallingLateralFriction = InitialFriction; }, FrictionTimer, false);
 }
 
 void AMyPaperCharacter::ServerFlipPlayer_Implementation(FVector2D MovementVector)
