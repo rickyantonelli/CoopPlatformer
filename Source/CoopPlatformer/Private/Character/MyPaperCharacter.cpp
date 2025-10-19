@@ -459,7 +459,7 @@ void AMyPaperCharacter::GravityAtApex() const
 void AMyPaperCharacter::RemoveBallArrivingWidget()
 {
 	// TODO: Can open this up by allowing a user widget to be passed in
-	if (BallArrivingWidget && BallArrivingWidget->IsInViewport() && IsHolding)
+	if (BallArrivingWidget && BallArrivingWidget->IsInViewport())
 	{
 		BallArrivingWidget->RemoveFromParent();
 	}

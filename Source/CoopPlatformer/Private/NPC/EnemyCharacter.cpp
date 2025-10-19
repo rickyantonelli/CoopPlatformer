@@ -16,20 +16,25 @@ AEnemyCharacter::AEnemyCharacter()
 	bAlwaysRelevant = true;
 	SetReplicateMovement(true);
 
-	// the enemy health, we dont need to keep track of a damage amount since it will always be 1
 	Health = 5;
-	// whether we can damage the enemy - we want this because we dont want damage to be applied multiple times in short frames
-	CanDamage = true;
-	// cooldown for ball passes
 	CooldownTimer = 1;
+
+	bCanDamage = true;
+	bCanPatrol = true;
+	FollowType = EFollowType::Off;
+
 
 	GetCapsuleComponent()->SetIsReplicated(true);
 	MoveSpeed = 100.0f;
+
+	GameStateRef = nullptr;
 }
 
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GameStateRef = GetWorld()->GetGameState<AMyGameStateBase>();
 
 	UCapsuleComponent* Capsule = GetCapsuleComponent();
 	if (Capsule)
@@ -47,25 +52,74 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bCanPatrol)
+	{
+		switch (FollowType)
+		{
+		case EFollowType::Off:
+			break;
+		case EFollowType::NearestPlayer:
+			PatrolToNearest(DeltaTime);
+			break;
+		case EFollowType::Ball:
+			PatrolToBall(DeltaTime);
+			break;
+		}
+	}
 }
 
-void AEnemyCharacter::Patrol()
+void AEnemyCharacter::PatrolToNearest(float DeltaTime)
 {
-	// for now we are just doing the basic code as if this is a moving platform
-	// in the future we want enemy AI to be much more complex so we'll probably completely redo this
+	if (GameStateRef && GameStateRef->ActivePlayers.Num() == 2)
+	{
+		if (!GameStateRef->ActivePlayers[0] || !GameStateRef->ActivePlayers[1]) return;
+		FVector TargetLocation = FVector::ZeroVector;
 
+		if (GameStateRef->ActivePlayers[0]->bDead)
+		{
+			if (GameStateRef->ActivePlayers[1]->bDead) return;
+			TargetLocation = GameStateRef->ActivePlayers[1]->GetActorLocation();
+		}
+		else if (GameStateRef->ActivePlayers[1]->bDead)
+		{
+			TargetLocation = GameStateRef->ActivePlayers[0]->GetActorLocation();
+		}
+		else
+		{
+
+			// figure out which player is closest then move towards them
+			FVector PlayerOneLocation = GameStateRef->ActivePlayers[0]->GetActorLocation();
+			FVector PlayerTwoLocation = GameStateRef->ActivePlayers[1]->GetActorLocation();
+
+			// get the closer player
+			TargetLocation = (FVector::Dist(GetActorLocation(), PlayerOneLocation) < FVector::Dist(GetActorLocation(), PlayerTwoLocation)) ? PlayerOneLocation : PlayerTwoLocation;
+		}
+		FVector Direction = (TargetLocation - GetActorLocation()).GetSafeNormal();
+		AddMovementInput(Direction, MoveSpeed * DeltaTime);
+	}
+}
+
+void AEnemyCharacter::PatrolToBall(float DeltaTime)
+{
+	if (GameStateRef && GameStateRef->BallActor)
+	{
+		FVector TargetLocation = GameStateRef->BallActor->GetActorLocation();
+		FVector Direction = (TargetLocation - GetActorLocation()).GetSafeNormal();
+		AddMovementInput(Direction, MoveSpeed * DeltaTime);
+	}
 }
 
 void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && CanDamage)
+	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && bCanDamage)
 	{
 		UE_LOG(LogTemp, Log, TEXT("APPLYING DAMAGE"));
 		Health -= 1;
-		CanDamage = false;
+		bCanDamage = false;
 		MulticastApplyDeath(Health);
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanDamage = true; }, CooldownTimer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {bCanDamage = true; }, CooldownTimer, false);
 	}
 }
 
@@ -150,7 +204,7 @@ void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AEnemyCharacter, Health);
-	DOREPLIFETIME(AEnemyCharacter, CanDamage);
+	DOREPLIFETIME(AEnemyCharacter, bCanDamage);
 	DOREPLIFETIME(AEnemyCharacter, LockedActors);
 	DOREPLIFETIME(AEnemyCharacter, UnlockedActors);
 }

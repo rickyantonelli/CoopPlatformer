@@ -20,18 +20,13 @@ AWindActor::AWindActor()
 
 	PushForce = 1.0f;
 	OverlappingBall = nullptr;
+	BlockLocation = FVector::ZeroVector;
 }
 
 // Called when the game starts or when spawned
 void AWindActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	OriginalExtend = Box->GetUnscaledBoxExtent();
-	OriginalScaledExtend = Box->GetScaledBoxExtent();
-	OriginalLocation = Box->GetComponentLocation();
-	StartLocation = Box->GetComponentLocation();
-	UE_LOG(LogTemp, Warning, TEXT("OriginalExtend Location: %s"), *OriginalExtend.ToString());
 
 	Box->OnComponentBeginOverlap.AddDynamic(this, &AWindActor::OnBoxCollision);
 	Box->OnComponentEndOverlap.AddDynamic(this, &AWindActor::OnBoxCollisionEnd);
@@ -49,54 +44,76 @@ void AWindActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// if (HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("CurrentExtent: %s"), *Box->GetScaledBoxExtent().ToString());
+	if (!HasAuthority()) return;
 
-	if (HasAuthority() && GoAgain)
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	if (OverlappingBall) Params.AddIgnoredActor(OverlappingBall);
+	Params.bTraceComplex = true;
+	Params.bReturnPhysicalMaterial = false;
+
+	FCollisionObjectQueryParams ObjectParams;
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	FVector BoxExtent;
+	FVector Origin;
+	GetActorBounds(false, Origin, BoxExtent);
+
+	FVector BottomPoint = Origin - FVector(0.0f, 0.0f, BoxExtent.Z);
+	FVector TopPoint = Origin + FVector(0.0f, 0.0f, BoxExtent.Z);
+
+
+	bool bHit = GetWorld()->LineTraceSingleByObjectType(Hit, BottomPoint, TopPoint, ObjectParams, Params);
+
+	if (bHit)
 	{
-		FVector Up = GetActorUpVector();
-		FVector EndLocation = FVector(Box->GetComponentLocation().X, Box->GetComponentLocation().Y, Box->GetComponentLocation().Z + Box->GetScaledBoxExtent().Z);
-
-		FHitResult Hit;
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
-		Params.bTraceComplex = true;
-
-		FCollisionObjectQueryParams ObjectParams;
-		ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
-		ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-		ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
-
-		bool bHit = GetWorld()->LineTraceSingleByObjectType(Hit, Box->GetComponentLocation(), EndLocation, ObjectParams, Params);
-
-		if (bHit)
+		if (BlockLocation == FVector::ZeroVector)
 		{
-			float NewExtentZ = (Hit.Location.Z - (Box->GetComponentLocation().Z - Box->GetScaledBoxExtent().Z)) * 0.5f;
-
-			FVector NewLocation(Box->GetComponentLocation().X, Box->GetComponentLocation().Y, Box->GetComponentLocation().Z - (NewExtentZ / 3));
-			FVector NewExtent = FVector(OriginalExtend.X, OriginalExtend.Y, NewExtentZ / Box->GetComponentScale().Z);
-
-			UE_LOG(LogTemp, Warning, TEXT("NewExtent: %s"), *NewExtent.ToString());
-			UE_LOG(LogTemp, Warning, TEXT("NewLocation: %s"), *NewLocation.ToString());
-
-			Box->SetBoxExtent(NewExtent);
-			Box->SetWorldLocation(NewLocation);
-
-			GoAgain = false;
+			BlockLocation = Hit.Location;
 		}
-		//else
-		//{
-		//	Box->SetBoxExtent(OriginalExtend);
-		//	Box->SetWorldLocation(OriginalLocation);
-		//}
+		else if (Hit.Location.Z < BlockLocation.Z)
+		{
+			BlockLocation = Hit.Location;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Wind Blocked at Location: %s"), *BlockLocation.ToString());
+	}
+	else
+	{
+		if (BlockLocation != FVector::ZeroVector)
+		{
+			// validate the blocker is actually gone
+			TArray<UPrimitiveComponent*> OverlapComps;
+            Box->GetOverlappingComponents(OverlapComps);
+			if (OverlapComps.Num() > 0)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Keeping Blocked at Location: %s"), *BlockLocation.ToString());
+			}
+			else
+			{
+				BlockLocation = FVector::ZeroVector;
+				UE_LOG(LogTemp, Warning, TEXT("Wind No Longer Blocked"));
+			}
+		}
+		else
+		{
+			BlockLocation = FVector::ZeroVector;
+		}
 	}
 
-	if (HasAuthority() && bPushing && OverlappingBall)
+	if (!bPushing) return;
+	if (!OverlappingBall || !OverlappingBall->IsMoving)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Pushing Ball Upwards"));
-		FVector BallLocation = OverlappingBall->GetActorLocation();
-		BallLocation.Z += PushForce * DeltaTime;
-		OverlappingBall->SetActorLocation(BallLocation);
+		UE_LOG(LogTemp, Warning, TEXT("Not Pushing: No Overlapping Ball or Ball Not Moving"));
+		return;
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Pushing Ball Upwards"));
+	FVector BallLocation = OverlappingBall->GetActorLocation();
+	BallLocation.Z += PushForce * DeltaTime;
+	OverlappingBall->SetActorLocation(BallLocation);
 
 }
 
@@ -104,12 +121,25 @@ void AWindActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor
 {
 	if (!OtherActor->ActorHasTag("Ball")) return;
 	if (!OverlappingBall || !OverlappingBall->IsMoving) return;
-	bPushing = true;
+	if (!HasAuthority()) return;
 
+	if (BlockLocation != FVector::ZeroVector)
+	{
+		FVector BallLocation = OverlappingBall->GetActorLocation();
+		if (BallLocation.Z > BlockLocation.Z)
+		{
+			// wind is being blocked at this point, return
+			UE_LOG(LogTemp, Warning, TEXT("Wind is Blocked, Not Pushing"));
+			return;
+		}
+	}
+
+	bPushing = true;
 }
 
 void AWindActor::OnBoxCollisionEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (!HasAuthority()) return;
 	if (!OtherActor->ActorHasTag("Ball")) return;
 	bPushing = false;
 }

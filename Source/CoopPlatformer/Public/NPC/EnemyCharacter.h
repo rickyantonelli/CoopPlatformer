@@ -6,9 +6,18 @@
 #include "PaperZDCharacter.h"
 #include "Controller/Controller2D.h"
 #include "Components/ArrowComponent.h"
+#include "Systems/MyGameStateBase.h"
 #include "EnemyCharacter.generated.h"
 
 class USoundBase;
+
+UENUM(BlueprintType)
+enum class EFollowType : uint8
+{
+	Off				UMETA(DisplayName = "Off"),
+	NearestPlayer   UMETA(DisplayName = "NearestPlayer"),
+	Ball			UMETA(DisplayName = "Ball"),
+};
 
 /**
  * 
@@ -38,8 +47,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	float CooldownTimer;
 
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	EFollowType FollowType;
+
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
-	bool CanDamage;
+	bool bCanDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	TArray<AActor*> LockedActors;
@@ -48,7 +60,10 @@ public:
 	TArray<AActor*> UnlockedActors;
 
 	UFUNCTION()
-	virtual void Patrol();
+	virtual void PatrolToNearest(float DeltaTime);
+
+	UFUNCTION()
+	virtual void PatrolToBall(float DeltaTime);
 
 	UFUNCTION()
 	void OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -67,4 +82,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<USoundBase> DamageSound;
+
+	AMyGameStateBase* GameStateRef;
+
+	bool bCanPatrol;
 };

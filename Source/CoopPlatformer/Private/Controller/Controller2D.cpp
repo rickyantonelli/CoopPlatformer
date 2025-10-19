@@ -219,7 +219,7 @@ void AController2D::ReturnBallToThrower()
 		//{
 		//	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		//}
-
+		MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingWidget();
 		MyGameStateCoop->ActivePlayers.Swap(0, 1);
 		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
 	}

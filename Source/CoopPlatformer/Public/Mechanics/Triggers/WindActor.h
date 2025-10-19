@@ -44,10 +44,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable")
 	float PushForce;
 
-	FVector OriginalExtend;
-	FVector OriginalScaledExtend;
-	FVector OriginalLocation;
-	FVector StartLocation;
+	FVector BlockLocation;
 
 	bool GoAgain = true;
 
