@@ -19,7 +19,6 @@ ADirectionPortal::ADirectionPortal()
 	TPMesh2->SetupAttachment(RootComp);
 	TPMesh2->SetIsReplicated(true);
 
-	CanTeleport = true;
 	TeleportCooldown = 0.5f;
 	CameraLagOffset = -5.0f;
 	CameraLagTime = 1.0f;
@@ -33,15 +32,14 @@ void ADirectionPortal::BeginPlay()
 
 	TPMesh1->OnComponentBeginOverlap.AddDynamic(this, &ADirectionPortal::OnBoxBeginOverlap);
 	TPMesh2->OnComponentBeginOverlap.AddDynamic(this, &ADirectionPortal::OnBoxBeginOverlap);
-	
 }
 
 void ADirectionPortal::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (CanTeleport && OtherActor->ActorHasTag("Player"))
+	if (OtherActor->ActorHasTag("Player") && !TPActorsOnCD.Contains(OtherActor))
 	{
 
-		CanTeleport = false;
+		TPActorsOnCD.Add(OtherActor);
 
 		AMyPaperCharacter* Player = Cast<AMyPaperCharacter>(OtherActor);
 		if (Player && Player->SpringArm)
@@ -56,8 +54,6 @@ void ADirectionPortal::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 				FVector IncomingVelo = MoveComp->Velocity;
 				UE_LOG(LogTemp, Warning, TEXT("IncomingVelo Velocity: %s"), *IncomingVelo.ToString());
 
-				float LateralFriction = MoveComp->FallingLateralFriction;
-
 				MoveComp->FallingLateralFriction = 0;
 				// for the ball or player, change the actor location to the other teleporter
 				UBoxComponent* TargetComp = (OverlappedComponent == TPMesh1) ? TPMesh2 : TPMesh1;
@@ -69,11 +65,12 @@ void ADirectionPortal::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 
 				Player->LaunchCharacter(OutVelo * LaunchAmp, true, true);
 
-				FTimerHandle LateralFrictionHandle;
-				GetWorld()->GetTimerManager().SetTimer(LateralFrictionHandle, [MoveComp, LateralFriction]() {MoveComp->FallingLateralFriction = LateralFriction; }, LateralFrictionTimer, false);
+				// Clear Lateralfriction handle first
+				GetWorld()->GetTimerManager().ClearTimer(LateralFrictionHandle);
+				GetWorld()->GetTimerManager().SetTimer(LateralFrictionHandle, [MoveComp, Player]() {MoveComp->FallingLateralFriction = Player->InitialFriction; }, LateralFrictionTimer, false);
 
 				FTimerHandle TimerHandler;
-				GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanTeleport = true; }, TeleportCooldown, false);
+				GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 
 			}
 

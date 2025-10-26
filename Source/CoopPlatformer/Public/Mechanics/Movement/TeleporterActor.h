@@ -36,7 +36,7 @@ public:
 	void OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	bool CanTeleport;
+	TArray<AActor*> TPActorsOnCD;
 
 	UPROPERTY(EditAnywhere, Category = "Custom")
 	float TeleportCooldown;

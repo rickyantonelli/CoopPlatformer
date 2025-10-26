@@ -44,7 +44,7 @@ public:
 	void ApplyCameraLag(AActor* PlayerActor);
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	bool CanTeleport;
+	TArray<AActor*> TPActorsOnCD;
 
 	UPROPERTY(EditAnywhere, Category = "Custom")
 	float TeleportCooldown;

@@ -12,6 +12,7 @@ AActorTriggerArea::AActorTriggerArea()
 	SetReplicateMovement(true);
 	// Set to 2 here, but there will be times where we want this number to be 1 so we'll leave it open
 	TriggerAmount = 2;
+	ResetTimer = 0.f;
 
 	// I'll rework this later, but this is just a bool to give flexibility on the blueprint side
 	// If true, it means we are enabling actors on event, if false vice versa
@@ -41,12 +42,6 @@ void AActorTriggerArea::BeginPlay()
 	}
 }
 
-void AActorTriggerArea::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AActorTriggerArea, bUnlocked);
-}
-
 void AActorTriggerArea::OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player") && PlayerActors.Find(OtherActor) == -1 && bUnlocked && HasAuthority())
@@ -63,6 +58,11 @@ void AActorTriggerArea::OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherAct
 			else
 			{
 				MulticastDisableActor();
+			}
+			if (ResetTimer > 0.f)
+			{
+				FTimerHandle ResetTimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [&]() { MulticastResetActors();  }, ResetTimer, false);
 			}
 		}
 	}
@@ -94,6 +94,7 @@ void AActorTriggerArea::MulticastDisableActor_Implementation()
 
 void AActorTriggerArea::MulticastEnableActor_Implementation()
 {
+	if (!EnableActor) return;
 	UBoxComponent* LockBox = EnableActor->GetComponentByClass<UBoxComponent>();
 	UPaperSpriteComponent* LockSprite = EnableActor->GetComponentByClass<UPaperSpriteComponent>();
 	if (LockBox)
@@ -104,4 +105,42 @@ void AActorTriggerArea::MulticastEnableActor_Implementation()
 	{
 		LockSprite->SetVisibility(true);
 	}
+}
+
+void AActorTriggerArea::MulticastResetActors_Implementation()
+{
+	if (HasAuthority()) bUnlocked = true;
+	if (DisableActor)
+	{
+		UBoxComponent* LockBox = DisableActor->GetComponentByClass<UBoxComponent>();
+		UPaperSpriteComponent* LockSprite = DisableActor->GetComponentByClass<UPaperSpriteComponent>();
+		if (LockBox)
+		{
+			LockBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		if (LockSprite)
+		{
+			LockSprite->SetVisibility(true);
+		}
+	}
+
+	if (EnableActor)
+	{
+		UBoxComponent* LockBox = EnableActor->GetComponentByClass<UBoxComponent>();
+		UPaperSpriteComponent* LockSprite = EnableActor->GetComponentByClass<UPaperSpriteComponent>();
+		if (LockBox)
+		{
+			LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		if (LockSprite)
+		{
+			LockSprite->SetVisibility(false);
+		}
+	}
+}
+
+void AActorTriggerArea::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AActorTriggerArea, bUnlocked);
 }

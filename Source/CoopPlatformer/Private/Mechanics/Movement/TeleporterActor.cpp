@@ -19,7 +19,6 @@ ATeleporterActor::ATeleporterActor()
 	TPMesh2->SetupAttachment(RootComp);
 	TPMesh2->SetIsReplicated(true);
 
-	CanTeleport = true;
 	TeleportCooldown = 0.5f;
 	CameraLagOffset = -5.0f;
 	CameraLagTime = 1.0f;
@@ -36,7 +35,7 @@ void ATeleporterActor::BeginPlay()
 
 void ATeleporterActor::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (CanTeleport && (OtherActor->ActorHasTag("Ball") || OtherActor->ActorHasTag("Player")))
+	if (!TPActorsOnCD.Contains(OtherActor) && (OtherActor->ActorHasTag("Ball") || OtherActor->ActorHasTag("Player")))
 	{
 		if (OtherActor->ActorHasTag("Ball"))
 		{
@@ -49,7 +48,7 @@ void ATeleporterActor::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 			}
 		}
 
-		CanTeleport = false;
+		TPActorsOnCD.Add(OtherActor);
 
 		AMyPaperCharacter* Player = Cast<AMyPaperCharacter>(OtherActor);
 		if (Player && Player->SpringArm)
@@ -63,7 +62,7 @@ void ATeleporterActor::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		FVector TargetLocation = (OverlappedComponent == TPMesh1) ? TPMesh2->GetComponentLocation() : TPMesh1->GetComponentLocation();
 		OtherActor->SetActorLocation(TargetLocation);
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanTeleport = true; }, TeleportCooldown, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 	}
 }
 

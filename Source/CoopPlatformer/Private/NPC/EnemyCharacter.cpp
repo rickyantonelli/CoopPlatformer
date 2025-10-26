@@ -6,6 +6,7 @@
 #include "PaperFlipbookComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include <Components/TextRenderComponent.h>
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -17,6 +18,7 @@ AEnemyCharacter::AEnemyCharacter()
 	SetReplicateMovement(true);
 
 	Health = 5;
+	MaxHealth = Health;
 	CooldownTimer = 1;
 
 	bCanDamage = true;
@@ -187,6 +189,15 @@ void AEnemyCharacter::EnableActors()
 
 void AEnemyCharacter::MulticastApplyDeath_Implementation(int32 NewHealth)
 {
+	UTextRenderComponent* HealthText = FindComponentByClass<UTextRenderComponent>();
+	if (HealthText)
+	{
+		float PercentHealth = (static_cast<float>(NewHealth) / MaxHealth) * 100.0f;
+		FString HealthString = FString::Printf(TEXT("%.0f%%"), PercentHealth);
+		HealthText->SetText(FText::FromString(HealthString));
+	}
+
+
 	if (DamageSound)
 	{
 		UGameplayStatics::PlaySound2D(this, DamageSound);

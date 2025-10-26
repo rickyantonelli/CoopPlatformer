@@ -26,7 +26,6 @@ ASplitPlayersTeleporter::ASplitPlayersTeleporter()
 	P2Teleporter->SetupAttachment(RootComp);
 	P2Teleporter->SetIsReplicated(true);
 
-	CanTeleport = true;
 	TeleportCooldown = 0.5f;
 	CameraLagOffset = -5.0f;
 	CameraLagTime = 1.0f;
@@ -47,9 +46,9 @@ void ASplitPlayersTeleporter::BeginPlay()
 void ASplitPlayersTeleporter::OnTeleportDistribute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// no ball teleporting, only players
-	if (CanTeleport && OtherActor->ActorHasTag("Player"))
+	if (OtherActor->ActorHasTag("Player") && !TPActorsOnCD.Contains(OtherActor))
 	{
-		CanTeleport = false;
+		TPActorsOnCD.Add(OtherActor);
 		ApplyCameraLag(OtherActor);
 
 		// for the ball or player, change the actor location to the other teleporter
@@ -66,15 +65,15 @@ void ASplitPlayersTeleporter::OnTeleportDistribute(UPrimitiveComponent* Overlapp
 		}
 		OtherActor->SetActorLocation(TargetLocation);
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanTeleport = true; }, TeleportCooldown, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 	}
 }
 
 void ASplitPlayersTeleporter::OnTeleportReturn(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (CanTeleport && OtherActor->ActorHasTag("Player"))
+	if (OtherActor->ActorHasTag("Player") && !TPActorsOnCD.Contains(OtherActor))
 	{
-		CanTeleport = false;
+		TPActorsOnCD.Add(OtherActor);
 		ApplyCameraLag(OtherActor);
 		
 		FVector TargetLocation = Teleporter->GetComponentLocation();
@@ -87,7 +86,7 @@ void ASplitPlayersTeleporter::OnTeleportReturn(UPrimitiveComponent* OverlappedCo
 
 		OtherActor->SetActorLocation(TargetLocation);
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {CanTeleport = true; }, TeleportCooldown, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 	}
 }
 

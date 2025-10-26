@@ -40,7 +40,7 @@ public:
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	bool CanTeleport;
+	TArray<AActor*> TPActorsOnCD;
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
 	UPROPERTY(EditAnywhere, Category = "Custom")
@@ -58,5 +58,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Custom")
 	float LaunchAmp;
+
+	FTimerHandle LateralFrictionHandle;
 
 };

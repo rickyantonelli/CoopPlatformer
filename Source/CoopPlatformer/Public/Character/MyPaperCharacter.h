@@ -300,6 +300,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	float BaseGravityScale;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	float InitialFriction;
+
 	/** The player's original spawn location - so that if they die without collecting a checkpoint they come back to here */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	FVector SpawnLocation;

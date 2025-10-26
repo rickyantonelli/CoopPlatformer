@@ -38,6 +38,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	MovementEnabled = true;
 	bFirstPlayer = false;
 	bPassingThrough = true;
+	InitialFriction = GetCharacterMovement()->FallingLateralFriction;
 
 	// Death
 	DeathDuration = 1.0f;
@@ -486,11 +487,10 @@ void AMyPaperCharacter::ApplyFreezeToken()
 
 void AMyPaperCharacter::MulticastApplyFriction_Implementation(int Friction, float FrictionTimer)
 {
-	int InitialFriction = GetCharacterMovement()->FallingLateralFriction;
 	GetCharacterMovement()->FallingLateralFriction = Friction;
 
 	FTimerHandle TimerHandler;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, InitialFriction]() {GetCharacterMovement()->FallingLateralFriction = InitialFriction; }, FrictionTimer, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() {GetCharacterMovement()->FallingLateralFriction = InitialFriction; }, FrictionTimer, false);
 }
 
 void AMyPaperCharacter::ServerFlipPlayer_Implementation(FVector2D MovementVector)

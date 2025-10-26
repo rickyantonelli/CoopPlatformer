@@ -36,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable")
 	bool EnableChoice;
 
+	UPROPERTY(EditAnywhere, Category = "Customizable")
+	float ResetTimer;
+
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bUnlocked;
 
@@ -54,4 +57,7 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEnableActor();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastResetActors();
 };

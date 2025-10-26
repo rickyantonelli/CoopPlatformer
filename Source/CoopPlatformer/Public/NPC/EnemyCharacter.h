@@ -86,4 +86,6 @@ public:
 	AMyGameStateBase* GameStateRef;
 
 	bool bCanPatrol;
+
+	int MaxHealth;
 };
