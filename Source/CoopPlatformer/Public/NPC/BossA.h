@@ -34,6 +34,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Custom|Wall Projectile")
 	float WallDestroyInterval;
 
+	UPROPERTY(EditAnywhere, Category = "Custom|Wall Projectile")
+	float WallResumeInterval;
+
 	bool bWallProjectileRight;
 
 	UPROPERTY(EditAnywhere, Category = "Custom|Bullet Projectile")
@@ -47,6 +50,9 @@ public:
 
 	bool bBulletTargetFirstPlayer;
 
+	UPROPERTY(Replicated)
+	bool bMoveToOrigin;
+
 	FTimerHandle WallProjectileTimerHandle;
 
 	FTimerHandle BulletProjectileTimerHandle;
@@ -57,6 +63,16 @@ public:
 	void FireWallProjectile();
 
 	UFUNCTION()
+	void BeginWallMechanic();
+
+	UFUNCTION()
 	void FireBulletProjectile();
+
+	UFUNCTION()
+	void ResumeTimers();
+
+	void OnTriggerBoxOverlapped(AActor* PlayerActor, AActor* OtherActor) override;
+
+	void OnResetActivated() override;
 
 };

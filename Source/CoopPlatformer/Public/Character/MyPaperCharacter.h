@@ -99,6 +99,10 @@ public:
 	UFUNCTION(Client, Unreliable, BlueprintCallable)
 	void BallArrivingClientRPCFunction();
 
+	/** Client RPC to display a widget notifying the player of a ball's arrival */
+	UFUNCTION(Client, Unreliable, BlueprintCallable)
+	void RemoveBallArrivingClientRPCFunction();
+
 	UFUNCTION(Client, Unreliable, BlueprintCallable)
 	void CountdownPingClientRPCFunction();
 

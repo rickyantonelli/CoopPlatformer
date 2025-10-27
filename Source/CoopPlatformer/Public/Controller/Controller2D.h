@@ -136,4 +136,7 @@ public:
 	void ValidatePass(AMyPaperCharacter* NewPlayer);
 
 	void ReturnBallToThrower();
+
+	UFUNCTION(Exec)
+	void CP(int32 CheckpointIndex);
 };

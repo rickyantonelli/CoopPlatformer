@@ -50,6 +50,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	EFollowType FollowType;
 
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	TObjectPtr<AActor> TriggerBox;
+
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bCanDamage;
 
@@ -66,10 +69,13 @@ public:
 	virtual void PatrolToBall(float DeltaTime);
 
 	UFUNCTION()
-	void OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnEnemyOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnResetActivated();
+	virtual void OnTriggerBoxOverlapped(AActor* PlayerActor, AActor* OtherActor);
+
+	UFUNCTION()
+	virtual void OnResetActivated();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastApplyDeath(int32 NewHealth);
@@ -85,7 +91,11 @@ public:
 
 	AMyGameStateBase* GameStateRef;
 
+	UPROPERTY(Replicated)
 	bool bCanPatrol;
+
+	UPROPERTY(Replicated)
+	bool bAwake;
 
 	int MaxHealth;
 };

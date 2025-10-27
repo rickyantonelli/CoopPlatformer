@@ -38,7 +38,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	MovementEnabled = true;
 	bFirstPlayer = false;
 	bPassingThrough = true;
-	InitialFriction = GetCharacterMovement()->FallingLateralFriction;
+	InitialFriction = 1.f;
 
 	// Death
 	DeathDuration = 1.0f;
@@ -85,6 +85,7 @@ void AMyPaperCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	SpawnLocation = GetActorLocation();
+	InitialFriction = GetCharacterMovement()->FallingLateralFriction;
 
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -541,6 +542,11 @@ void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
 
 	if (BallArrivingWidget) BallArrivingWidget->AddToViewport();
+}
+
+void AMyPaperCharacter::RemoveBallArrivingClientRPCFunction_Implementation()
+{
+	RemoveBallArrivingWidget();
 }
 
 void AMyPaperCharacter::CountdownPingClientRPCFunction_Implementation()

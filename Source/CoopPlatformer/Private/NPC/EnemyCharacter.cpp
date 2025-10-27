@@ -18,11 +18,12 @@ AEnemyCharacter::AEnemyCharacter()
 	SetReplicateMovement(true);
 
 	Health = 5;
-	MaxHealth = Health;
+	MaxHealth = 5;
 	CooldownTimer = 1;
 
 	bCanDamage = true;
 	bCanPatrol = true;
+	bAwake = false;
 	FollowType = EFollowType::Off;
 
 
@@ -36,12 +37,14 @@ void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	MaxHealth = Health;
+
 	GameStateRef = GetWorld()->GetGameState<AMyGameStateBase>();
 
 	UCapsuleComponent* Capsule = GetCapsuleComponent();
 	if (Capsule)
 	{
-		Capsule->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnComponentOverlap);
+		Capsule->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnEnemyOverlapped);
 	}
 
 	AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
@@ -54,6 +57,8 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!bAwake) return;
 
 	if (bCanPatrol)
 	{
@@ -112,7 +117,7 @@ void AEnemyCharacter::PatrolToBall(float DeltaTime)
 	}
 }
 
-void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AEnemyCharacter::OnEnemyOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && bCanDamage)
 	{
@@ -125,11 +130,29 @@ void AEnemyCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponen
 	}
 }
 
+void AEnemyCharacter::OnTriggerBoxOverlapped(AActor* PlayerActor, AActor* OtherActor)
+{
+	if (bAwake) return;
+	if (!HasAuthority()) return;
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		bAwake = true;
+	}
+}
+
 void AEnemyCharacter::OnResetActivated()
 {
-	// the players are resetting, so we should reset as well
-	// obviously long term this should not just be `set the health back to a constant`
-	Health = 5;
+	UTextRenderComponent* HealthText = FindComponentByClass<UTextRenderComponent>();
+	if (HealthText)
+	{
+		float PercentHealth = 100.0f;
+		FString HealthString = FString::Printf(TEXT("%.0f%%"), PercentHealth);
+		HealthText->SetText(FText::FromString(HealthString));
+	}
+
+	if (!HasAuthority()) return;
+	Health = MaxHealth;
+	bAwake = false;
 }
 
 void AEnemyCharacter::DisableActors()
@@ -218,4 +241,5 @@ void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AEnemyCharacter, bCanDamage);
 	DOREPLIFETIME(AEnemyCharacter, LockedActors);
 	DOREPLIFETIME(AEnemyCharacter, UnlockedActors);
+	DOREPLIFETIME(AEnemyCharacter, bCanPatrol);
 }

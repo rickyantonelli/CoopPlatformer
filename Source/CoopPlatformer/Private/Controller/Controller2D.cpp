@@ -177,7 +177,7 @@ void AController2D::ServerApplyBallCaught()
 		BallActor->IsAttached = true;
 		MyGameStateCoop->ActivePlayers.Swap(0,1);
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
-		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingWidget();
+		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingClientRPCFunction();
 		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		BallActor->IsMoving = false;
 
@@ -219,7 +219,7 @@ void AController2D::ReturnBallToThrower()
 		//{
 		//	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		//}
-		MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingWidget();
+		MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingClientRPCFunction();
 		MyGameStateCoop->ActivePlayers.Swap(0, 1);
 		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
 	}
@@ -410,6 +410,55 @@ void AController2D::MulticastPlayPassSound_Implementation()
 	{
 		UGameplayStatics::PlaySound2D(this, PassSound);
 	}
+}
+
+void AController2D::CP(int32 CheckpointIndex)
+{
+	if (!HasAuthority())
+		return; // Only the server/host should execute this
+
+	TArray<AActor*> FoundCheckpoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACheckpoint::StaticClass(), FoundCheckpoints);
+
+	if (FoundCheckpoints.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No checkpoints found in world!"));
+		return;
+	}
+
+	// CheckpointIndex is 1-based (so "CP 1" == index 0)
+	int32 Index = CheckpointIndex - 1;
+	if (!FoundCheckpoints.IsValidIndex(Index))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invalid checkpoint index: %d (found %d checkpoints)"), CheckpointIndex, FoundCheckpoints.Num());
+		return;
+	}
+
+	ACheckpoint* TargetCheckpoint = Cast<ACheckpoint>(FoundCheckpoints[Index]);
+	if (!TargetCheckpoint)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Checkpoint at index %d is invalid!"), CheckpointIndex);
+		return;
+	}
+
+	FVector TargetLoc = TargetCheckpoint->GetActorLocation();
+
+	// Teleport all players (server authoritative)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PC = It->Get();
+		if (PC)
+		{
+			APawn* MyPawn = PC->GetPawn();
+			if (MyPawn)
+			{
+				MyPawn->SetActorLocation(TargetLoc);
+				UE_LOG(LogTemp, Log, TEXT("Teleported %s to checkpoint %d"), *MyPawn->GetName(), CheckpointIndex);
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Teleported all players to checkpoint %d"), CheckpointIndex);
 }
 
 void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

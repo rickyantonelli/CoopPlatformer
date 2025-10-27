@@ -5,7 +5,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 
-
 void ACoopPlatformerGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
