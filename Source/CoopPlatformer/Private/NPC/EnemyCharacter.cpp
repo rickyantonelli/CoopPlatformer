@@ -160,6 +160,7 @@ void AEnemyCharacter::DisableActors()
 	// Disable Actors
 	for (AActor* LockedActor : LockedActors)
 	{
+		if (!LockedActor) continue;
 		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
 		if (LockMesh)
 		{

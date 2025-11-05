@@ -60,7 +60,7 @@ void ATeleporterActor::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 
 		// for the ball or player, change the actor location to the other teleporter
 		FVector TargetLocation = (OverlappedComponent == TPMesh1) ? TPMesh2->GetComponentLocation() : TPMesh1->GetComponentLocation();
-		OtherActor->SetActorLocation(TargetLocation);
+		OtherActor->TeleportTo(TargetLocation, OtherActor->GetActorRotation());
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 	}

@@ -289,6 +289,14 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bCanXMove = true;
 
+	bool bLockedX = false;
+
+	bool bLockedZ = false;
+
+	float BackgroundLoc = 0.f;
+
+	FVector LockPosition = FVector::ZeroVector;
+
 	bool LastWallHitLeft = true;
 
 	UPROPERTY(VisibleAnywhere, Replicated)
@@ -325,11 +333,14 @@ public:
 	FCountdownPingActivated OnCountdownPingActivated;
 
 	/** The the widget that notifies the player of the ball's arrival */
+	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidget> BallArrivingWidget;
 
+	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidget> CountdownWidget;
 
 	/** The the widget that notifies the player of the ball's arrival */
+	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidget> PauseMenuWidget;
 
 	/** When server changes IsHolding */

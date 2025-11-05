@@ -2,6 +2,7 @@
 
 #include "Mechanics/Movement/DirectionPortal.h"
 #include "Character/MyPaperCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 ADirectionPortal::ADirectionPortal()
 {
@@ -38,43 +39,50 @@ void ADirectionPortal::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 {
 	if (OtherActor->ActorHasTag("Player") && !TPActorsOnCD.Contains(OtherActor))
 	{
-
-		TPActorsOnCD.Add(OtherActor);
-
 		AMyPaperCharacter* Player = Cast<AMyPaperCharacter>(OtherActor);
-		if (Player && Player->SpringArm)
+		if (!Player) return;
+		UCharacterMovementComponent* MoveComp = Player->FindComponentByClass<UCharacterMovementComponent>();
+		if (!MoveComp) return;
+
+		if (HasAuthority())
 		{
-			Player->SpringArm->CameraLagSpeed += CameraLagOffset;
-			FTimerHandle LagTimer;
-			GetWorld()->GetTimerManager().SetTimer(LagTimer, [Player, this]() {Player->SpringArm->CameraLagSpeed -= CameraLagOffset; }, CameraLagTime, false);
+			TPActorsOnCD.Add(OtherActor);
 
-			UCharacterMovementComponent* MoveComp = Player->FindComponentByClass<UCharacterMovementComponent>();
-			if (MoveComp)
-			{
-				FVector IncomingVelo = MoveComp->Velocity;
-				UE_LOG(LogTemp, Warning, TEXT("IncomingVelo Velocity: %s"), *IncomingVelo.ToString());
+			MulticastLaunchPlayer(Player, MoveComp, OverlappedComponent);
 
-				MoveComp->FallingLateralFriction = 0;
-				// for the ball or player, change the actor location to the other teleporter
-				UBoxComponent* TargetComp = (OverlappedComponent == TPMesh1) ? TPMesh2 : TPMesh1;
-				Player->SetActorLocation(TargetComp->GetComponentLocation());
-				float Speed = IncomingVelo.Size();
-				UE_LOG(LogTemp, Warning, TEXT("TargetComp->GetForwardVector(): %s"), *TargetComp->GetForwardVector().ToString());
-				FVector OutVelo = TargetComp->GetForwardVector() * Speed;
-				UE_LOG(LogTemp, Warning, TEXT("Outgoing Velocity: %s"), *OutVelo.ToString());
-
-				Player->LaunchCharacter(OutVelo * LaunchAmp, true, true);
-
-				// Clear Lateralfriction handle first
-				GetWorld()->GetTimerManager().ClearTimer(LateralFrictionHandle);
-				GetWorld()->GetTimerManager().SetTimer(LateralFrictionHandle, [MoveComp, Player]() {MoveComp->FallingLateralFriction = Player->InitialFriction; }, LateralFrictionTimer, false);
-
-				FTimerHandle TimerHandler;
-				GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
-
-			}
+			FTimerHandle TimerHandler;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 
 		}
 	}
 }
 
+void ADirectionPortal::MulticastLaunchPlayer_Implementation(AMyPaperCharacter* Player, UCharacterMovementComponent* MoveComp, UPrimitiveComponent* OverlappedComponent)
+{
+	FVector IncomingVelo = MoveComp->Velocity;
+
+	// for the ball or player, change the actor location to the other teleporter
+	UBoxComponent* TargetComp = (OverlappedComponent == TPMesh1) ? TPMesh2 : TPMesh1;
+	Player->TeleportTo(TargetComp->GetComponentLocation(), Player->GetActorRotation());
+
+	FVector OutVelo = TargetComp->GetForwardVector() * IncomingVelo.Size();
+
+	Player->LaunchCharacter(OutVelo * LaunchAmp, true, true);
+
+	if (Player->SpringArm)
+	{
+		Player->SpringArm->CameraLagSpeed += CameraLagOffset;
+		FTimerHandle LagTimer;
+		GetWorld()->GetTimerManager().SetTimer(LagTimer, [Player, this]() {Player->SpringArm->CameraLagSpeed -= CameraLagOffset; }, CameraLagTime, false);
+	}
+	MoveComp->FallingLateralFriction = 0;
+
+	GetWorld()->GetTimerManager().ClearTimer(LateralFrictionHandle);
+	GetWorld()->GetTimerManager().SetTimer(LateralFrictionHandle, [MoveComp, Player]() {MoveComp->FallingLateralFriction = Player->InitialFriction; }, LateralFrictionTimer, false);
+}
+
+void ADirectionPortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ADirectionPortal, TPActorsOnCD);
+}

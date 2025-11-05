@@ -63,7 +63,7 @@ void ASplitPlayersTeleporter::OnTeleportDistribute(UPrimitiveComponent* Overlapp
 			TargetLocation = P1Teleporter->GetComponentLocation();
 			bP1Taken = true;
 		}
-		OtherActor->SetActorLocation(TargetLocation);
+		OtherActor->TeleportTo(TargetLocation, OtherActor->GetActorRotation());
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 	}
@@ -84,7 +84,7 @@ void ASplitPlayersTeleporter::OnTeleportReturn(UPrimitiveComponent* OverlappedCo
 			bP1Taken = false;
 		}
 
-		OtherActor->SetActorLocation(TargetLocation);
+		OtherActor->TeleportTo(TargetLocation, OtherActor->GetActorRotation());
 		FTimerHandle TimerHandler;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 	}

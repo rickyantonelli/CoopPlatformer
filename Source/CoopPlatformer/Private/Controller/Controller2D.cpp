@@ -57,35 +57,36 @@ void AController2D::BeginPlay()
 	}
 
 	// Apply the user settings we want as default
-	// Eventually this will go away
-	UGameUserSettings* UserSettings = GEngine->GetGameUserSettings();
-	if (UserSettings)
-	{
-		int settingQuality = 2;
-		UserSettings->SetViewDistanceQuality(settingQuality);
-		UserSettings->SetAntiAliasingQuality(settingQuality);
-		UserSettings->SetShadowQuality(settingQuality);
-		UserSettings->SetPostProcessingQuality(settingQuality);
-		UserSettings->SetTextureQuality(settingQuality);
-		UserSettings->SetVisualEffectQuality(settingQuality);
-		UserSettings->SetFoliageQuality(settingQuality);
-		UserSettings->SetShadingQuality(settingQuality);
-		UserSettings->SetGlobalIlluminationQuality(settingQuality);
-		UserSettings->SetReflectionQuality(settingQuality);
+	//// Eventually this will go away
+	//UGameUserSettings* UserSettings = GEngine->GetGameUserSettings();
+	//if (UserSettings)
+	//{
+	//	//int settingQuality = 2;
+	//	//UserSettings->SetViewDistanceQuality(settingQuality);
+	//	//UserSettings->SetAntiAliasingQuality(settingQuality);
+	//	//UserSettings->SetShadowQuality(settingQuality);
+	//	//UserSettings->SetPostProcessingQuality(settingQuality);
+	//	//UserSettings->SetTextureQuality(settingQuality);
+	//	//UserSettings->SetVisualEffectQuality(settingQuality);
+	//	//UserSettings->SetFoliageQuality(settingQuality);
+	//	//UserSettings->SetShadingQuality(settingQuality);
+	//	//UserSettings->SetGlobalIlluminationQuality(settingQuality);
+	//	//UserSettings->SetReflectionQuality(settingQuality);
+	//	UserSettings->SetFullscreenMode(EWindowMode::Windowed);
 
-		UserSettings->ApplySettings(true);
+	//	UserSettings->ApplySettings(false);
 
-		// Some debugging to ensure the settings were correctly set
-		UE_LOG(LogTemp, Log, TEXT("Resolution Quality: %f"), UserSettings->GetResolutionScaleNormalized());
-		UE_LOG(LogTemp, Log, TEXT("View Distance Quality: %d"), UserSettings->GetViewDistanceQuality());
-		UE_LOG(LogTemp, Log, TEXT("Anti-Aliasing Quality: %d"), UserSettings->GetAntiAliasingQuality());
-		UE_LOG(LogTemp, Log, TEXT("Shadow Quality: %d"), UserSettings->GetShadowQuality());
-		UE_LOG(LogTemp, Log, TEXT("Post-Process Quality: %d"), UserSettings->GetPostProcessingQuality());
-		UE_LOG(LogTemp, Log, TEXT("Texture Quality: %d"), UserSettings->GetTextureQuality());
-		UE_LOG(LogTemp, Log, TEXT("Effects Quality: %d"), UserSettings->GetVisualEffectQuality());
-		UE_LOG(LogTemp, Log, TEXT("Foliage Quality: %d"), UserSettings->GetFoliageQuality());
-		UE_LOG(LogTemp, Log, TEXT("Shading Quality: %d"), UserSettings->GetShadingQuality());
-	}
+	//	// Some debugging to ensure the settings were correctly set
+	//	UE_LOG(LogTemp, Log, TEXT("Resolution Quality: %f"), UserSettings->GetResolutionScaleNormalized());
+	//	UE_LOG(LogTemp, Log, TEXT("View Distance Quality: %d"), UserSettings->GetViewDistanceQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Anti-Aliasing Quality: %d"), UserSettings->GetAntiAliasingQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Shadow Quality: %d"), UserSettings->GetShadowQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Post-Process Quality: %d"), UserSettings->GetPostProcessingQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Texture Quality: %d"), UserSettings->GetTextureQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Effects Quality: %d"), UserSettings->GetVisualEffectQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Foliage Quality: %d"), UserSettings->GetFoliageQuality());
+	//	UE_LOG(LogTemp, Log, TEXT("Shading Quality: %d"), UserSettings->GetShadingQuality());
+	//}
 
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASamePassKeyActor::StaticClass(), FoundActors);
@@ -212,17 +213,12 @@ void AController2D::ValidatePass(AMyPaperCharacter* NewPlayer)
 
 void AController2D::ReturnBallToThrower()
 {
-	// To be called when the ball is in mid air
-	if (HasAuthority() && BallActor->IsMoving)
-	{
-		//if (BallActor->GetAttachParentActor())
-		//{
-		//	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		//}
-		MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingClientRPCFunction();
-		MyGameStateCoop->ActivePlayers.Swap(0, 1);
-		MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
-	}
+	if (!HasAuthority()) return;
+	if (!BallActor || !BallActor->IsMoving) return;
+
+	MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingClientRPCFunction();
+	MyGameStateCoop->ActivePlayers.Swap(0, 1);
+	MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
 }
 
 void AController2D::GatherActorsHandler()
@@ -260,87 +256,112 @@ void AController2D::CountdownPingServerRPCFunction_Implementation()
 	MyGameStateCoop->ActivePlayers[1]->CountdownPingClientRPCFunction();
 }
 
+void AController2D::CollectPlayerDeath(AActor* PlayerActor)
+{
+	AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
+	if (PlayerCharacterActor)
+	{
+		if (PlayerCharacterActor->IsHolding)
+		{
+			PassServerRPCFunction();
+		}
+		// send the ball back to the thrower if player dies while ball is on its way
+		else if (BallActor && BallActor->IsMoving && PlayerCharacterActor == MyGameStateCoop->ActivePlayers[1])
+		{
+			ReturnBallToThrower();
+		}
+
+		// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
+		UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
+		if (MyCharacterMovement)
+		{
+			// reset the movement to zero so that the momentum doesn't continue when the player respawns
+			MyCharacterMovement->Velocity = FVector::ZeroVector;
+		}
+		PlayerCharacterActor->TeleportTo(PlayerCharacterActor->SpawnLocation, PlayerCharacterActor->GetActorRotation());
+		PlayerCharacterActor->OnDeath();
+	}
+}
+
+void AController2D::CollectPlayerFullDeath()
+{
+	// this tag implies a death type that requires a full reset (kills both players)
+	if (HasAuthority())
+	{
+		MulticastKillBothPlayers();
+	}
+}
+
+void AController2D::CollectCheckpoint(AActor* PlayerActor, AActor* OtherActor)
+{
+	AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
+	ACheckpoint* CheckpointActor = Cast<ACheckpoint>(OtherActor);
+	if (PlayerCharacterActor && CheckpointActor)
+	{
+		if (CheckpointActor->CheckpointedPlayers.Find(PlayerCharacterActor) == -1) // if the player actor is not in our Tarray for the checkpoint
+		{
+			CheckpointActor->AddPlayer(PlayerCharacterActor);
+		}
+	}
+}
+
+void AController2D::CollectBall(AActor* PlayerActor)
+{
+	AMyPaperCharacter* OverlappingActor = Cast<AMyPaperCharacter>(PlayerActor);
+
+	if (MyGameStateCoop->ActivePlayers[0] != OverlappingActor)
+	{
+		MyGameStateCoop->ActivePlayers.Swap(0, 1);
+	}
+
+	MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
+	MyGameStateCoop->ActivePlayers[0]->ResetJumpAbility();
+
+	BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	BallActor->CanPass = true;
+	BallActor->IsAttached = true;
+}
+
+void AController2D::CollectDashToken(AActor* PlayerActor, AActor* OtherActor)
+{
+	AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
+	PlayerCharacterActor->ApplyDashToken();
+
+	ADashToken* DashToken = Cast<ADashToken>(OtherActor);
+	DashToken->CollectDash();
+}
+
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
 	// ball pickup handling
 	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && BallActor && !BallActor->IsAttached && !BallActor->IsMoving && MyGameStateCoop->ActivePlayers.Num() == 2)
 	{
-		AMyPaperCharacter* OverlappingActor = Cast<AMyPaperCharacter>(PlayerActor);
-
-		if (MyGameStateCoop->ActivePlayers[0] != OverlappingActor)
-		{
-			MyGameStateCoop->ActivePlayers.Swap(0, 1);
-		}
-
-		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
-		MyGameStateCoop->ActivePlayers[0]->ResetJumpAbility();
-
-		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-
-		BallActor->CanPass = true;
-		BallActor->IsAttached = true;
+		CollectBall(PlayerActor);
 	}
 
 
 	// death handling
 	if (OtherActor->ActorHasTag("Death"))
 	{
-		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-		if (PlayerCharacterActor)
-		{
-			if (PlayerCharacterActor->IsHolding)
-			{
-				PassServerRPCFunction();
-			}
-			// send the ball back to the thrower if player dies while ball is on its way
-			else if (BallActor && BallActor->IsMoving && PlayerCharacterActor == MyGameStateCoop->ActivePlayers[1])
-			{
-				ReturnBallToThrower();
-			}
-
-			// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
-			UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
-			if (MyCharacterMovement)
-			{
-				// reset the movement to zero so that the momentum doesn't continue when the player respawns
-				MyCharacterMovement->Velocity = FVector::ZeroVector;
-			}
-			PlayerCharacterActor->SetActorLocation(PlayerCharacterActor->SpawnLocation);
-			PlayerCharacterActor->OnDeath();
-		}
+		CollectPlayerDeath(PlayerActor);
 	}
 
 	if (OtherActor->ActorHasTag("FullDeath"))
 	{
-		// this tag implies a death type that requires a full reset (kills both players)
-		if (HasAuthority())
-		{
-			MulticastKillBothPlayers();
-		}
+		CollectPlayerFullDeath();
 	}
 
 	// checkpoint handling
 	if (OtherActor->ActorHasTag("Checkpoint"))
 	{
-		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-		ACheckpoint* CheckpointActor = Cast<ACheckpoint>(OtherActor);
-		if (PlayerCharacterActor && CheckpointActor)
-		{
-			if (CheckpointActor->CheckpointedPlayers.Find(PlayerCharacterActor) == -1) // if the player actor is not in our Tarray for the checkpoint
-			{
-				CheckpointActor->AddPlayer(PlayerCharacterActor);
-			}
-		}
+		CollectCheckpoint(PlayerActor, OtherActor);
 	}
 
 	// Dash prototype - holding off for now
 	if (OtherActor->ActorHasTag("Dash"))
 	{
-		AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-		PlayerCharacterActor->ApplyDashToken();
-
-		ADashToken* DashToken = Cast<ADashToken>(OtherActor);
-		DashToken->CollectDash();
+		CollectDashToken(PlayerActor, OtherActor);
 	}
 }
 
@@ -365,16 +386,8 @@ void AController2D::ShiftViewTarget()
 	}
 
 	if (!MyPlayer || !OtherPlayer) return;
-
-
-	// TODO: This is fine for a while, but eventually we want to lerp the background over to the other player
-	// then swap the visibility states, then set the background back to the original location
-	// same applies for the revert function below
-
-	MyPlayer->Background->SetVisibility(false);
-	OtherPlayer->Background->SetVisibility(true);
-
-	SetViewTargetWithBlend(OtherPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+	SetViewTargetWithBlend(OtherPlayer); //0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+	MyPlayer->Background->AttachToComponent(OtherPlayer->Camera, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void AController2D::RevertViewTarget()
@@ -382,9 +395,8 @@ void AController2D::RevertViewTarget()
 	if (!MyGameStateCoop || MyGameStateCoop->ActivePlayers.Num() != 2) return;
 	if (!MyPlayer || !OtherPlayer) return;
 
-	MyPlayer->Background->SetVisibility(true);
-	OtherPlayer->Background->SetVisibility(false);
-	SetViewTargetWithBlend(MyPlayer, 0.3f, EViewTargetBlendFunction::VTBlend_Linear, 2.0f);
+	SetViewTargetWithBlend(MyPlayer);
+	MyPlayer->Background->AttachToComponent(MyPlayer->Camera, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void AController2D::MulticastOnCaughtActivated_Implementation()
@@ -397,7 +409,7 @@ void AController2D::MulticastKillBothPlayers_Implementation()
 	// trigger death for both players
 	for (AMyPaperCharacter* ActivePlayer : MyGameStateCoop->ActivePlayers)
 	{
-		ActivePlayer->SetActorLocation(ActivePlayer->SpawnLocation);
+		ActivePlayer->TeleportTo(ActivePlayer->SpawnLocation, ActivePlayer->GetActorRotation());
 		ActivePlayer->OnDeath();
 	}
 	OnResetActivated.Broadcast();
@@ -414,36 +426,27 @@ void AController2D::MulticastPlayPassSound_Implementation()
 
 void AController2D::CP(int32 CheckpointIndex)
 {
-	if (!HasAuthority())
-		return; // Only the server/host should execute this
+	if (!HasAuthority()) return;
 
 	TArray<AActor*> FoundCheckpoints;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACheckpoint::StaticClass(), FoundCheckpoints);
 
-	if (FoundCheckpoints.Num() == 0)
+	if (FoundCheckpoints.Num() == 0) return;
+
+	FString TargetName = FString::Printf(TEXT("BP_Checkpoint_C_%d"), CheckpointIndex);
+	FVector TargetLoc = FVector::ZeroVector;
+
+	for (AActor* Checkpoint : FoundCheckpoints)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No checkpoints found in world!"));
-		return;
+		if (Checkpoint->GetName() == TargetName)
+		{
+			TargetLoc = Checkpoint->GetActorLocation();
+			break;
+		}
 	}
 
-	// CheckpointIndex is 1-based (so "CP 1" == index 0)
-	int32 Index = CheckpointIndex - 1;
-	if (!FoundCheckpoints.IsValidIndex(Index))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Invalid checkpoint index: %d (found %d checkpoints)"), CheckpointIndex, FoundCheckpoints.Num());
-		return;
-	}
+	if (TargetLoc == FVector::ZeroVector) return;
 
-	ACheckpoint* TargetCheckpoint = Cast<ACheckpoint>(FoundCheckpoints[Index]);
-	if (!TargetCheckpoint)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Checkpoint at index %d is invalid!"), CheckpointIndex);
-		return;
-	}
-
-	FVector TargetLoc = TargetCheckpoint->GetActorLocation();
-
-	// Teleport all players (server authoritative)
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		APlayerController* PC = It->Get();
@@ -452,8 +455,7 @@ void AController2D::CP(int32 CheckpointIndex)
 			APawn* MyPawn = PC->GetPawn();
 			if (MyPawn)
 			{
-				MyPawn->SetActorLocation(TargetLoc);
-				UE_LOG(LogTemp, Log, TEXT("Teleported %s to checkpoint %d"), *MyPawn->GetName(), CheckpointIndex);
+				MyPawn->TeleportTo(TargetLoc, MyPawn->GetActorRotation());
 			}
 		}
 	}

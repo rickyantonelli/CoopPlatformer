@@ -48,8 +48,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Custom|Bullet Projectile")
 	float BulletDestroyInterval;
 
-	bool bBulletTargetFirstPlayer;
-
 	UPROPERTY(Replicated)
 	bool bMoveToOrigin;
 

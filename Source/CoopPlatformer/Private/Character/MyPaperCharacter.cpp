@@ -25,7 +25,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
 	Background = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Background"));
-	Background->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	Background->SetupAttachment(Camera);
 	
 	DoubleJumpFlipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DoubleJumpEffect"));
 	DoubleJumpFlipbook->SetupAttachment(RootComponent);
@@ -102,11 +102,31 @@ void AMyPaperCharacter::BeginPlay()
 		OriginalFlipbookScale = SpriteComp->GetRelativeScale3D();
 	}
 
+	if (Background)
+	{
+		BackgroundLoc = Background->GetComponentLocation().Y;
+	}
+
 }
 
 void AMyPaperCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (LockPosition != FVector::ZeroVector)
+	{
+		FVector SpringArmLocation = SpringArm->GetComponentLocation();
+		if (bLockedX)
+		{
+			SpringArmLocation.X = LockPosition.X;
+		}
+
+		if (bLockedZ)
+		{
+			SpringArmLocation.Z = LockPosition.Z;
+		}
+		SpringArm->SetWorldLocation(SpringArmLocation);
+	}
 
 	PreviousVelocity = GetCharacterMovement()->Velocity;
 	// if we ever get to a frame where we are jumping but also have 0 z velocity (vertical) then stop the jump
@@ -114,6 +134,11 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 	if (Jumping)
 	{
 		if (GetCharacterMovement()->Velocity.Z == 0) StopJumping();
+	}
+
+	if (Background && Background->GetComponentLocation().X != BackgroundLoc)
+	{
+		Background->SetWorldLocation(FVector(Background->GetComponentLocation().X, BackgroundLoc , Background->GetComponentLocation().Z));
 	}
 }
 
@@ -461,7 +486,7 @@ void AMyPaperCharacter::GravityAtApex() const
 void AMyPaperCharacter::RemoveBallArrivingWidget()
 {
 	// TODO: Can open this up by allowing a user widget to be passed in
-	if (BallArrivingWidget && BallArrivingWidget->IsInViewport())
+	if (IsLocallyControlled() && BallArrivingWidget && IsValid(BallArrivingWidget) && BallArrivingWidget->IsInViewport())
 	{
 		BallArrivingWidget->RemoveFromParent();
 	}
@@ -599,7 +624,7 @@ void AMyPaperCharacter::OnWallExit(bool FromJump)
 		KickOffVelocity.X = LastWallHitLeft ? KickOffHorizontal : -KickOffHorizontal;
 		KickOffVelocity.Z = 0.f; // just lateral
 
-		if (HasAuthority()) LaunchCharacter(KickOffVelocity, true, false);
+		LaunchCharacter(KickOffVelocity, true, false);
 
 		return;
 	}

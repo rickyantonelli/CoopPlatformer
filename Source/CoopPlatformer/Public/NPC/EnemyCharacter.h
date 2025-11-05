@@ -89,7 +89,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<USoundBase> DamageSound;
 
-	AMyGameStateBase* GameStateRef;
+	TObjectPtr<AMyGameStateBase> GameStateRef;
 
 	UPROPERTY(Replicated)
 	bool bCanPatrol;

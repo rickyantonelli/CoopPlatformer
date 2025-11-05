@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Controller/Controller2D.h"
 #include "GameFramework/Actor.h"
+#include "Systems/MyGameStateBase.h"
 #include "Engine/TriggerBox.h"
 #include "PassSwapActor.generated.h"
 
@@ -27,13 +28,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
 	TArray<AActor*> FirstSetActors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
 	TArray<AActor*> SecondSetActors;
 
-	TObjectPtr<ATriggerBox> ActivatedArea;
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	TObjectPtr<AActor> ActivationArea;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastSwapActors();
@@ -46,6 +48,23 @@ public:
 
 	bool BindingsSet = false;
 
-	bool Activated = true;
+	UPROPERTY(Replicated)
+	bool bActivated = false;
+
+	UPROPERTY(Replicated)
+	TArray<AActor*> CurrentActiveActors;
+
+	UFUNCTION()
+	virtual void OnActivateTriggerBeginOverlap(AActor* PlayerActor, AActor* OtherActor);
+
+	UFUNCTION()
+	virtual void OnActivateTriggerEndOverlap(AActor* PlayerActor, AActor* OtherActor);
+
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	TObjectPtr<UPaperSprite> OffSprite;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	TObjectPtr<UPaperSprite> OnSprite;
+
 
 };

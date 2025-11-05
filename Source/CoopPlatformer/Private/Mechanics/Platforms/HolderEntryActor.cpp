@@ -2,6 +2,7 @@
 
 
 #include "Mechanics/Platforms/HolderEntryActor.h"
+#include "Controller/Controller2D.h"
 
 // Sets default values
 AHolderEntryActor::AHolderEntryActor()
@@ -60,16 +61,22 @@ void AHolderEntryActor::OnBoxCollisionEnter(UPrimitiveComponent* OverlappedCompo
 	{
 		if (!PlayerCharacter->IsHolding)
 		{
-			KickOffVelocity.X = PlayerCharacter->PreviousVelocity.X < 0 ? KickOffHorizontal : -KickOffHorizontal;
-			PlayerCharacter->LaunchCharacter(KickOffVelocity, true, true);
+			/*KickOffVelocity.X = PlayerCharacter->PreviousVelocity.X < 0 ? KickOffHorizontal : -KickOffHorizontal;
+			PlayerCharacter->LaunchCharacter(KickOffVelocity, true, true);*/
+			APlayerController* PC = Cast<APlayerController>(PlayerCharacter->GetController());
+			AController2D* C2D = Cast<AController2D>(PC);
+			C2D->CollectPlayerFullDeath();
 		}
 	}
 	else
 	{
 		if (PlayerCharacter->IsHolding)
 		{
-			KickOffVelocity.X = PlayerCharacter->PreviousVelocity.X < 0 ? KickOffHorizontal : -KickOffHorizontal;
-			PlayerCharacter->LaunchCharacter(KickOffVelocity, true, true);
+			/*KickOffVelocity.X = PlayerCharacter->PreviousVelocity.X < 0 ? KickOffHorizontal : -KickOffHorizontal;
+			PlayerCharacter->LaunchCharacter(KickOffVelocity, true, true);*/
+			APlayerController* PC = Cast<APlayerController>(PlayerCharacter->GetController());
+			AController2D* C2D = Cast<AController2D>(PC);
+			C2D->CollectPlayerFullDeath();
 		}
 	}
 }

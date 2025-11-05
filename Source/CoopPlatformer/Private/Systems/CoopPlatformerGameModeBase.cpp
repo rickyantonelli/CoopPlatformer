@@ -23,6 +23,10 @@ void ACoopPlatformerGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
+	// print the timestamp when a player logs in
+	FTimespan TimeSinceStart = FDateTime::Now() - FDateTime(1970, 1, 1);
+	UE_LOG(LogTemp, Log, TEXT("Player Logged In at: %f seconds since epoch"), TimeSinceStart.GetTotalSeconds());
+
 	if (!ActiveControllers.Contains(NewPlayer))
 	{
 		ActiveControllers.Add(NewPlayer);

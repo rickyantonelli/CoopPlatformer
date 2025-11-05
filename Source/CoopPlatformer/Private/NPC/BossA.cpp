@@ -14,7 +14,6 @@ ABossA::ABossA()
 
 	BulletProjectileInterval = 2.f;
 	BulletDestroyInterval = 10.f;
-	bBulletTargetFirstPlayer = true;
 }
 
 void ABossA::BeginPlay()
@@ -105,9 +104,8 @@ void ABossA::FireBulletProjectile()
 	if (!HasAuthority() || !BulletProjectileClass || !GameStateRef || GameStateRef->ActivePlayers.Num() != 2)
 		return;
 
-	bBulletTargetFirstPlayer = !bBulletTargetFirstPlayer;
-
-	AMyPaperCharacter* Player = bBulletTargetFirstPlayer ? GameStateRef->ActivePlayers[1] : GameStateRef->ActivePlayers[0];
+	// Target the ball holder
+	AMyPaperCharacter* Player = GameStateRef->ActivePlayers[0];
 
 	FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	Direction.Y = 0.f;

@@ -16,6 +16,8 @@ public:
 	// Sets default values for this actor's properties
 	ADirectionPortal();
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -39,7 +41,7 @@ public:
 	void OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Debug")
 	TArray<AActor*> TPActorsOnCD;
 
 	/** If the key is locked or not, when unlocked stop checking for overlap */
@@ -60,5 +62,8 @@ public:
 	float LaunchAmp;
 
 	FTimerHandle LateralFrictionHandle;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLaunchPlayer(AMyPaperCharacter* Player, UCharacterMovementComponent* MoveComp, UPrimitiveComponent* OverlappedComponent);
 
 };

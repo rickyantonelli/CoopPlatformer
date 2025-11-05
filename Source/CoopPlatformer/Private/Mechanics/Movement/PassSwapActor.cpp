@@ -22,6 +22,7 @@ void APassSwapActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+
 	 // hide all actors in the second set
 	for (AActor* Actor : SecondSetActors)
 	{
@@ -32,28 +33,17 @@ void APassSwapActor::BeginPlay()
 		{
 			LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-		if (LockSprite)
+		if (LockSprite && OffSprite)
 		{
-			LockSprite->SetVisibility(false);
+			LockSprite->SetSprite(OffSprite);
 		}
 	}
 
-
-	// TODO: this should only be happening if its activated, which we can keep track of with a trigger area and collision
-	// for the current scope though (demo) we will just assume it is always activated
-	
-	//// Since this is an optional trigger area, if it doesnt exist we are always activated
-	//if (ActivatedArea)
-	//{
-	//	Activated = false;
-	//	// bind the OnActorBeginOverlap event to the ActivatedArea's BeginOverlap function
-	//	ActivatedArea->OnComponentBeginOverlap.AddDynamic(this, &APassSwapActor::OnActivatedAreaOverlapBegin);
-
-	//}
-	//else
-	//{
-	//	Activated = true;
-	//}
+	if (ActivationArea)
+	{
+		ActivationArea->OnActorBeginOverlap.AddDynamic(this, &APassSwapActor::OnActivateTriggerBeginOverlap);
+		ActivationArea->OnActorEndOverlap.AddDynamic(this, &APassSwapActor::OnActivateTriggerEndOverlap);
+	}
 }
 
 // Called every frame
@@ -61,7 +51,9 @@ void APassSwapActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority() && !BindingsSet)
+	if (!HasAuthority()) return;
+
+	if (!BindingsSet)
 	{
 		TArray<AActor*> Controllers;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerController::StaticClass(), Controllers);
@@ -79,7 +71,6 @@ void APassSwapActor::Tick(float DeltaTime)
 			BindingsSet = true;
 		}
 	}
-
 }
 
 void APassSwapActor::MulticastSwapActors_Implementation()
@@ -96,9 +87,15 @@ void APassSwapActor::MulticastSwapActors_Implementation()
 		{
 			LockBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
-		if (LockSprite)
+		// TODO: This whole OffSprite/OnSprite logic is temporary since we will completely change the way these look in the future
+		if (LockSprite && OnSprite)
 		{
-			LockSprite->SetVisibility(true);
+			LockSprite->SetSprite(OnSprite);
+			UE_LOG(LogTemp, Log, TEXT("Set OnSprite for ActivatingActor: %s"), *ActivatingActor->GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LockSprite or OnSprite is null for ActivatingActor: %s"), *ActivatingActor->GetName());
 		}
 	}
 
@@ -110,9 +107,9 @@ void APassSwapActor::MulticastSwapActors_Implementation()
 		{
 			LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-		if (LockSprite)
+		if (LockSprite && OffSprite)
 		{
-			LockSprite->SetVisibility(false);
+			LockSprite->SetSprite(OffSprite);
 		}
 	}
 
@@ -121,14 +118,47 @@ void APassSwapActor::MulticastSwapActors_Implementation()
 
 void APassSwapActor::OnPassActivated()
 {
-	if (Activated)
+	if (bActivated)
 	{
 		MulticastSwapActors();
+	}
+}
+
+void APassSwapActor::OnActivateTriggerBeginOverlap(AActor* PlayerActor, AActor* OtherActor)
+{
+	if (!HasAuthority()) return;
+	if (!OtherActor->ActorHasTag("Player")) return;
+
+	if (!CurrentActiveActors.Contains(OtherActor))
+	{
+		CurrentActiveActors.Add(OtherActor);
+	}
+
+	if (CurrentActiveActors.Num() == 2)
+	{
+		bActivated = true;
+	}
+}
+
+void APassSwapActor::OnActivateTriggerEndOverlap(AActor* PlayerActor, AActor* OtherActor)
+{
+	if (!HasAuthority()) return;
+	if (!OtherActor->ActorHasTag("Player")) return;
+
+	if (CurrentActiveActors.Contains(OtherActor))
+	{
+		CurrentActiveActors.Remove(OtherActor);
+	}
+
+	if (CurrentActiveActors.Num() < 2)
+	{
+		bActivated = false;
 	}
 }
 
 void APassSwapActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	// DOREPLIFETIME(APassSwapActor, FirstSetActive);
+	DOREPLIFETIME(APassSwapActor, bActivated);
+	DOREPLIFETIME(APassSwapActor, CurrentActiveActors);
 }

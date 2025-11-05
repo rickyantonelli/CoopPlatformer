@@ -137,6 +137,22 @@ public:
 
 	void ReturnBallToThrower();
 
+
+	UFUNCTION()
+	void CollectPlayerDeath(AActor* PlayerActor);
+
+	UFUNCTION()
+	void CollectPlayerFullDeath();
+
+	UFUNCTION()
+	void CollectCheckpoint(AActor* PlayerActor, AActor* OtherActor);
+
+	UFUNCTION()
+	void CollectBall(AActor* PlayerActor);
+
+	UFUNCTION()
+	void CollectDashToken(AActor* PlayerActor, AActor* OtherActor);
+
 	UFUNCTION(Exec)
 	void CP(int32 CheckpointIndex);
 };

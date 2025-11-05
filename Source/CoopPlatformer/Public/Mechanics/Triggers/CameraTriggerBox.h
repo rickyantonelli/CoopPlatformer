@@ -25,12 +25,18 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	float SpringArmOffset = 0.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	float XOffset = 0.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Customizable")
 	float ZOffset = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable")
+	bool bLockX = false;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable")
+	bool bLockZ = false;
 };

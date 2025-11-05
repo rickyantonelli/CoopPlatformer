@@ -3,7 +3,6 @@
 
 #include "Mechanics/Triggers/BallReboundComponent.h"
 #include <Kismet/GameplayStatics.h>
-#include "Controller/Controller2D.h"
 #include "Components/BoxComponent.h"
 
 
@@ -35,15 +34,39 @@ void UBallReboundComponent::BeginPlay()
 void UBallReboundComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (!AuthController)
+	{
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			AController2D* MyController = Cast<AController2D>(It->Get());
+			if (MyController && MyController->HasAuthority() && MyController->BallActor)
+			{
+				AuthController = MyController;
+				break;
+			}
+		}
+	}
 }
 
 void UBallReboundComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!OtherActor->ActorHasTag("Ball")) return;
 
-	AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
-	if (!MyController) return;
-	MyController->ReturnBallToThrower();
+	ABallActor* Ball = Cast<ABallActor>(OtherActor);
+	if (!Ball) return;
+	if (Ball->IsAttached) return;
+
+	//AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
+	//if (!MyController) return;
+	//MyController->ReturnBallToThrower();
+
+	// AController2D* AuthController = nullptr;
+
+
+
+	if (!AuthController) return;
+	AuthController->ReturnBallToThrower();
 
 }
 

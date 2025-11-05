@@ -38,6 +38,18 @@ void ACameraTriggerBox::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAct
 				// Get the spring arm distance before changing, so we can revert back when leaving
 				Player->SpringArm->TargetOffset = FVector(XOffset, 0.0f, ZOffset);
 			}
+			
+			if (bLockX)
+			{
+				Player->bLockedX = true;
+				Player->LockPosition = Player->SpringArm->GetComponentLocation();
+			}
+
+			if (bLockZ)
+			{
+				Player->bLockedZ = true;
+				if (!bLockX) Player->LockPosition = Player->SpringArm->GetComponentLocation();
+			}
 
 			// Additionally get the background sprite, as this needs to move accordingly
 			// TODO: Obviously taking the index is a bad idea, this is for demo purposes only
@@ -64,6 +76,10 @@ void ACameraTriggerBox::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor
 		AMyPaperCharacter* Player = Cast<AMyPaperCharacter>(OtherActor);
 		if (Player && Player->SpringArm)
 		{
+			Player->bLockedX = false;
+			Player->bLockedZ = false;
+			Player->LockPosition = FVector::ZeroVector;
+
 			if (SpringArmOffset != 0.0f)
 			{
 				Player->SpringArm->TargetArmLength -= SpringArmOffset;
@@ -86,6 +102,9 @@ void ACameraTriggerBox::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor
 					Background->SetRelativeLocation(RelativeLocation);
 				}
 			}
+
+			// This might be a bandaid for a bug, but occasionally the spring arm location gets moved so we should reset it
+			Player->SpringArm->SetRelativeLocation(FVector::ZeroVector);
 		}
 	}
 }
