@@ -433,7 +433,6 @@ void AController2D::CP(int32 CheckpointIndex)
 
 	if (FoundCheckpoints.Num() == 0) return;
 
-	FString TargetName = FString::Printf(TEXT("BP_Checkpoint_C_%d"), CheckpointIndex);
 	FVector TargetLoc = FVector::ZeroVector;
 
 	// sort FoundCheckpoints by name to ensure consistent order
