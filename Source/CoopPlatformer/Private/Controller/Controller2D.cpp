@@ -436,13 +436,14 @@ void AController2D::CP(int32 CheckpointIndex)
 	FString TargetName = FString::Printf(TEXT("BP_Checkpoint_C_%d"), CheckpointIndex);
 	FVector TargetLoc = FVector::ZeroVector;
 
-	for (AActor* Checkpoint : FoundCheckpoints)
+	// sort FoundCheckpoints by name to ensure consistent order
+	FoundCheckpoints.Sort([](const AActor& A, const AActor& B) {
+		return A.GetName() < B.GetName();
+		});
+
+	if (CheckpointIndex >= 0 && CheckpointIndex < FoundCheckpoints.Num())
 	{
-		if (Checkpoint->GetName() == TargetName)
-		{
-			TargetLoc = Checkpoint->GetActorLocation();
-			break;
-		}
+		TargetLoc = FoundCheckpoints[CheckpointIndex]->GetActorLocation();
 	}
 
 	if (TargetLoc == FVector::ZeroVector) return;
