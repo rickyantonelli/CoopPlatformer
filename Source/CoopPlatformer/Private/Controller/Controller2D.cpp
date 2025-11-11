@@ -106,7 +106,7 @@ void AController2D::BeginPlay()
 void AController2D::OnPassActorActivated()
 {
 	// delegate received from the player
-	PassServerRPCFunction();
+	ServerPass();
 }
 
 void AController2D::OnCountdownPingActivated()
@@ -114,13 +114,13 @@ void AController2D::OnCountdownPingActivated()
 	CountdownPingServerRPCFunction();
 }
 
-void AController2D::PassServerRPCFunction_Implementation()
+void AController2D::ServerPass()
 {
+	if (!HasAuthority()) return;
 	if (!BallActor) return;
 	if (!BallActor->CanPass) return;
 	if (!BallActor->NoPassCooldown) return;
 	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
-	//if (!MyGameStateCoop->ActivePlayers[0] || !MyGameStateCoop->ActivePlayers[1]) return;
 	if (!PlayersSet) return;
 	if (BallActor->GetAttachParentActor() != MyGameStateCoop->ActivePlayers[0]) return;
 
@@ -135,7 +135,8 @@ void AController2D::PassServerRPCFunction_Implementation()
 	BallActor->ForceNetUpdate();
 
 	MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
-	MulticastPlayPassSound();
+	/*MulticastPlayPassSound();*/
+	MyGameStateCoop->MulticastPlayPassSound(PassSound);
 
 	OnPassActivated.Broadcast();
 }
@@ -263,7 +264,7 @@ void AController2D::CollectPlayerDeath(AActor* PlayerActor)
 	{
 		if (PlayerCharacterActor->IsHolding)
 		{
-			PassServerRPCFunction();
+			ServerPass();
 		}
 		// send the ball back to the thrower if player dies while ball is on its way
 		else if (BallActor && BallActor->IsMoving && PlayerCharacterActor == MyGameStateCoop->ActivePlayers[1])
@@ -417,6 +418,14 @@ void AController2D::MulticastKillBothPlayers_Implementation()
 
 void AController2D::MulticastPlayPassSound_Implementation()
 {
+	if (HasAuthority())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Playing sound server"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Playing sound client"));
+	}
 	// Play the completed sound on all clients
 	if (PassSound)
 	{
@@ -427,6 +436,7 @@ void AController2D::MulticastPlayPassSound_Implementation()
 void AController2D::CP(int32 CheckpointIndex)
 {
 	if (!HasAuthority()) return;
+	if (CheckpointIndex <= 0) return;
 
 	TArray<AActor*> FoundCheckpoints;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACheckpoint::StaticClass(), FoundCheckpoints);
@@ -435,14 +445,15 @@ void AController2D::CP(int32 CheckpointIndex)
 
 	FVector TargetLoc = FVector::ZeroVector;
 
-	// sort FoundCheckpoints by name to ensure consistent order
-	FoundCheckpoints.Sort([](const AActor& A, const AActor& B) {
-		return A.GetName() < B.GetName();
-		});
-
-	if (CheckpointIndex >= 0 && CheckpointIndex < FoundCheckpoints.Num())
+	ACheckpoint* TargetCheckpoint = nullptr;
+	for (AActor* Actor : FoundCheckpoints)
 	{
-		TargetLoc = FoundCheckpoints[CheckpointIndex]->GetActorLocation();
+		ACheckpoint* Checkpoint = Cast<ACheckpoint>(Actor);
+		if (Checkpoint && Checkpoint->CheckpointID == CheckpointIndex)
+		{
+			TargetLoc = Checkpoint->GetActorLocation();
+			break;
+		}
 	}
 
 	if (TargetLoc == FVector::ZeroVector) return;

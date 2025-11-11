@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
@@ -55,6 +56,12 @@ protected:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void UnFreezeServerRPCFunction(FVector FreezeVelo);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void ServerPassRPC();
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void ServerCountdownPingRPC();
 
 	/** Called for dashing input */
 	void ExtraActionPressed(const FInputActionValue& Value);

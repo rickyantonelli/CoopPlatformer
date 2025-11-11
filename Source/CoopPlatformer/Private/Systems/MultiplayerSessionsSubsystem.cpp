@@ -2,6 +2,7 @@
 // Code written by Ricky Antonelli, but used in reference to https://www.udemy.com/course/unreal-engine-5-multiplayer 
 
 #include "Systems/MultiplayerSessionsSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 
@@ -99,7 +100,7 @@ void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 
 	SessionSearch->bIsLanQuery = IsLan; // will make the search purely a lan search
 	SessionSearch->MaxSearchResults = 9999; // the max search results that we can get
-	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals); // this is an object called query settings that we can set - only search for sessions with presence
+	SessionSearch->QuerySettings.Set(FName("SEARCH_PRESENCE"), true, EOnlineComparisonOp::Equals); // this is an object called query settings that we can set - only search for sessions with presence
 
 	ServerNameToFind = ServerName;
 

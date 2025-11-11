@@ -46,6 +46,9 @@ public:
 	/** Array of characters that tracks whether a player has overlapped the checkpoint */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	TArray<TObjectPtr<AMyPaperCharacter>> CheckpointedPlayers;
+
+	UPROPERTY(EditAnywhere, Category = "Custom")
+	int CheckpointID = 0;
 	
 	/** Allows the checkpoint to be collected, only allow a checkpoint to be collected once */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")

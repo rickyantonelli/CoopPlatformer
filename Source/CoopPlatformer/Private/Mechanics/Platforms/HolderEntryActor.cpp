@@ -51,7 +51,7 @@ void AHolderEntryActor::OnBoxCollisionEnter(UPrimitiveComponent* OverlappedCompo
 	AMyPaperCharacter* PlayerCharacter = Cast<AMyPaperCharacter>(OtherActor);
 	if (!PlayerCharacter) return;
 
-	FVector KickOffVelocity;
+	//FVector KickOffVelocity;
 	float KickOffHorizontal = 100.f;
 
 	PlayerCharacter->bPassingThrough = false;

@@ -94,8 +94,8 @@ public:
 	void OnCountdownPingActivated();
 
 	/** Server RPC for passing */
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void PassServerRPCFunction();
+	UFUNCTION(BlueprintCallable)
+	void ServerPass();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void CountdownPingServerRPCFunction();
@@ -114,7 +114,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastKillBothPlayers();
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void MulticastPlayPassSound();
 
 	/** Reverts the player's view target back to itself */

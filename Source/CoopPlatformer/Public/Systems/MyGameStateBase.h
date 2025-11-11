@@ -31,4 +31,7 @@ public:
 
 	/** Required for replicated variables - required for passing between players */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayPassSound(USoundBase* Sound);
 };

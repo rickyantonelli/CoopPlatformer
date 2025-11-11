@@ -222,8 +222,13 @@ void AMyPaperCharacter::Pass(const FInputActionValue& Value)
 {
 	if (IsHolding && bPassingThrough && MovementEnabled && IsLocallyControlled())
 	{
-		OnPassActivated.Broadcast();
+		ServerPassRPC();
 	}
+}
+
+void AMyPaperCharacter::ServerPassRPC_Implementation()
+{
+	OnPassActivated.Broadcast();
 }
 
 void AMyPaperCharacter::ExtraActionPressed(const FInputActionValue& Value)
@@ -315,8 +320,13 @@ void AMyPaperCharacter::CountdownPing(const FInputActionValue& Value)
 {
 	if (IsLocallyControlled() && IsHolding)
 	{
-		OnCountdownPingActivated.Broadcast();
+		ServerCountdownPingRPC();
 	}
+}
+
+void AMyPaperCharacter::ServerCountdownPingRPC_Implementation()
+{
+	OnCountdownPingActivated.Broadcast();
 }
 
 void AMyPaperCharacter::DashServerRPCFunction_Implementation(FVector DashDir)
