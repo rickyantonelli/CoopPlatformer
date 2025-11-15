@@ -154,5 +154,5 @@ public:
 	void CollectDashToken(AActor* PlayerActor, AActor* OtherActor);
 
 	UFUNCTION(Exec)
-	void CP(int32 CheckpointIndex);
+	void CP(FString CheckpointInput);
 };

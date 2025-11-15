@@ -46,7 +46,10 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	// Jumping
 	WithinCoyoteTime = false;
 	WithinDoubleJumpGrace = false;
-	Jumping = false;
+	WithinJumpBuffer = false;
+	bCanJumpBuffer = false;
+	bUsedJumpBuffer = false;
+	bJumping = false;
 	DevInfiniteJump = false;
 	HasJumpInput = true;
 	CoyoteDuration = 0.5f;
@@ -54,6 +57,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	JumpApexTimer = 0.2f;
 	JumpApexGravityScale = 0.5f;
 	DoubleJumpGrace = 0.2f;
+	JumpBuffer = 0.1f;
 
 	// Dash
 	CanDash = false;
@@ -131,7 +135,7 @@ void AMyPaperCharacter::Tick(float DeltaTime)
 	PreviousVelocity = GetCharacterMovement()->Velocity;
 	// if we ever get to a frame where we are jumping but also have 0 z velocity (vertical) then stop the jump
 	// this stops us from sticking to the ceiling because we've hit the top but are holding jump
-	if (Jumping)
+	if (bJumping)
 	{
 		if (GetCharacterMovement()->Velocity.Z == 0) StopJumping();
 	}
@@ -352,7 +356,7 @@ void AMyPaperCharacter::ResetJumpAbility()
 			FTimerHandle TimerHandler;
 			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinDoubleJumpGrace = false; }, DoubleJumpGrace, false);
 			return;
-		} 
+		}
 
 		// We want to allow the players a theoretical possibility to jump as much as they want
 		// So increment by one, rather than just setting to 2
@@ -363,6 +367,20 @@ void AMyPaperCharacter::ResetJumpAbility()
 		if (DoubleJumpFlipbook)
 		{
 			DoubleJumpFlipbook->SetVisibility(true);
+		}
+
+		if (NewMovementMode == EMovementMode::MOVE_Falling)
+		{
+			// check for a buffer to jump
+			if (WithinJumpBuffer)
+			{
+				bCanJumpBuffer = true;
+				FTimerHandle TimerHandle;
+				GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+					{
+						Jump();
+					}, 0.01f, false);
+			}
 		}
 	}
 }
@@ -375,28 +393,55 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 	CanDash = false;
 	if (HasAuthority()) JumpMaxCount = 1;
 	GetCharacterMovement()->GravityScale = BaseGravityScale;
-	Jumping = false;
+	bJumping = false;
 	if (DoubleJumpFlipbook)
 	{
 		DoubleJumpFlipbook->SetVisibility(false);
+	}
+
+	if (WithinJumpBuffer)
+	{
+		bCanJumpBuffer = true;
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+			{
+				Jump();
+			}, 0.01f, false);
 	}
 }
 
 bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 {
 	// overriding to see if we are within coyote time, if not just use Super
-	if (WithinCoyoteTime && !Jumping)
+	if (WithinCoyoteTime && !bJumping)
 	{
 		return true;
 	}
 
-	else return Super::CanJumpInternal_Implementation();
+	if (bCanJumpBuffer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Using jump buffer"));
+		return true;
+	}
+
+	return Super::CanJumpInternal_Implementation();
 }
 
 void AMyPaperCharacter::Jump()
 {
+	if (!HasJumpInput) return;
+
+	// if we cant jump, then start the buffer timer
+	if (!bUsedJumpBuffer && !CanJump() && GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Falling)
+	{
+		WithinJumpBuffer = true;
+		GetWorld()->GetTimerManager().ClearTimer(JumpBufferTimer);
+		GetWorld()->GetTimerManager().SetTimer(JumpBufferTimer, [this](){WithinJumpBuffer = false;}, JumpBuffer, false);
+		return;
+	}
+
 	// only allow if movement is enabled
-	if (MovementEnabled && HasJumpInput)
+	if (MovementEnabled)
 	{
 		Super::Jump();
 	}
@@ -405,21 +450,27 @@ void AMyPaperCharacter::Jump()
 void AMyPaperCharacter::StopJumping()
 {
 	Super::StopJumping();
-	// leaving this override in case we need it later
 }
 
 void AMyPaperCharacter::JumpReleased()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Jump Released"));
-	// we care about this because we want the player to release the jump button before getting another jump
 	HasJumpInput = true;
+	bUsedJumpBuffer = false;
 }
 
 void AMyPaperCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
-	HasJumpInput = false;
-	Jumping = true;
+	if (!bCanJumpBuffer) HasJumpInput = false;
+	bJumping = true;
+	if (bCanJumpBuffer)
+	{
+		bUsedJumpBuffer = true;
+		bCanJumpBuffer = false;
+	}
+	WithinJumpBuffer = false;
+	GetWorld()->GetTimerManager().ClearTimer(JumpBufferTimer);
+
 
 	if (bInWallJumpTimer)
 	{
@@ -658,5 +709,6 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	DOREPLIFETIME(AMyPaperCharacter, JumpMaxCount);
 	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
 	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);
+	DOREPLIFETIME(AMyPaperCharacter, ActiveCheckpoint);
 }
 

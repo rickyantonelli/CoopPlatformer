@@ -54,6 +54,7 @@ void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 				CanBeCollected = false;
 				if (HasAuthority())
 				{
+					CheckpointedActor->ActiveCheckpoint = CheckpointID;
 					// visually turn off the checkpoint
 					MulticastCheckpointUnlocked();
 				}

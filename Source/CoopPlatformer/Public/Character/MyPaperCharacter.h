@@ -190,6 +190,9 @@ public:
 	float CoyoteDuration;
 
 	UPROPERTY(EditAnywhere, Category = "Customizable Values|Jump")
+	float JumpBuffer;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable Values|Jump")
 	float DoubleJumpGrace;
 
 	/** For testing - allows the dev to infinitely jump instead of passing back and forth to get jump resets */
@@ -261,11 +264,22 @@ public:
 	bool WithinCoyoteTime;
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool WithinJumpBuffer;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool bCanJumpBuffer;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	bool bUsedJumpBuffer;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool WithinDoubleJumpGrace;
+
+	FTimerHandle JumpBufferTimer;
 
 	/** Whether a player is in the act of jumping */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-	bool Jumping;
+	bool bJumping;
 
 	/** Whether the player has an input available to jump. This is so that the player has to press jump every time they want to, not hold it down */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
@@ -295,6 +309,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bCanXMove = true;
+
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	int ActiveCheckpoint = 0;
 
 	bool bLockedX = false;
 

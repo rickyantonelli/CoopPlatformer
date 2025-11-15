@@ -433,10 +433,28 @@ void AController2D::MulticastPlayPassSound_Implementation()
 	}
 }
 
-void AController2D::CP(int32 CheckpointIndex)
+void AController2D::CP(FString CheckpointInput)
 {
 	if (!HasAuthority()) return;
-	if (CheckpointIndex <= 0) return;
+
+	int32 CheckpointIndex = 0;
+
+	if (CheckpointInput.Equals(TEXT("next"), ESearchCase::IgnoreCase))
+	{
+		CheckpointIndex = MyGameStateCoop->ActivePlayers[0]->ActiveCheckpoint + 1;
+	}
+	else if (FCString::Atoi(*CheckpointInput) > 0)
+	{
+		CheckpointIndex = FCString::Atoi(*CheckpointInput);
+	}
+
+	if (CheckpointIndex <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invalid checkpoint index: %s"), *CheckpointInput);
+		return;
+	}
+
+	// if (CheckpointIndex <= 0) return;
 
 	TArray<AActor*> FoundCheckpoints;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACheckpoint::StaticClass(), FoundCheckpoints);
