@@ -259,6 +259,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool MovementEnabled;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool JumpEnabled;
+
 	/** Whether a player is within coyote time and can still jump despite not being grounded */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	bool WithinCoyoteTime;
@@ -423,5 +426,8 @@ public:
 
 	UFUNCTION()
 	void OnWallExit(bool FromJump=false);
+
+	UFUNCTION()
+	void DisableJump(float DisableTimer);
 
 };

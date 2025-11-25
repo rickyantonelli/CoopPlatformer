@@ -5,6 +5,7 @@
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include <Online/OnlineSessionNames.h>
 
 UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 {
@@ -64,6 +65,7 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 	SessionSettings.bUseLobbiesIfAvailable = true; // use lobbies API if it's available
 	SessionSettings.bUsesPresence = true; // something Steam uses, has to do with player info and regions
 	SessionSettings.bAllowJoinViaPresence = true; // another presence thing for steam
+	SessionSettings.bAllowJoinViaPresenceFriendsOnly = false;
 	SessionSettings.bIsLANMatch = IsLan; // depends on the subsystem, want this to be true for NULL but false for Steam
 
 
@@ -100,7 +102,10 @@ void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 
 	SessionSearch->bIsLanQuery = IsLan; // will make the search purely a lan search
 	SessionSearch->MaxSearchResults = 9999; // the max search results that we can get
-	SessionSearch->QuerySettings.Set(FName("SEARCH_PRESENCE"), true, EOnlineComparisonOp::Equals); // this is an object called query settings that we can set - only search for sessions with presence
+	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals); 
+	SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	SessionSearch->QuerySettings.Set(FName("SERVER_NAME"), ServerName, EOnlineComparisonOp::Equals);
+
 
 	ServerNameToFind = ServerName;
 
@@ -197,7 +202,9 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
 		FString Address = "";
-		bool Success = SessionInterface->GetResolvedConnectString(MySessionName, Address);
+		UE_LOG(LogTemp, Warning, TEXT("OnJoinSessionComplete: Result=%d"), (int32)Result);
+		bool Success = SessionInterface->GetResolvedConnectString(SessionName, Address);
+		UE_LOG(LogTemp, Warning, TEXT("ResolvedConnectString: Success=%d Address='%s'"), Success, *Address);
 		if (Success)
 		{
 			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
@@ -207,6 +214,14 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 			}
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Could not get connect string."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not join session."));
 	}
 }
 

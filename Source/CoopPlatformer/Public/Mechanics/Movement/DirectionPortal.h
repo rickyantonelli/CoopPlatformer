@@ -61,6 +61,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Custom")
 	float LaunchAmp;
 
+	UPROPERTY(EditAnywhere, Category = "Customizable")
+	float MovementDisableAmount;
+
 	FTimerHandle LateralFrictionHandle;
 
 	UFUNCTION(NetMulticast, Reliable)

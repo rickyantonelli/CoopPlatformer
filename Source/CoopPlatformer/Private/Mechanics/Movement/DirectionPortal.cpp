@@ -25,6 +25,7 @@ ADirectionPortal::ADirectionPortal()
 	CameraLagTime = 1.0f;
 	LateralFrictionTimer = 0.5f;
 	LaunchAmp = 1.0f;
+	MovementDisableAmount = 0.1f;
 }
 
 void ADirectionPortal::BeginPlay()
@@ -44,6 +45,8 @@ void ADirectionPortal::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		UCharacterMovementComponent* MoveComp = Player->FindComponentByClass<UCharacterMovementComponent>();
 		if (!MoveComp) return;
 
+		Player->DisableJump(MovementDisableAmount);
+
 		if (HasAuthority())
 		{
 			TPActorsOnCD.Add(OtherActor);
@@ -61,24 +64,30 @@ void ADirectionPortal::MulticastLaunchPlayer_Implementation(AMyPaperCharacter* P
 {
 	FVector IncomingVelo = MoveComp->Velocity;
 
-	// for the ball or player, change the actor location to the other teleporter
 	UBoxComponent* TargetComp = (OverlappedComponent == TPMesh1) ? TPMesh2 : TPMesh1;
 	Player->TeleportTo(TargetComp->GetComponentLocation(), Player->GetActorRotation());
 
 	FVector OutVelo = TargetComp->GetForwardVector() * IncomingVelo.Size();
-
 	Player->LaunchCharacter(OutVelo * LaunchAmp, true, true);
 
 	if (Player->SpringArm)
 	{
 		Player->SpringArm->CameraLagSpeed += CameraLagOffset;
 		FTimerHandle LagTimer;
-		GetWorld()->GetTimerManager().SetTimer(LagTimer, [Player, this]() {Player->SpringArm->CameraLagSpeed -= CameraLagOffset; }, CameraLagTime, false);
+		GetWorld()->GetTimerManager().SetTimer(LagTimer, [Player, this]()
+			{
+				if (IsValid(Player) && Player->SpringArm) // Check validity
+				{
+					Player->SpringArm->CameraLagSpeed -= CameraLagOffset;
+				}
+			}, CameraLagTime, false);
 	}
-	MoveComp->FallingLateralFriction = 0;
 
-	GetWorld()->GetTimerManager().ClearTimer(LateralFrictionHandle);
-	GetWorld()->GetTimerManager().SetTimer(LateralFrictionHandle, [MoveComp, Player]() {MoveComp->FallingLateralFriction = Player->InitialFriction; }, LateralFrictionTimer, false);
+	// Use the player's own MulticastApplyFriction function instead
+	if (Player)
+	{
+		Player->MulticastApplyFriction(0, LateralFrictionTimer);
+	}
 }
 
 void ADirectionPortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

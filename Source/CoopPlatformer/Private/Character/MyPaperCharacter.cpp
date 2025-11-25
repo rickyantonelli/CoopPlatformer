@@ -36,6 +36,7 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	// Misc movement
 	IsHolding = false;
 	MovementEnabled = true;
+	JumpEnabled = true;
 	bFirstPlayer = false;
 	bPassingThrough = true;
 	InitialFriction = 1.f;
@@ -430,6 +431,8 @@ bool AMyPaperCharacter::CanJumpInternal_Implementation() const
 void AMyPaperCharacter::Jump()
 {
 	if (!HasJumpInput) return;
+	if (!JumpEnabled) return;
+	if (!MovementEnabled) return;
 
 	// if we cant jump, then start the buffer timer
 	if (!bUsedJumpBuffer && !CanJump() && GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Falling)
@@ -440,11 +443,7 @@ void AMyPaperCharacter::Jump()
 		return;
 	}
 
-	// only allow if movement is enabled
-	if (MovementEnabled)
-	{
-		Super::Jump();
-	}
+	Super::Jump();
 }
 
 void AMyPaperCharacter::StopJumping()
@@ -694,7 +693,12 @@ void AMyPaperCharacter::OnWallExit(bool FromJump)
 	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {if (JumpMaxCount > 1) JumpMaxCount -= 1; }, WallJumpGrace, false);
 }
 
-
+void AMyPaperCharacter::DisableJump(float DisableTimer)
+{
+	JumpEnabled = false;
+	FTimerHandle DisableTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(DisableTimerHandle, [this]() {JumpEnabled = true; }, DisableTimer, false);
+}
 
 void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {

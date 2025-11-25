@@ -21,6 +21,7 @@ ASpringActor::ASpringActor()
 	BoxMesh->SetIsReplicated(true);
 
 	LaunchPower = 1000;
+	MovementDisableAmount = 0.1f;
 
 }
 
@@ -46,6 +47,11 @@ void ASpringActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AAct
 		AMyPaperCharacter* MyCharacter = Cast<AMyPaperCharacter>(OtherActor);
 		if (MyCharacter)
 		{
+			MyCharacter->DisableJump(MovementDisableAmount);
+
+			// reset player momentum before launching
+			MyCharacter->GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
 			FVector LaunchDirection = GetActorUpVector();
 			MyCharacter->LaunchCharacter(LaunchDirection * LaunchPower, false, true);
 		}

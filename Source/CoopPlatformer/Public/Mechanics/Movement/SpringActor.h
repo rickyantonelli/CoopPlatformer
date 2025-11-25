@@ -24,8 +24,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Customizable")
 	float LaunchPower;
+
+	UPROPERTY(EditAnywhere, Category = "Customizable")
+	float MovementDisableAmount;
 
 	/** The root component of the pressure plate actor */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
