@@ -23,10 +23,19 @@ void UBallReboundComponent::BeginPlay()
 	if (!GetOwner() || bControllersBound) return;
 	if (!GetOwner()->HasAuthority()) return;
 
-	UBoxComponent* Box = GetOwner()->FindComponentByClass<UBoxComponent>();
-	if (!Box) return;
+	UPaperSpriteComponent* Sprite = GetOwner()->FindComponentByClass<UPaperSpriteComponent>();
+	if (Sprite)
+	{
+		Sprite->OnComponentBeginOverlap.AddDynamic(this, &UBallReboundComponent::OnOverlapBegin);
+	}
 
-	Box->OnComponentBeginOverlap.AddDynamic(this, &UBallReboundComponent::OnOverlapBegin);
+	UBoxComponent* Box = GetOwner()->FindComponentByClass<UBoxComponent>();
+	if (Box)
+	{
+		Box->OnComponentBeginOverlap.AddDynamic(this, &UBallReboundComponent::OnOverlapBegin);
+	}
+
+	
 }
 
 
@@ -56,17 +65,37 @@ void UBallReboundComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedCompon
 	ABallActor* Ball = Cast<ABallActor>(OtherActor);
 	if (!Ball) return;
 	if (Ball->IsAttached) return;
-
-	//AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
-	//if (!MyController) return;
-	//MyController->ReturnBallToThrower();
-
-	// AController2D* AuthController = nullptr;
-
-
-
 	if (!AuthController) return;
+
+	// Spawn spark effect on all clients
+	if (SparkActorClass)
+	{
+		FVector SpawnLocation = SweepResult.ImpactPoint;
+		if (SpawnLocation.IsZero())
+		{
+			SpawnLocation = OtherActor->GetActorLocation();
+		}
+
+		AActor* SparkActor = GetWorld()->SpawnActor<AActor>(SparkActorClass, SpawnLocation, FRotator::ZeroRotator);
+		if (SparkActor)
+		{
+			SparkActor->SetLifeSpan(SparkLifetime);
+		}
+	}
+
 	AuthController->ReturnBallToThrower();
 
+}
+
+void UBallReboundComponent::MulticastSpawnSparkEffect_Implementation(FVector SpawnLocation)
+{
+	if (SparkActorClass)
+	{
+		AActor* SparkActor = GetWorld()->SpawnActor<AActor>(SparkActorClass, SpawnLocation, FRotator::ZeroRotator);
+		if (SparkActor)
+		{
+			SparkActor->SetLifeSpan(SparkLifetime);
+		}
+	}
 }
 

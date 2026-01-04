@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
 #include "PaperSpriteComponent.h"
+#include "PaperFlipbookComponent.h"
 #include "VanishingPlatform.generated.h"
 
 UCLASS()
@@ -32,6 +33,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<UPaperSpriteComponent> Sprite;
 
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UPaperFlipbookComponent> Flipbook;
+
 	UFUNCTION()
 	void OnBoxCollision(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
@@ -44,9 +48,9 @@ public:
 	float RespawnTime = 2.0f;
 
 	UFUNCTION()
-	void StartVanish();
+	void ResetVanish();
 
 	UFUNCTION()
-	void ResetVanish();
+	void OnVanishFlipbookFinished();
 
 };

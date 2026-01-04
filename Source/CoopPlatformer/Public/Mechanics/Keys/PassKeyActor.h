@@ -24,9 +24,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	/** The key's static mesh*/
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TObjectPtr<UBoxComponent> Mesh;
+	TObjectPtr<UBoxComponent> Box;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UPaperSpriteComponent> Sprite;
 
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()

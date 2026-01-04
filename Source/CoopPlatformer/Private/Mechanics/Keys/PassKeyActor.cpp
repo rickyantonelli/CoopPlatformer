@@ -9,10 +9,6 @@ APassKeyActor::APassKeyActor()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
-
-	Mesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(RootComp);
-	Mesh->SetIsReplicated(true);
 }
 
 void APassKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -24,7 +20,17 @@ void APassKeyActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Mesh->OnComponentBeginOverlap.AddDynamic(this, &APassKeyActor::OnBoxCollision);
+	Box = GetComponentByClass<UBoxComponent>();
+	if (Box)
+	{
+		Box->OnComponentBeginOverlap.AddDynamic(this, &APassKeyActor::OnBoxCollision);
+	}
+
+	Sprite = GetComponentByClass<UPaperSpriteComponent>();
+	if (Sprite)
+	{
+		Sprite->OnComponentBeginOverlap.AddDynamic(this, &APassKeyActor::OnBoxCollision);
+	}
 }
 
 void APassKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

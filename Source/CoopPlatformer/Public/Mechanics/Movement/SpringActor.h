@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Character/MyPaperCharacter.h"
 #include "GameFramework/Actor.h"
+#include "PaperFlipbookComponent.h"
 #include "SpringActor.generated.h"
 
 UCLASS()
@@ -34,10 +35,18 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<USceneComponent> RootComp;
 
-	/** The pressure plate's static mesh*/
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UBoxComponent> BoxMesh;
+	TObjectPtr<UBoxComponent> Box;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UPaperSpriteComponent> Sprite;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UPaperFlipbookComponent> Flipbook;
 
 	UFUNCTION()
 	void OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnSpringFlipbookFinished();
 };

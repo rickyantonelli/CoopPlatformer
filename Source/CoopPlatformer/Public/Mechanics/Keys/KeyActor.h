@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Character/BallActor.h"
 #include "PaperSpriteComponent.h"
+#include "PaperFlipBookComponent.h"
+#include "PaperFlipbook.h"
 #include "GameFramework/Actor.h"
 #include "KeyActor.generated.h"
 
@@ -50,6 +52,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperSprite> GreenKey;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperFlipbook> UnlockFlipbook;
+
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<USoundBase> CompletedSound;
 
@@ -71,4 +76,10 @@ public:
 
 	UFUNCTION()
 	void OnResetActivated();
+
+	UFUNCTION()
+	void OnDoorFlipbookFinished();
+
+	UFUNCTION()
+	void OnUnlockFlipbookFinished();
 };

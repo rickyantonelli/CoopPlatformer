@@ -43,6 +43,12 @@ void AKeyActor::BeginPlay()
 			MyController->OnResetActivated.AddDynamic(this, &AKeyActor::OnResetActivated);
 		}
 	}
+
+	UPaperFlipbookComponent* KeyFlipbookComp = GetComponentByClass<UPaperFlipbookComponent>();
+	if (KeyFlipbookComp)
+	{
+		KeyFlipbookComp->OnFinishedPlaying.AddDynamic(this, &AKeyActor::OnUnlockFlipbookFinished);
+	}
 }
 
 void AKeyActor::Tick(float DeltaTime)
@@ -58,6 +64,11 @@ void AKeyActor::MulticastRedKey_Implementation()
 		{
 			SpriteComp->SetSprite(RedKey);
 		}
+		UPaperFlipbookComponent* KeyFlipbookComp = GetComponentByClass<UPaperFlipbookComponent>();
+		if (KeyFlipbookComp)
+		{
+			KeyFlipbookComp->SetVisibility(false);
+		}
 	}
 }
 
@@ -68,6 +79,32 @@ void AKeyActor::OnResetActivated()
 	if (HasAuthority())
 	{
 		MulticastTriggerReset();
+	}
+}
+
+void AKeyActor::OnDoorFlipbookFinished()
+{
+	// after the flipbook is finished playing, hide the flipbook component
+	for (AActor* LockedActor : LockedActors)
+	{
+		UPaperFlipbookComponent* FlipbookComp = LockedActor->GetComponentByClass<UPaperFlipbookComponent>();
+		if (FlipbookComp)
+		{
+			FlipbookComp->SetVisibility(false);
+		}
+	}
+}
+
+void AKeyActor::OnUnlockFlipbookFinished()
+{
+	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
+	{
+		if (SpriteComp)
+		{
+			SpriteComp->SetSprite(GreenKey);
+			SpriteComp->SetVisibility(true);
+			
+		}
 	}
 }
 
@@ -92,6 +129,7 @@ void AKeyActor::MulticastTriggerUnlock_Implementation()
 		{
 			UBoxComponent* LockBox = LockedActor->GetComponentByClass<UBoxComponent>();
 			UPaperSpriteComponent* LockSprite = LockedActor->GetComponentByClass<UPaperSpriteComponent>();
+			UPaperFlipbookComponent* FlipbookComp = LockedActor->GetComponentByClass<UPaperFlipbookComponent>();
 			if (LockBox)
 			{
 				LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -99,6 +137,17 @@ void AKeyActor::MulticastTriggerUnlock_Implementation()
 			if (LockSprite)
 			{
 				LockSprite->SetVisibility(false);
+				LockSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+			if (FlipbookComp)
+			{
+				// Make the flipbook visibile and play it once
+				FlipbookComp->SetVisibility(true);
+				FlipbookComp->SetLooping(false);
+				FlipbookComp->PlayFromStart();
+
+				FlipbookComp->OnFinishedPlaying.AddDynamic(this, &AKeyActor::OnDoorFlipbookFinished);
+
 			}
 		}
 	}
@@ -106,9 +155,23 @@ void AKeyActor::MulticastTriggerUnlock_Implementation()
 	// Set the keys to green
 	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
 	{
+		
 		if (SpriteComp)
 		{
-			SpriteComp->SetSprite(GreenKey);
+			UPaperFlipbookComponent* KeyFlipbookComp = GetComponentByClass<UPaperFlipbookComponent>();
+			if (UnlockFlipbook && KeyFlipbookComp)
+			{
+				SpriteComp->SetVisibility(false);
+				KeyFlipbookComp->SetVisibility(true);
+				KeyFlipbookComp->SetLooping(false);
+				KeyFlipbookComp->SetFlipbook(UnlockFlipbook);
+				KeyFlipbookComp->PlayFromStart();
+
+			}
+			else
+			{
+				SpriteComp->SetSprite(GreenKey);
+			}
 		}
 	}
 
@@ -141,6 +204,10 @@ void AKeyActor::MulticastTriggerReset_Implementation()
 			if (LockSprite)
 			{
 				LockSprite->SetVisibility(true);
+				if (!LockBox)
+				{
+					LockSprite->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				}
 			}
 		}
 	}

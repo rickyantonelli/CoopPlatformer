@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Controller/Controller2D.h"
+#include "PaperFlipbook.h"
+#include "PaperFlipBookComponent.h"
 #include "BallReboundComponent.generated.h"
 
 
@@ -31,4 +33,13 @@ public:
 	bool bControllersBound = false;
 
 	AController2D* AuthController = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
+	TSubclassOf<AActor> SparkActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
+	float SparkLifetime = 1.0f;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSpawnSparkEffect(FVector SpawnLocation);
 };

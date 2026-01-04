@@ -16,10 +16,6 @@ ASpringActor::ASpringActor()
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
 
-	BoxMesh = CreateDefaultSubobject<UBoxComponent>(TEXT("Mesh"));
-	BoxMesh->SetupAttachment(RootComp);
-	BoxMesh->SetIsReplicated(true);
-
 	LaunchPower = 1000;
 	MovementDisableAmount = 0.1f;
 
@@ -30,7 +26,24 @@ void ASpringActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	BoxMesh->OnComponentBeginOverlap.AddDynamic(this, &ASpringActor::OnBoxCollision);
+	Box = GetComponentByClass<UBoxComponent>();
+	if (Box)
+	{
+		Box->OnComponentBeginOverlap.AddDynamic(this, &ASpringActor::OnBoxCollision);
+	}
+
+	Sprite = GetComponentByClass<UPaperSpriteComponent>();
+	if (Sprite)
+	{
+		Sprite->OnComponentBeginOverlap.AddDynamic(this, &ASpringActor::OnBoxCollision);
+	}
+
+	Flipbook = GetComponentByClass<UPaperFlipbookComponent>();
+
+	if (Flipbook)
+	{
+		Flipbook->OnFinishedPlaying.AddDynamic(this, &ASpringActor::OnSpringFlipbookFinished);
+	}
 }
 
 // Called every frame
@@ -55,6 +68,23 @@ void ASpringActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AAct
 			FVector LaunchDirection = GetActorUpVector();
 			MyCharacter->LaunchCharacter(LaunchDirection * LaunchPower, false, true);
 		}
+
+		if (Flipbook && Sprite)
+		{
+			Sprite->SetVisibility(false);
+			Flipbook->SetVisibility(true);
+			Flipbook->SetLooping(false);
+			Flipbook->PlayFromStart();
+		}
+	}
+}
+
+void ASpringActor::OnSpringFlipbookFinished()
+{
+	if (Flipbook && Sprite)
+	{
+		Flipbook->SetVisibility(false);
+		Sprite->SetVisibility(true);
 	}
 }
 

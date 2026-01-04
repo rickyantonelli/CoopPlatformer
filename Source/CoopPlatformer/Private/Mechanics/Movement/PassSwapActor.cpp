@@ -36,6 +36,10 @@ void APassSwapActor::BeginPlay()
 		if (LockSprite && OffSprite)
 		{
 			LockSprite->SetSprite(OffSprite);
+			if (!LockBox)
+			{
+				LockSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	}
 
@@ -87,15 +91,14 @@ void APassSwapActor::MulticastSwapActors_Implementation()
 		{
 			LockBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
-		// TODO: This whole OffSprite/OnSprite logic is temporary since we will completely change the way these look in the future
+
 		if (LockSprite && OnSprite)
 		{
 			LockSprite->SetSprite(OnSprite);
-			UE_LOG(LogTemp, Log, TEXT("Set OnSprite for ActivatingActor: %s"), *ActivatingActor->GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("LockSprite or OnSprite is null for ActivatingActor: %s"), *ActivatingActor->GetName());
+			if (!LockBox)
+			{
+				LockSprite->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			}
 		}
 	}
 
@@ -110,6 +113,10 @@ void APassSwapActor::MulticastSwapActors_Implementation()
 		if (LockSprite && OffSprite)
 		{
 			LockSprite->SetSprite(OffSprite);
+			if (!LockBox)
+			{
+				LockSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	}
 

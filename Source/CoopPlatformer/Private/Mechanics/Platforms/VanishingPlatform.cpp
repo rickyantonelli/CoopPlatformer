@@ -1,7 +1,7 @@
 // Copyright Ricky Antonelli
 
-
 #include "Mechanics/Platforms/VanishingPlatform.h"
+#include "PaperFlipbook.h"
 
 // Sets default values
 AVanishingPlatform::AVanishingPlatform()
@@ -14,16 +14,6 @@ AVanishingPlatform::AVanishingPlatform()
 
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
-
-	Platform = CreateDefaultSubobject<UBoxComponent>(TEXT("Platform"));
-	Platform->SetupAttachment(RootComp);
-	Platform->SetIsReplicated(true);
-	Platform->SetNotifyRigidBodyCollision(true);
-
-	Sprite = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Sprite"));
-	Sprite->SetupAttachment(Platform);
-	Sprite->SetIsReplicated(true);
-	Sprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned
@@ -31,7 +21,29 @@ void AVanishingPlatform::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Platform->OnComponentHit.AddDynamic(this, &AVanishingPlatform::OnBoxCollision);
+	Platform = GetComponentByClass<UBoxComponent>();
+	if (Platform)
+	{
+		Platform->OnComponentHit.AddDynamic(this, &AVanishingPlatform::OnBoxCollision);
+	}
+
+	Sprite = GetComponentByClass<UPaperSpriteComponent>();
+	if (Sprite)
+	{
+		Sprite->OnComponentHit.AddDynamic(this, &AVanishingPlatform::OnBoxCollision);
+	}
+
+	Flipbook = GetComponentByClass<UPaperFlipbookComponent>();
+	if (Flipbook)
+	{
+		Flipbook->OnFinishedPlaying.AddDynamic(this, &AVanishingPlatform::OnVanishFlipbookFinished);
+
+		float DefaultFPS = Flipbook->GetFlipbook()->GetFramesPerSecond();
+		int32 NumFrames = Flipbook->GetFlipbook()->GetNumFrames();
+		float PlayRateMultiplier = (NumFrames / VanishingTime) / DefaultFPS;
+		Flipbook->SetPlayRate(PlayRateMultiplier);
+	}
+
 	
 }
 
@@ -39,34 +51,43 @@ void AVanishingPlatform::OnBoxCollision(UPrimitiveComponent* HitComp, AActor* Ot
 {
 	if (OtherActor->ActorHasTag("Player") && !bIsVanishing)
 	{
-		// start the vanish
 		bIsVanishing = true;
-		FTimerHandle VanishTimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(VanishTimerHandle, [&]() { StartVanish();  }, VanishingTime, false);
+
+		Sprite->SetVisibility(false);
+		Flipbook->SetVisibility(true);
+		Flipbook->SetLooping(false);
+		Flipbook->PlayFromStart();
 	}
 }
 
-void AVanishingPlatform::StartVanish()
+void AVanishingPlatform::ResetVanish()
 {
-	if (!Platform || !Sprite)
+	
+	if (Platform)
 	{
-		return;
+		Platform->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
-	Platform->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Sprite->SetVisibility(false);
+	else
+	{
+		Sprite->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	Sprite->SetVisibility(true);
+}
+
+void AVanishingPlatform::OnVanishFlipbookFinished()
+{
+	if (Platform)
+	{
+		Platform->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else
+	{
+		Sprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	Flipbook->SetVisibility(false);
 
 	bIsVanishing = false;
 
 	FTimerHandle ResetTimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [&]() { ResetVanish();  }, RespawnTime, false);
-}
-
-void AVanishingPlatform::ResetVanish()
-{
-	if (!Platform || !Sprite)
-	{
-		return;
-	}
-	Platform->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Sprite->SetVisibility(true);
 }
