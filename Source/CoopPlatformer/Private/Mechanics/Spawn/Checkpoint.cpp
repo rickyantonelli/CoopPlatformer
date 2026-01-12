@@ -1,6 +1,7 @@
 // Copyright Ricky Antonelli
 
 #include "Mechanics/Spawn/Checkpoint.h"
+#include "PaperFlipbook.h"
 
 // Sets default values
 ACheckpoint::ACheckpoint()
@@ -13,10 +14,10 @@ ACheckpoint::ACheckpoint()
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp")); 
 	SetRootComponent(RootComp); 
 
-	TriggerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TriggerMesh"));
-	TriggerMesh->SetupAttachment(RootComp);
-	TriggerMesh->SetIsReplicated(true);
-	TriggerMesh->SetCollisionProfileName(FName("OverlapAllDynamic"));
+	CheckpointSprite = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("CheckpointSprite"));
+	CheckpointSprite->SetupAttachment(RootComp);
+	CheckpointSprite->SetIsReplicated(true);
+	CheckpointSprite->SetCollisionProfileName(FName("OverlapAllDynamic"));
 
 	CanBeCollected = true;
 	Tags.Add("Checkpoint");
@@ -26,6 +27,15 @@ ACheckpoint::ACheckpoint()
 void ACheckpoint::BeginPlay()
 {
 	Super::BeginPlay();
+
+
+	UnlockFlipbook = FindComponentByClass<UPaperFlipbookComponent>();
+
+	if (UnlockFlipbook)
+	{
+		UnlockFlipbook->OnFinishedPlaying.AddDynamic(this, &ACheckpoint::OnUnlockFlipbookFinished);
+		// Flipbook should be hidden and set replicated in the editor
+	}
 }
 
 void ACheckpoint::Tick(float DeltaTime)
@@ -65,10 +75,24 @@ void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 
 void ACheckpoint::MulticastCheckpointUnlocked_Implementation()
 {
-	UStaticMeshComponent* LockSprite = GetComponentByClass<UStaticMeshComponent>();
-	if (LockSprite)
+	if (CheckpointSprite)
 	{
-		LockSprite->SetVisibility(false);
+		CheckpointSprite->SetVisibility(false);
+	}
+
+	if (UnlockFlipbook)
+	{
+		UnlockFlipbook->SetVisibility(true);
+		UnlockFlipbook->SetLooping(false);
+		UnlockFlipbook->PlayFromStart();
+	}
+}
+
+void ACheckpoint::OnUnlockFlipbookFinished()
+{
+	if (UnlockFlipbook)
+	{
+		UnlockFlipbook->SetVisibility(false);
 	}
 }
 

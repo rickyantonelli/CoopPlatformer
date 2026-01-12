@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Character/MyPaperCharacter.h"
+#include "PaperSpriteComponent.h"
+#include "PaperFlipbookComponent.h"
 #include "Checkpoint.generated.h"
 
 /** 
@@ -41,7 +43,10 @@ public:
 
 	/** The trigger mesh for the checkpoint */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> TriggerMesh;
+	TObjectPtr<UPaperSpriteComponent> CheckpointSprite;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UPaperFlipbookComponent> UnlockFlipbook;
 
 	/** Array of characters that tracks whether a player has overlapped the checkpoint */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
@@ -56,4 +61,7 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastCheckpointUnlocked();
+
+	UFUNCTION()
+	void OnUnlockFlipbookFinished();
 };

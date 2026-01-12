@@ -56,38 +56,6 @@ void AController2D::BeginPlay()
 		BallActor = MyGameStateCoop->BallActor;
 	}
 
-	// Apply the user settings we want as default
-	//// Eventually this will go away
-	//UGameUserSettings* UserSettings = GEngine->GetGameUserSettings();
-	//if (UserSettings)
-	//{
-	//	//int settingQuality = 2;
-	//	//UserSettings->SetViewDistanceQuality(settingQuality);
-	//	//UserSettings->SetAntiAliasingQuality(settingQuality);
-	//	//UserSettings->SetShadowQuality(settingQuality);
-	//	//UserSettings->SetPostProcessingQuality(settingQuality);
-	//	//UserSettings->SetTextureQuality(settingQuality);
-	//	//UserSettings->SetVisualEffectQuality(settingQuality);
-	//	//UserSettings->SetFoliageQuality(settingQuality);
-	//	//UserSettings->SetShadingQuality(settingQuality);
-	//	//UserSettings->SetGlobalIlluminationQuality(settingQuality);
-	//	//UserSettings->SetReflectionQuality(settingQuality);
-	//	UserSettings->SetFullscreenMode(EWindowMode::Windowed);
-
-	//	UserSettings->ApplySettings(false);
-
-	//	// Some debugging to ensure the settings were correctly set
-	//	UE_LOG(LogTemp, Log, TEXT("Resolution Quality: %f"), UserSettings->GetResolutionScaleNormalized());
-	//	UE_LOG(LogTemp, Log, TEXT("View Distance Quality: %d"), UserSettings->GetViewDistanceQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Anti-Aliasing Quality: %d"), UserSettings->GetAntiAliasingQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Shadow Quality: %d"), UserSettings->GetShadowQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Post-Process Quality: %d"), UserSettings->GetPostProcessingQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Texture Quality: %d"), UserSettings->GetTextureQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Effects Quality: %d"), UserSettings->GetVisualEffectQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Foliage Quality: %d"), UserSettings->GetFoliageQuality());
-	//	UE_LOG(LogTemp, Log, TEXT("Shading Quality: %d"), UserSettings->GetShadingQuality());
-	//}
-
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASamePassKeyActor::StaticClass(), FoundActors);
 	for (AActor* Actor : FoundActors)
@@ -147,25 +115,13 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 
 	if (BallActor && BallActor->IsMoving && PlayersSet)
 	{
-			
-		// TODO: This should be moved to OnOverlapBegin - inefficient to constantly check an array of overlap actors
-		TArray<AActor*> OverlapActors;
-		MyGameStateCoop->ActivePlayers[1]->GetOverlappingActors(OverlapActors, ABallActor::StaticClass());
-		if (!OverlapActors.IsEmpty())
-		{
-			if (MyGameStateCoop->ActivePlayers[1]->bPassingThrough == false)
-			{
-				ReturnBallToThrower();
-				return;
-			}
-			// The ball has arrived at the NonHoldingPlayer
-			ServerApplyBallCaught();
-		}
-		else
-		{
-			FVector NewLocation = FMath::VInterpConstantTo(BallActor->GetActorLocation(), MyGameStateCoop->ActivePlayers[1]->GetActorLocation(), DeltaSeconds, BallActor->BallMovementSpeed); // this takes in 2 vectors and moves towards the target location at the given speed - this specifically returns the new location we need to be at
-			BallActor->SetActorLocation(NewLocation);
-		}
+		FVector NewLocation = FMath::VInterpConstantTo(
+			BallActor->GetActorLocation(),
+			MyGameStateCoop->ActivePlayers[1]->GetActorLocation(),
+			DeltaSeconds,
+			BallActor->BallMovementSpeed
+		);
+		BallActor->SetActorLocation(NewLocation);
 	}
 }
 
@@ -216,6 +172,7 @@ void AController2D::ReturnBallToThrower()
 {
 	if (!HasAuthority()) return;
 	if (!BallActor || !BallActor->IsMoving) return;
+	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
 
 	MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingClientRPCFunction();
 	MyGameStateCoop->ActivePlayers.Swap(0, 1);
@@ -335,6 +292,24 @@ void AController2D::CollectDashToken(AActor* PlayerActor, AActor* OtherActor)
 
 void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 {
+	// Ball catching during pass
+	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && BallActor && BallActor->IsMoving && MyGameStateCoop->ActivePlayers.Num() == 2)
+	{
+		AMyPaperCharacter* ReceivingPlayer = Cast<AMyPaperCharacter>(PlayerActor);
+
+		// Check if this is the intended receiver
+		if (ReceivingPlayer == MyGameStateCoop->ActivePlayers[1])
+		{
+			if (ReceivingPlayer->bPassingThrough == false)
+			{
+				ReturnBallToThrower();
+				return;
+			}
+			ServerApplyBallCaught();
+		}
+	}
+
+
 	// ball pickup handling
 	if (HasAuthority() && OtherActor->ActorHasTag("Ball") && BallActor && !BallActor->IsAttached && !BallActor->IsMoving && MyGameStateCoop->ActivePlayers.Num() == 2)
 	{

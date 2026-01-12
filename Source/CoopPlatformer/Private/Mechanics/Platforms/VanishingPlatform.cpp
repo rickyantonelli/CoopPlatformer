@@ -1,6 +1,8 @@
 // Copyright Ricky Antonelli
 
 #include "Mechanics/Platforms/VanishingPlatform.h"
+#include "Character/MyPaperCharacter.h"
+#include "Engine/OverlapResult.h"
 #include "PaperFlipbook.h"
 
 // Sets default values
@@ -62,7 +64,34 @@ void AVanishingPlatform::OnBoxCollision(UPrimitiveComponent* HitComp, AActor* Ot
 
 void AVanishingPlatform::ResetVanish()
 {
-	
+	TArray<FOverlapResult> Overlaps;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	FCollisionObjectQueryParams ObjectParams;
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	bool bAnyOverlap = GetWorld()->OverlapMultiByObjectType(
+		Overlaps,
+		Sprite->GetComponentLocation(),
+		Sprite->GetComponentQuat(),
+		ECC_Pawn,
+		Sprite->GetCollisionShape(),
+		Params
+	);
+
+
+	for (const FOverlapResult& Result : Overlaps)
+	{
+		if (AMyPaperCharacter* PC = Cast<AMyPaperCharacter>(Result.GetActor()))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Player still on platform, delaying respawn."));
+		}
+	}
+
 	if (Platform)
 	{
 		Platform->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
