@@ -18,10 +18,10 @@ ATokenUnlockActor::ATokenUnlockActor()
 	Box->SetupAttachment(RootComp);
 	Box->SetIsReplicated(true);
 
-	Sprite = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Sprite"));
-	Sprite->SetupAttachment(Box);
-	Sprite->SetIsReplicated(true);
-	Sprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Flipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("Flipbook"));
+	Flipbook->SetupAttachment(RootComp);
+	Flipbook->SetIsReplicated(true);
+	Flipbook->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned
@@ -71,40 +71,80 @@ void ATokenUnlockActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent,
 
 void ATokenUnlockActor::MulticastHideToken_Implementation()
 {
-	if (!Box || !Sprite)
+	if (!Box || !Flipbook)
 	{
 		return;
 	}
 	Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Sprite->SetVisibility(false);
+	Flipbook->SetVisibility(false);
 }
 
 void ATokenUnlockActor::MulticastResetToken_Implementation()
 {
-	if (!Box || !Sprite)
+	if (!Box || !Flipbook)
 	{
 		return;
 	}
 	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Sprite->SetVisibility(true);
+	Flipbook->SetVisibility(true);
 }
 
 void ATokenUnlockActor::MulticastUnlockActors_Implementation()
 {
 	for (AActor* LockedActor : LockedActors)
 	{
-		UBoxComponent* LockBox = LockedActor->GetComponentByClass<UBoxComponent>();
-		UPaperSpriteComponent* LockSprite = LockedActor->GetComponentByClass<UPaperSpriteComponent>();
-		if (LockBox)
+		// for a while the implementation will be as such - to keep flexibility
+		// first check if there is a static mesh, if there is then just set the visibility of the mesh and collision off
+		// if there is no mesh, then we are dealing with a sprite - which is going to have a box component and PaperSprite component
+
+
+		// set this to false so that we dont check overlaps anymore since it's already been unlocked
+		UStaticMeshComponent* LockMesh = LockedActor->GetComponentByClass<UStaticMeshComponent>();
+		if (LockMesh)
 		{
-			LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			LockMesh->SetVisibility(false);
+			LockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-		if (LockSprite)
+		else
 		{
-			LockSprite->SetVisibility(false);
+			UBoxComponent* LockBox = LockedActor->GetComponentByClass<UBoxComponent>();
+			UPaperSpriteComponent* LockSprite = LockedActor->GetComponentByClass<UPaperSpriteComponent>();
+			UPaperFlipbookComponent* FlipbookComp = LockedActor->GetComponentByClass<UPaperFlipbookComponent>();
+			if (LockBox)
+			{
+				LockBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+			if (LockSprite)
+			{
+				LockSprite->SetVisibility(false);
+				LockSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+			if (FlipbookComp)
+			{
+				// Make the flipbook visibile and play it once
+				FlipbookComp->SetVisibility(true);
+				FlipbookComp->SetLooping(false);
+				FlipbookComp->PlayFromStart();
+
+				FlipbookComp->OnFinishedPlaying.AddDynamic(this, &ATokenUnlockActor::OnDoorFlipbookFinished);
+
+			}
 		}
 	}
 
 	bCollected = false;
 	CollectingCharacter = nullptr;
+}
+
+void ATokenUnlockActor::OnDoorFlipbookFinished()
+{
+	// after the flipbook is finished playing, hide the flipbook component
+	for (AActor* LockedActor : LockedActors)
+	{
+		UPaperFlipbookComponent* FlipbookComp = LockedActor->GetComponentByClass<UPaperFlipbookComponent>();
+		if (FlipbookComp)
+		{
+			FlipbookComp->SetVisibility(false);
+		}
+	}
 }

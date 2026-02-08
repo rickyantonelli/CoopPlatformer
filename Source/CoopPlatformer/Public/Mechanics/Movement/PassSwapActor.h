@@ -1,7 +1,5 @@
 // Copyright Ricky Antonelli
-
 #pragma once
-
 #include "CoreMinimal.h"
 #include "Controller/Controller2D.h"
 #include "GameFramework/Actor.h"
@@ -13,19 +11,15 @@ UCLASS()
 class COOPPLATFORMER_API APassSwapActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	APassSwapActor();
 
+public:
+	APassSwapActor();
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
@@ -43,7 +37,7 @@ public:
 	UFUNCTION()
 	void OnPassActivated();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) //, Replicated)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool FirstSetActive = true;
 
 	bool BindingsSet = false;
@@ -66,5 +60,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Customizable Values")
 	TObjectPtr<UPaperSprite> OnSprite;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<AMyGameStateBase> MyGameStateCoop;
 
+	// Distance to push player out on Y axis when stuck
+	UPROPERTY(EditAnywhere, Category = "Customizable Values")
+	float PlayerPushDistance;
+
+private:
+	// Helper function to check if player overlaps with platform on Y axis
+	bool IsPlayerOverlappingYAxis(AActor* Player, AActor* Platform);
+
+	// Helper function to safely position player outside platform
+	void RepositionPlayerIfStuck(AActor* Player, AActor* Platform);
 };

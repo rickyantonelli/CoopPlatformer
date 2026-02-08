@@ -5,6 +5,7 @@
 #include "PaperSpriteComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Controller/Controller2D.h"
+#include "PaperFlipBookComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AKeyActor::AKeyActor()

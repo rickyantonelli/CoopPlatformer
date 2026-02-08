@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Character/BallActor.h"
 #include "PaperSpriteComponent.h"
-#include "PaperFlipBookComponent.h"
 #include "PaperFlipbook.h"
 #include "GameFramework/Actor.h"
 #include "KeyActor.generated.h"

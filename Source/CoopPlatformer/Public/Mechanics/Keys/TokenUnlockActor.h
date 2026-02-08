@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PaperSpriteComponent.h"
 #include "Components/BoxComponent.h"
+#include "PaperFlipBookComponent.h"
 #include "Character/MyPaperCharacter.h"
 #include "TokenUnlockActor.generated.h"
 
@@ -33,7 +34,7 @@ public:
 	TObjectPtr<UBoxComponent> Box;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Customizable")
-	TObjectPtr<UPaperSpriteComponent> Sprite;
+	TObjectPtr<UPaperFlipbookComponent> Flipbook;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
 	TArray<AActor*> LockedActors;
@@ -55,6 +56,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastHideToken();
+
+	UFUNCTION()
+	void OnDoorFlipbookFinished();
 
 	bool bCollected = false;
 };

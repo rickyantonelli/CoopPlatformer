@@ -26,6 +26,8 @@ ADirectionPortal::ADirectionPortal()
 	LateralFrictionTimer = 0.5f;
 	LaunchAmp = 1.0f;
 	MovementDisableAmount = 0.1f;
+
+	bBallAllowed = false;
 }
 
 void ADirectionPortal::BeginPlay()
@@ -57,6 +59,30 @@ void ADirectionPortal::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponen
 			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
 
 		}
+	}
+
+	if (bBallAllowed && OtherActor->ActorHasTag("Ball") && !TPActorsOnCD.Contains(OtherActor))
+	{
+		// Check if the Ball is attached to a Player
+		AActor* ParentActor = OtherActor->GetAttachParentActor();
+		if (ParentActor && ParentActor->ActorHasTag("Player"))
+		{
+			// The Ball is attached to a Player, do not teleport
+			return;
+		}
+
+		if (HasAuthority())
+		{
+			TPActorsOnCD.Add(OtherActor);
+
+			FVector TargetLocation = (OverlappedComponent == TPMesh1) ? TPMesh2->GetComponentLocation() : TPMesh1->GetComponentLocation();
+			OtherActor->TeleportTo(TargetLocation, OtherActor->GetActorRotation());
+
+			FTimerHandle TimerHandler;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
+
+		}
+
 	}
 }
 
