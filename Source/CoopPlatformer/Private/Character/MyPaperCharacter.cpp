@@ -30,6 +30,9 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	DoubleJumpFlipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DoubleJumpEffect"));
 	DoubleJumpFlipbook->SetupAttachment(RootComponent);
 
+	BallSocket = CreateDefaultSubobject<USceneComponent>(TEXT("BallSocket"));
+	BallSocket->SetupAttachment(RootComponent);
+
 	GetCharacterMovement()->bNotifyApex = true;
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 

@@ -136,7 +136,7 @@ void AController2D::ServerApplyBallCaught()
 		MyGameStateCoop->ActivePlayers.Swap(0,1);
 		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
 		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingClientRPCFunction();
-		BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		BallActor->AttachToComponent(MyGameStateCoop->ActivePlayers[0]->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach to the socket on the player's mesh
 		BallActor->IsMoving = false;
 
 		// Broadcast that the ball was caught
@@ -275,7 +275,7 @@ void AController2D::CollectBall(AActor* PlayerActor)
 	MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
 	MyGameStateCoop->ActivePlayers[0]->ResetJumpAbility();
 
-	BallActor->AttachToActor(MyGameStateCoop->ActivePlayers[0], FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	BallActor->AttachToComponent(MyGameStateCoop->ActivePlayers[0]->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	BallActor->CanPass = true;
 	BallActor->IsAttached = true;
