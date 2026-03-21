@@ -154,14 +154,16 @@ void APassSwapActor::MulticastSwapActors_Implementation()
 
 	UE_LOG(LogTemp, Log, TEXT("Swapping actors"));
 
-	// Get all player characters in the world
-	TArray<AActor*> Players;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("Player"), Players);
+	if (!MyGameStateCoop || MyGameStateCoop->ActivePlayers.Num() != 2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MulticastSwapActors: Invalid GameState or player count"));
+		return;
+	}
 
 	// FIRST: Check for stuck players BEFORE activating platforms
 	for (AActor* ActivatingActor : ActivatingActors)
 	{
-		for (AActor* Player : Players)
+		for (AMyPaperCharacter* Player : MyGameStateCoop->ActivePlayers)
 		{
 			RepositionPlayerIfStuck(Player, ActivatingActor);
 		}
@@ -232,6 +234,7 @@ void APassSwapActor::OnActivateTriggerBeginOverlap(AActor* PlayerActor, AActor* 
 	if (CurrentActiveActors.Num() == 2)
 	{
 		bActivated = true;
+		UE_LOG(LogTemp, Log, TEXT("Both players in activation area, pass swap ready to activate"));
 	}
 }
 
