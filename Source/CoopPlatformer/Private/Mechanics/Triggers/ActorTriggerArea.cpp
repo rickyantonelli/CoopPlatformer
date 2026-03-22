@@ -62,7 +62,7 @@ void AActorTriggerArea::OnOverlapBegin(AActor* TriggerBoxActor, AActor* OtherAct
 			if (ResetTimer > 0.f)
 			{
 				FTimerHandle ResetTimerHandle;
-				GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [&]() { MulticastResetActors();  }, ResetTimer, false);
+				GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [this]() { MulticastResetActors();  }, ResetTimer, false);
 			}
 		}
 	}

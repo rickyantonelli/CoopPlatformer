@@ -44,7 +44,7 @@ void ABallActor::BeginPassCooldown()
 	// set a slight pass cooldown so that players cant infinitely pass back and forth and fly
 	NoPassCooldown = false;
 	FTimerHandle TimerHandler;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {NoPassCooldown = true; }, PassCooldownDuration, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() {NoPassCooldown = true; }, PassCooldownDuration, false);
 }
 
 void ABallActor::OnRep_IsAttached()

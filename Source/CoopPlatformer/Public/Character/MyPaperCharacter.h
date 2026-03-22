@@ -167,9 +167,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> CountdownPingAction;
 
-	/** The class of the widget that notifies the player of the ball's arrival */
-	UPROPERTY(EditAnywhere, Category = "UI")
-	TSubclassOf<UUserWidget> BallArrivingOverlayWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> CountdownPingOverlayWidgetClass;
@@ -282,6 +279,15 @@ public:
 	bool WithinDoubleJumpGrace;
 
 	FTimerHandle JumpBufferTimer;
+	FTimerHandle CoyoteTimerHandle;
+	FTimerHandle DoubleJumpGraceTimerHandle;
+	FTimerHandle DevJumpResetTimerHandle;
+	FTimerHandle DeathMovementTimerHandle;
+	FTimerHandle DeathVisibilityTimerHandle;
+	FTimerHandle WallJumpTimerHandle;
+	FTimerHandle WallJumpGraceTimerHandle;
+	FTimerHandle FrictionTimerHandle;
+	FTimerHandle JumpDisableTimerHandle;
 
 	/** Whether a player is in the act of jumping */
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
@@ -295,14 +301,14 @@ public:
 	bool bInWallJumpTimer;
 
 	/** Whether the player can dash*/
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Debug")
 	bool CanDash;
 
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bPassingThrough;
 
 	/** Whether the player can dash*/
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Debug")
 	bool bCanFreeze;
 
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
@@ -362,9 +368,6 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FCountdownPingActivated OnCountdownPingActivated;
 
-	/** The the widget that notifies the player of the ball's arrival */
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TObjectPtr<UUserWidget> BallArrivingWidget;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidget> CountdownWidget;
@@ -396,6 +399,9 @@ public:
 	/** Removes the ball arriving widget once the player has caught the ball */
 	UFUNCTION()
 	void RemoveBallArrivingWidget();
+
+	/** Returns the PlayerHUDWidget from the local HUD, or nullptr if unavailable */
+	UUserWidget* GetPlayerHUDWidget() const;
 
 	UFUNCTION()
 	void ApplyDashToken();

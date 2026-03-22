@@ -12,6 +12,7 @@ void AMyGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AMyGameStateBase, ActivePlayers);
 	// DOREPLIFETIME(AMyGameStateBase, ActiveControllers);
 	DOREPLIFETIME(AMyGameStateBase, BallActor);
+	DOREPLIFETIME(AMyGameStateBase, BallHolder);
 }
 
 void AMyGameStateBase::MulticastPlayPassSound_Implementation(USoundBase* Sound)

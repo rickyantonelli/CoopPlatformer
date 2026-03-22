@@ -118,5 +118,5 @@ void AVanishingPlatform::OnVanishFlipbookFinished()
 	bIsVanishing = false;
 
 	FTimerHandle ResetTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [&]() { ResetVanish();  }, RespawnTime, false);
+	GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [this]() { ResetVanish();  }, RespawnTime, false);
 }

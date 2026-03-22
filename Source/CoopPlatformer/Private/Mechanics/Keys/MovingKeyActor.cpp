@@ -82,7 +82,7 @@ void AMovingKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, A
 	bMovingForward = !bMovingForward;
 
 	FTimerHandle CooldownHandle;
-	GetWorld()->GetTimerManager().SetTimer(CooldownHandle, [&]() { bOnCooldown = false;  }, CooldownTimer, false);
+	GetWorld()->GetTimerManager().SetTimer(CooldownHandle, [this]() { bOnCooldown = false;  }, CooldownTimer, false);
 }
 
 void AMovingKeyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

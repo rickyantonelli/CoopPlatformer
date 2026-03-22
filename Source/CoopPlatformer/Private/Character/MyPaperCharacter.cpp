@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/HUD.h"
 
 AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UNovaCharacterMovementComponent>(AMyPaperCharacter::CharacterMovementComponentName))
@@ -159,8 +160,7 @@ void AMyPaperCharacter::OnMovementModeChanged(EMovementMode PreviousMovementMode
 	if (NewMovementMode == EMovementMode::MOVE_Falling)
 	{
 		WithinCoyoteTime = true;
-		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinCoyoteTime = false; }, CoyoteDuration, false);
+		GetWorld()->GetTimerManager().SetTimer(CoyoteTimerHandle, [this]() {WithinCoyoteTime = false; }, CoyoteDuration, false);
 	}
 
 }
@@ -356,9 +356,7 @@ void AMyPaperCharacter::ResetJumpAbility()
 		{
 			// This double jump grace will eliminate the bad feeling when you thought you did your first jump before catching
 			WithinDoubleJumpGrace = true;
-
-			FTimerHandle TimerHandler;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {WithinDoubleJumpGrace = false; }, DoubleJumpGrace, false);
+			GetWorld()->GetTimerManager().SetTimer(DoubleJumpGraceTimerHandle, [this]() {WithinDoubleJumpGrace = false; }, DoubleJumpGrace, false);
 			return;
 		}
 
@@ -379,8 +377,7 @@ void AMyPaperCharacter::ResetJumpAbility()
 			if (WithinJumpBuffer)
 			{
 				bCanJumpBuffer = true;
-				FTimerHandle TimerHandle;
-				GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+				GetWorldTimerManager().SetTimer(JumpBufferTimer, [this]()
 					{
 						Jump();
 					}, 0.01f, false);
@@ -406,8 +403,7 @@ void AMyPaperCharacter::Landed(const FHitResult& Hit)
 	if (WithinJumpBuffer)
 	{
 		bCanJumpBuffer = true;
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+		GetWorldTimerManager().SetTimer(JumpBufferTimer, [this]()
 			{
 				Jump();
 			}, 0.01f, false);
@@ -497,28 +493,32 @@ void AMyPaperCharacter::OnJumped_Implementation()
 	if (DevInfiniteJump)
 	{
 		// For solo testing, just gives a large amount of jumps so you can test without passing
-		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {JumpMaxCount = 10; }, DevJumpResetTimer, false);
+		GetWorld()->GetTimerManager().SetTimer(DevJumpResetTimerHandle, [this]() {JumpMaxCount = 10; }, DevJumpResetTimer, false);
 	}
 }
 
 void AMyPaperCharacter::OnDeath()
 {
+	// Cancel any in-flight timers that would mutate state during death
+	GetWorld()->GetTimerManager().ClearTimer(CoyoteTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(WallJumpTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(WallJumpGraceTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(DeathMovementTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(DeathVisibilityTimerHandle);
+
 	if (IsLocallyControlled())
 	{
 		// On death we instantly return the player to spawn
 		// but we want to disable controls for a short amount of time so player's dont instantly move on respawn
 		// set it up with MovementEnabled so that players still have things like pause menu still available
 		MovementEnabled = false;
-		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {MovementEnabled = true; }, DeathDuration, false);
+		GetWorld()->GetTimerManager().SetTimer(DeathMovementTimerHandle, [this]() {MovementEnabled = true; }, DeathDuration, false);
 	}
 	if (SpriteComp && HasAuthority())
 	{
 		bDead = true;
 		SpriteComp->SetVisibility(false);
-		FTimerHandle TimerHandler2;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler2, [&]() {SpriteComp->SetVisibility(true); bDead = false; }, DeathDuration, false);
+		GetWorld()->GetTimerManager().SetTimer(DeathVisibilityTimerHandle, [this]() {SpriteComp->SetVisibility(true); bDead = false; }, DeathDuration, false);
 	}
 }
 
@@ -546,13 +546,33 @@ void AMyPaperCharacter::GravityAtApex() const
 	//GetCharacterMovement()->bNotifyApex = true;
 }
 
+UUserWidget* AMyPaperCharacter::GetPlayerHUDWidget() const
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return nullptr;
+
+	AHUD* HUD = PC->GetHUD();
+	if (!HUD) return nullptr;
+
+	// Find the PlayerHUDWidget property on BP_NovaHUD by name
+	FProperty* Prop = HUD->GetClass()->FindPropertyByName(TEXT("PlayerHUDWidget"));
+	if (!Prop) return nullptr;
+
+	FObjectProperty* ObjProp = CastField<FObjectProperty>(Prop);
+	if (!ObjProp) return nullptr;
+
+	return Cast<UUserWidget>(ObjProp->GetObjectPropertyValue_InContainer(HUD));
+}
+
 void AMyPaperCharacter::RemoveBallArrivingWidget()
 {
-	// TODO: Can open this up by allowing a user widget to be passed in
-	if (IsLocallyControlled() && BallArrivingWidget && IsValid(BallArrivingWidget) && BallArrivingWidget->IsInViewport())
-	{
-		BallArrivingWidget->RemoveFromParent();
-	}
+	if (!IsLocallyControlled()) return;
+
+	UUserWidget* HUDWidget = GetPlayerHUDWidget();
+	if (!HUDWidget) return;
+
+	UFunction* Func = HUDWidget->FindFunction(TEXT("HideBallArriving"));
+	if (Func) HUDWidget->ProcessEvent(Func, nullptr);
 }
 
 void AMyPaperCharacter::ApplyDashToken()
@@ -578,8 +598,7 @@ void AMyPaperCharacter::MulticastApplyFriction_Implementation(int Friction, floa
 {
 	GetCharacterMovement()->FallingLateralFriction = Friction;
 
-	FTimerHandle TimerHandler;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() {GetCharacterMovement()->FallingLateralFriction = InitialFriction; }, FrictionTimer, false);
+	GetWorld()->GetTimerManager().SetTimer(FrictionTimerHandle, [this]() {GetCharacterMovement()->FallingLateralFriction = InitialFriction; }, FrictionTimer, false);
 }
 
 void AMyPaperCharacter::ServerFlipPlayer_Implementation(FVector2D MovementVector)
@@ -625,11 +644,11 @@ void AMyPaperCharacter::MulticastResumeGame_Implementation(UUserWidget* myWidget
 
 void AMyPaperCharacter::BallArrivingClientRPCFunction_Implementation()
 {
-	// RPC to display the Ball Arriving widget when a ball is on its way to the player
-	checkf(BallArrivingOverlayWidgetClass, TEXT("Ball Arriving Overlay Widget class uninitialized"));
-	BallArrivingWidget = CreateWidget<UUserWidget>(GetWorld(), BallArrivingOverlayWidgetClass);
+	UUserWidget* HUDWidget = GetPlayerHUDWidget();
+	if (!HUDWidget) return;
 
-	if (BallArrivingWidget) BallArrivingWidget->AddToViewport();
+	UFunction* Func = HUDWidget->FindFunction(TEXT("ShowBallArriving"));
+	if (Func) HUDWidget->ProcessEvent(Func, nullptr);
 }
 
 void AMyPaperCharacter::RemoveBallArrivingClientRPCFunction_Implementation()
@@ -660,8 +679,7 @@ void AMyPaperCharacter::OnWallHit(bool bLeft)
 
 	bInWallJumpTimer = true;
 
-	FTimerHandle TimerHandler;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {if (bInWallJumpTimer) OnWallExit(); }, WallJumpDuration, false);
+	GetWorld()->GetTimerManager().SetTimer(WallJumpTimerHandle, [this]() {if (bInWallJumpTimer) OnWallExit(); }, WallJumpDuration, false);
 
 	GetCharacterMovement()->GravityScale = WallJumpGravityScale;
 	GetCharacterMovement()->Velocity = FVector(0.f, 0.f, 0.f);
@@ -692,15 +710,13 @@ void AMyPaperCharacter::OnWallExit(bool FromJump)
 		return;
 	}
 
-	FTimerHandle TimerHandler;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {if (JumpMaxCount > 1) JumpMaxCount -= 1; }, WallJumpGrace, false);
+	GetWorld()->GetTimerManager().SetTimer(WallJumpGraceTimerHandle, [this]() {if (JumpMaxCount > 1) JumpMaxCount -= 1; }, WallJumpGrace, false);
 }
 
 void AMyPaperCharacter::DisableJump(float DisableTimer)
 {
 	JumpEnabled = false;
-	FTimerHandle DisableTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(DisableTimerHandle, [this]() {JumpEnabled = true; }, DisableTimer, false);
+	GetWorld()->GetTimerManager().SetTimer(JumpDisableTimerHandle, [this]() {JumpEnabled = true; }, DisableTimer, false);
 }
 
 void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

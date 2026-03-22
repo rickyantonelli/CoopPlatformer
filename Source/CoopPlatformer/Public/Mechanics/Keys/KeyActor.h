@@ -7,6 +7,7 @@
 #include "PaperSpriteComponent.h"
 #include "PaperFlipbook.h"
 #include "GameFramework/Actor.h"
+#include "Systems/MyGameStateBase.h"
 #include "KeyActor.generated.h"
 
 class USoundBase;
@@ -72,6 +73,8 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bCanReset;
+
+	AMyGameStateBase* GameStateRef;
 
 	UFUNCTION()
 	void OnResetActivated();

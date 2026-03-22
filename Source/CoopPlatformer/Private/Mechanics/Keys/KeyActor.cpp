@@ -4,7 +4,7 @@
 #include "Mechanics/Keys/KeyActor.h"
 #include "PaperSpriteComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Controller/Controller2D.h"
+
 #include "PaperFlipBookComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -35,14 +35,11 @@ void AKeyActor::BeginPlay()
 
 	GetComponents<UPaperSpriteComponent>(SpriteComps);
 
-	if (bCanReset)
+	GameStateRef = GetWorld()->GetGameState<AMyGameStateBase>();
+
+	if (bCanReset && GameStateRef)
 	{
-		// TODO: Dont use GetFirstPlayerController as its unreliable
-		AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
-		if (MyController)
-		{
-			MyController->OnResetActivated.AddDynamic(this, &AKeyActor::OnResetActivated);
-		}
+		GameStateRef->OnResetActivated.AddDynamic(this, &AKeyActor::OnResetActivated);
 	}
 
 	UPaperFlipbookComponent* KeyFlipbookComp = GetComponentByClass<UPaperFlipbookComponent>();

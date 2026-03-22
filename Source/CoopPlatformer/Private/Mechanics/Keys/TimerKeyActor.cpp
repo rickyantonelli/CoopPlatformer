@@ -38,7 +38,7 @@ void ATimerKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			// if the timer isn't in action, then start it and mark our bool as true
 			FTimerHandle TimerHandler;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() { if (HasAuthority()) MulticastTimerExpired();  }, UnlockTimer, false);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() { if (HasAuthority()) MulticastTimerExpired();  }, UnlockTimer, false);
 
 			InTimer = true;
 		}

@@ -47,10 +47,9 @@ void AEnemyCharacter::BeginPlay()
 		Capsule->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnEnemyOverlapped);
 	}
 
-	AController2D* MyController = Cast<AController2D>(GetWorld()->GetFirstPlayerController());
-	if (MyController)
+	if (GameStateRef)
 	{
-		MyController->OnResetActivated.AddDynamic(this, &AEnemyCharacter::OnResetActivated);
+		GameStateRef->OnResetActivated.AddDynamic(this, &AEnemyCharacter::OnResetActivated);
 	}
 }
 
@@ -126,7 +125,7 @@ void AEnemyCharacter::OnEnemyOverlapped(UPrimitiveComponent* OverlappedComponent
 		bCanDamage = false;
 		MulticastApplyDeath(Health);
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {bCanDamage = true; }, CooldownTimer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() {bCanDamage = true; }, CooldownTimer, false);
 	}
 }
 

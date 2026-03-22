@@ -17,14 +17,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPassActivated);
 
 class USoundBase;
 
-// Define the enum class 
-UENUM(BlueprintType)
-enum class EHoldingState : uint8
-{
-	HoldingPlayer = 0 UMETA(DisplayName = "Holding Player"),
-	NonHoldingPlayer = 1 UMETA(DisplayName = "Non-Holding Player")
-};
-
 /**
  * The player controller class, which handles a variety of responsibilities:
  * Gathering actors

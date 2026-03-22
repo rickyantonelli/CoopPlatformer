@@ -90,11 +90,15 @@ void AController2D::ServerPass()
 	if (!BallActor->NoPassCooldown) return;
 	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
 	if (!PlayersSet) return;
-	if (BallActor->GetAttachParentActor() != MyGameStateCoop->ActivePlayers[0]) return;
+
+	AMyPaperCharacter* Holder = MyGameStateCoop->GetHolder();
+	AMyPaperCharacter* Receiver = MyGameStateCoop->GetReceiver();
+	if (!Holder || !Receiver) return;
+	if (BallActor->GetAttachParentActor() != Holder) return;
 
 	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	BallActor->IsAttached = false;
-	MyGameStateCoop->ActivePlayers[0]->IsHolding = false;
+	Holder->IsHolding = false;
 	BallActor->IsMoving = true;
 	BallActor->CanPass = false;
 	BallActor->BeginPassCooldown();
@@ -102,7 +106,8 @@ void AController2D::ServerPass()
 	// TODO: do we need this?
 	BallActor->ForceNetUpdate();
 
-	MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
+	UE_LOG(LogTemp, Log, TEXT("ServerPass: Holder=%s -> Receiver=%s"), *Holder->GetName(), *Receiver->GetName());
+	Receiver->BallArrivingClientRPCFunction();
 	/*MulticastPlayPassSound();*/
 	MyGameStateCoop->MulticastPlayPassSound(PassSound);
 
@@ -115,9 +120,12 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 
 	if (BallActor && BallActor->IsMoving && PlayersSet)
 	{
+		AMyPaperCharacter* Receiver = MyGameStateCoop->GetReceiver();
+		if (!Receiver) return;
+
 		FVector NewLocation = FMath::VInterpConstantTo(
 			BallActor->GetActorLocation(),
-			MyGameStateCoop->ActivePlayers[1]->GetActorLocation(),
+			Receiver->GetActorLocation(),
 			DeltaSeconds,
 			BallActor->BallMovementSpeed
 		);
@@ -129,14 +137,20 @@ void AController2D::ServerApplyBallCaught()
 {
 	if (HasAuthority())
 	{
-		// Apply all the needed things when a ball is caught - reset jump, swap array positions, set variables, attachment
-		MyGameStateCoop->ActivePlayers[1]->ResetJumpAbility(); // resets the jump for the player if they are in mid-air (core mechanic)
+		AMyPaperCharacter* Receiver = MyGameStateCoop->GetReceiver();
+		if (!Receiver) return;
+
+		// Apply all the needed things when a ball is caught - reset jump, set variables, attachment
+		Receiver->ResetJumpAbility(); // resets the jump for the player if they are in mid-air (core mechanic)
 		BallActor->CanPass = true;
 		BallActor->IsAttached = true;
-		MyGameStateCoop->ActivePlayers.Swap(0,1);
-		MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
-		MyGameStateCoop->ActivePlayers[0]->RemoveBallArrivingClientRPCFunction();
-		BallActor->AttachToComponent(MyGameStateCoop->ActivePlayers[0]->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale); // attach to the socket on the player's mesh
+
+		// Transfer ball ownership to the receiver
+		UE_LOG(LogTemp, Log, TEXT("BallCaught: New Holder=%s"), *Receiver->GetName());
+		MyGameStateCoop->SetBallHolder(Receiver);
+		Receiver->IsHolding = true;
+		Receiver->RemoveBallArrivingClientRPCFunction();
+		BallActor->AttachToComponent(Receiver->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		BallActor->IsMoving = false;
 
 		// Broadcast that the ball was caught
@@ -165,7 +179,12 @@ void AController2D::ValidatePass(AMyPaperCharacter* NewPlayer)
 		NewPlayer->OnCountdownPingActivated.AddDynamic(this, &AController2D::OnCountdownPingActivated);
 	}
 
-	MyGameStateCoop->ActivePlayers[1]->SetActorLocation(MyGameStateCoop->ActivePlayers[0]->GetActorLocation());
+	// Teleport the new player to the holder's location (if a holder exists), otherwise to the first player
+	AMyPaperCharacter* Holder = MyGameStateCoop->GetHolder();
+	if (Holder && NewPlayer != Holder)
+	{
+		NewPlayer->SetActorLocation(Holder->GetActorLocation());
+	}
 }
 
 void AController2D::ReturnBallToThrower()
@@ -174,9 +193,19 @@ void AController2D::ReturnBallToThrower()
 	if (!BallActor || !BallActor->IsMoving) return;
 	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
 
-	MyGameStateCoop->ActivePlayers[1]->RemoveBallArrivingClientRPCFunction();
-	MyGameStateCoop->ActivePlayers.Swap(0, 1);
-	MyGameStateCoop->ActivePlayers[1]->BallArrivingClientRPCFunction();
+	AMyPaperCharacter* OriginalReceiver = MyGameStateCoop->GetReceiver();
+	AMyPaperCharacter* OriginalThrower = MyGameStateCoop->GetHolder();
+	if (!OriginalReceiver || !OriginalThrower) return;
+
+	// Clear the arriving widget on the original receiver
+	OriginalReceiver->RemoveBallArrivingClientRPCFunction();
+
+	// Swap BallHolder to the original receiver so that GetReceiver() now returns the original thrower.
+	// This causes BallPassingHandler to move the ball toward the original thrower.
+	MyGameStateCoop->SetBallHolder(OriginalReceiver);
+
+	// Notify the original thrower that the ball is now coming back to them
+	OriginalThrower->BallArrivingClientRPCFunction();
 }
 
 void AController2D::GatherActorsHandler()
@@ -210,8 +239,13 @@ void AController2D::GatherActorsHandler()
 void AController2D::CountdownPingServerRPCFunction_Implementation()
 {
 	if (MyGameStateCoop->ActivePlayers.Num() != 2) return;
-	MyGameStateCoop->ActivePlayers[0]->CountdownPingClientRPCFunction();
-	MyGameStateCoop->ActivePlayers[1]->CountdownPingClientRPCFunction();
+	for (AMyPaperCharacter* ActivePlayer : MyGameStateCoop->ActivePlayers)
+	{
+		if (ActivePlayer)
+		{
+			ActivePlayer->CountdownPingClientRPCFunction();
+		}
+	}
 }
 
 void AController2D::CollectPlayerDeath(AActor* PlayerActor)
@@ -224,7 +258,7 @@ void AController2D::CollectPlayerDeath(AActor* PlayerActor)
 			ServerPass();
 		}
 		// send the ball back to the thrower if player dies while ball is on its way
-		else if (BallActor && BallActor->IsMoving && PlayerCharacterActor == MyGameStateCoop->ActivePlayers[1])
+		else if (BallActor && BallActor->IsMoving && PlayerCharacterActor == MyGameStateCoop->GetReceiver())
 		{
 			ReturnBallToThrower();
 		}
@@ -266,16 +300,15 @@ void AController2D::CollectCheckpoint(AActor* PlayerActor, AActor* OtherActor)
 void AController2D::CollectBall(AActor* PlayerActor)
 {
 	AMyPaperCharacter* OverlappingActor = Cast<AMyPaperCharacter>(PlayerActor);
+	if (!OverlappingActor) return;
 
-	if (MyGameStateCoop->ActivePlayers[0] != OverlappingActor)
-	{
-		MyGameStateCoop->ActivePlayers.Swap(0, 1);
-	}
+	// Set ball ownership directly to whoever picked it up
+	UE_LOG(LogTemp, Log, TEXT("CollectBall: New Holder=%s"), *OverlappingActor->GetName());
+	MyGameStateCoop->SetBallHolder(OverlappingActor);
+	OverlappingActor->IsHolding = true;
+	OverlappingActor->ResetJumpAbility();
 
-	MyGameStateCoop->ActivePlayers[0]->IsHolding = true;
-	MyGameStateCoop->ActivePlayers[0]->ResetJumpAbility();
-
-	BallActor->AttachToComponent(MyGameStateCoop->ActivePlayers[0]->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	BallActor->AttachToComponent(OverlappingActor->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	BallActor->CanPass = true;
 	BallActor->IsAttached = true;
@@ -284,9 +317,10 @@ void AController2D::CollectBall(AActor* PlayerActor)
 void AController2D::CollectDashToken(AActor* PlayerActor, AActor* OtherActor)
 {
 	AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-	PlayerCharacterActor->ApplyDashToken();
-
 	ADashToken* DashToken = Cast<ADashToken>(OtherActor);
+	if (!PlayerCharacterActor || !DashToken) return;
+
+	PlayerCharacterActor->ApplyDashToken();
 	DashToken->CollectDash();
 }
 
@@ -298,7 +332,7 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 		AMyPaperCharacter* ReceivingPlayer = Cast<AMyPaperCharacter>(PlayerActor);
 
 		// Check if this is the intended receiver
-		if (ReceivingPlayer == MyGameStateCoop->ActivePlayers[1])
+		if (ReceivingPlayer == MyGameStateCoop->GetReceiver())
 		{
 			if (ReceivingPlayer->bPassingThrough == false)
 			{
@@ -317,25 +351,25 @@ void AController2D::OnOverlapBegin(AActor *PlayerActor, AActor* OtherActor)
 	}
 
 
-	// death handling
-	if (OtherActor->ActorHasTag("Death"))
+	// death handling (server-only — TeleportTo, OnDeath, and ball logic must not run on client)
+	if (HasAuthority() && OtherActor->ActorHasTag("Death"))
 	{
 		CollectPlayerDeath(PlayerActor);
 	}
 
-	if (OtherActor->ActorHasTag("FullDeath"))
+	if (HasAuthority() && OtherActor->ActorHasTag("FullDeath"))
 	{
 		CollectPlayerFullDeath();
 	}
 
-	// checkpoint handling
-	if (OtherActor->ActorHasTag("Checkpoint"))
+	// checkpoint handling (server-only — CheckpointedPlayers array and SpawnLocation must be authoritative)
+	if (HasAuthority() && OtherActor->ActorHasTag("Checkpoint"))
 	{
 		CollectCheckpoint(PlayerActor, OtherActor);
 	}
 
-	// Dash prototype - holding off for now
-	if (OtherActor->ActorHasTag("Dash"))
+	// Dash prototype - holding off for now (server-only — token state mutation)
+	if (HasAuthority() && OtherActor->ActorHasTag("Dash"))
 	{
 		CollectDashToken(PlayerActor, OtherActor);
 	}
@@ -389,6 +423,10 @@ void AController2D::MulticastKillBothPlayers_Implementation()
 		ActivePlayer->OnDeath();
 	}
 	OnResetActivated.Broadcast();
+	if (MyGameStateCoop)
+	{
+		MyGameStateCoop->OnResetActivated.Broadcast();
+	}
 }
 
 void AController2D::MulticastPlayPassSound_Implementation()
@@ -416,7 +454,9 @@ void AController2D::CP(FString CheckpointInput)
 
 	if (CheckpointInput.Equals(TEXT("next"), ESearchCase::IgnoreCase))
 	{
-		CheckpointIndex = MyGameStateCoop->ActivePlayers[0]->ActiveCheckpoint + 1;
+		CheckpointIndex = (MyGameStateCoop->ActivePlayers.Num() > 0 && MyGameStateCoop->ActivePlayers[0])
+			? MyGameStateCoop->ActivePlayers[0]->ActiveCheckpoint + 1
+			: 1;
 	}
 	else if (FCString::Atoi(*CheckpointInput) > 0)
 	{

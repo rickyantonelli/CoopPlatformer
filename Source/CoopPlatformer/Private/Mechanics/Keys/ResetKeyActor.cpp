@@ -31,7 +31,7 @@ void AResetKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AA
 			MulticastTriggerUnlock();
 
 			FTimerHandle TimerHandler;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() { if (HasAuthority()) MulticastTriggerReset();  }, ResetTimer, false);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() { if (HasAuthority()) MulticastTriggerReset();  }, ResetTimer, false);
 		}
 	}
 }

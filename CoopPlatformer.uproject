@@ -35,6 +35,10 @@
 		{
 			"Name": "SteamSockets",
 			"Enabled": true
+		},
+		{
+			"Name": "Aura",
+			"Enabled": true
 		}
 	]
 }

@@ -57,7 +57,7 @@ void AFreezeToken::CollectToken()
 
 		// after the timer, allow to be collected again
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [&]() {SetCollectable(); }, RespawnTimer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this]() {SetCollectable(); }, RespawnTimer, false);
 	}
 }
 
