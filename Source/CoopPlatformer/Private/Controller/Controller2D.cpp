@@ -535,6 +535,5 @@ void AController2D::ServerSaveCheckpoint_Implementation(int32 CheckpointID)
 	if (CheckpointID > Data.HighestCheckpointID)
 	{
 		Data.HighestCheckpointID = CheckpointID;
-		GI->SaveGame();
 	}
 }
