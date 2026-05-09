@@ -13,6 +13,8 @@
 #include "Mechanics/Movement/FreezeToken.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "Systems/CoopGameInstance.h"
+#include "Systems/NovaSaveGame.h"
 
 AController2D::AController2D()
 {
@@ -512,4 +514,27 @@ void AController2D::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AController2D, BallActor);
+}
+
+void AController2D::ServerSaveCheckpoint_Implementation(int32 CheckpointID)
+{
+	UCoopGameInstance* GI = Cast<UCoopGameInstance>(GetGameInstance());
+	if (!GI || !GI->bSavingEnabled)
+	{
+		return;
+	}
+
+	if (!GI->CurrentSaveGame)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ServerSaveCheckpoint: No CurrentSaveGame loaded."));
+		return;
+	}
+
+	const FName LevelName = FName(*GetWorld()->GetMapName());
+	FLevelSaveData& Data = GI->CurrentSaveGame->LevelProgress.FindOrAdd(LevelName);
+	if (CheckpointID > Data.HighestCheckpointID)
+	{
+		Data.HighestCheckpointID = CheckpointID;
+		GI->SaveGame();
+	}
 }

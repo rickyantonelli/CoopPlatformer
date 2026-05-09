@@ -1,9 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Ricky Antonelli
 
 
 #include "Systems/CoopPlatformerGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
+#include "Systems/MyPlayerState.h"
+#include "Systems/CoopGameInstance.h"
 
 void ACoopPlatformerGameModeBase::BeginPlay()
 {
@@ -92,4 +94,77 @@ void ACoopPlatformerGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, ActivePlayers);
 	DOREPLIFETIME(ACoopPlatformerGameModeBase, PlayersFull);
 
+}
+
+void ACoopPlatformerGameModeBase::TeleportPlayersToCheckpoints(int32 CheckpointID)
+{
+	TArray<AActor*> FoundCheckpoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACheckpoint::StaticClass(), FoundCheckpoints);
+	if (FoundCheckpoints.IsEmpty()) return;
+
+	ACheckpoint* TargetCheckpoint = nullptr;
+	for (AActor* Actor : FoundCheckpoints)
+	{
+		ACheckpoint* CP = Cast<ACheckpoint>(Actor);
+		if (CP && CP->CheckpointID == CheckpointID)
+		{
+			TargetCheckpoint = CP;
+			break;
+		}
+	}
+
+	if (!TargetCheckpoint)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TeleportPlayersToCheckpoints: No checkpoint found with ID %d"), CheckpointID);
+		return;
+	}
+
+	const FVector TargetLoc = TargetCheckpoint->GetActorLocation();
+	for (APlayerController* PC : ActiveControllers)
+	{
+		if (!PC) continue;
+		if (AMyPaperCharacter* Pawn = Cast<AMyPaperCharacter>(PC->GetPawn()))
+		{
+			Pawn->SetActorLocation(TargetLoc, false, nullptr, ETeleportType::TeleportPhysics);
+			Pawn->SpawnLocation = TargetLoc;
+		}
+	}
+}
+
+void ACoopPlatformerGameModeBase::CheckAllPlayersLoaded()
+{
+	// Wait until both players are connected before checking
+	if (ActiveControllers.Num() < 2) return;
+
+	for (APlayerController* PC : ActiveControllers)
+	{
+		if (!PC) continue;
+
+		AMyPlayerState* PS = PC->GetPlayerState<AMyPlayerState>();
+		if (!PS || !PS->IsLoaded)
+		{
+			return;
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("All players loaded! Count: %d"), ActiveControllers.Num());
+
+	// Teleport to checkpoint if one was requested for this travel
+	if (UCoopGameInstance* GI = GetGameInstance<UCoopGameInstance>())
+	{
+		if (GI->PendingCheckpointID > 1)
+		{
+			TeleportPlayersToCheckpoints(GI->PendingCheckpointID);
+		}
+		GI->PendingCheckpointID = -1; // always clear regardless
+	}
+
+	for (APlayerController* PC : ActiveControllers)
+	{
+		if (!PC) continue;
+		if (AMyPaperCharacter* Pawn = Cast<AMyPaperCharacter>(PC->GetPawn()))
+		{
+			Pawn->ClientDismissLoadingScreen();
+		}
+	}
 }

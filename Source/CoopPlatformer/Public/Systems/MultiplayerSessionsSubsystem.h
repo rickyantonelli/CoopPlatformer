@@ -6,6 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
+#include "Systems/ENovaLevel.h"
 #include "MultiplayerSessionsSubsystem.generated.h"
 
 // creating a custom delegate
@@ -102,9 +103,13 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FServerJoinDelegate ServerJoinDel;
 
-	/** The path to the map that the server should travel to */
-	UPROPERTY(BlueprintReadWrite)
-	FString GameMapPath;
+	/** The level to travel to when the session is created. */
+	UPROPERTY(BlueprintReadWrite, Category = "Travel")
+	ENovaLevel PendingLevel = ENovaLevel::World1;
+
+	/** Checkpoint to teleport to after loading. -1 = no teleport (default). */
+	UPROPERTY(BlueprintReadWrite, Category = "Travel")
+	int32 PendingCheckpointID = -1;
 
 };
 

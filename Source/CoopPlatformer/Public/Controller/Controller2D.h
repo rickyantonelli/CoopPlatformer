@@ -147,4 +147,12 @@ public:
 
 	UFUNCTION(Exec)
 	void CP(FString CheckpointInput);
+
+	/**
+	 * Server RPC called by ACheckpoint when both players have activated it.
+	 * Writes the checkpoint ID to the save if saving is enabled and this ID is higher than what's stored.
+	 * @param CheckpointID: The ID of the checkpoint that was activated
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerSaveCheckpoint(int32 CheckpointID);
 };

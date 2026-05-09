@@ -2,6 +2,7 @@
 
 #include "Mechanics/Spawn/Checkpoint.h"
 #include "PaperFlipbook.h"
+#include "Controller/Controller2D.h"
 
 // Sets default values
 ACheckpoint::ACheckpoint()
@@ -67,6 +68,12 @@ void ACheckpoint::AddPlayer(AMyPaperCharacter* PlayerActor)
 					CheckpointedActor->ActiveCheckpoint = CheckpointID;
 					// visually turn off the checkpoint
 					MulticastCheckpointUnlocked();
+
+					// Save progress on each player's controller
+					if (AController2D* PC = Cast<AController2D>(CheckpointedActor->GetController()))
+					{
+						PC->ServerSaveCheckpoint(CheckpointID);
+					}
 				}
 			}
 		}

@@ -63,6 +63,10 @@ protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void ServerCountdownPingRPC();
 
+	/** Server RPC - notifies the server that this player has loaded in */
+	UFUNCTION(Server, Reliable)
+	void ServerPlayerLoaded();
+
 	/** Called for dashing input */
 	void ExtraActionPressed(const FInputActionValue& Value);
 
@@ -105,6 +109,10 @@ public:
 	/** Client RPC to display a widget notifying the player of a ball's arrival */
 	UFUNCTION(Client, Unreliable, BlueprintCallable)
 	void BallArrivingClientRPCFunction();
+
+	/** Client RPC - dismisses the loading screen once all players are loaded */
+	UFUNCTION(Client, Reliable)
+	void ClientDismissLoadingScreen();
 
 	/** Client RPC to display a widget notifying the player of a ball's arrival */
 	UFUNCTION(Client, Unreliable, BlueprintCallable)
@@ -170,6 +178,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> CountdownPingOverlayWidgetClass;
+
+	/** The loading screen widget class - assign WBP_LoadingScreen in BP_2DPlayer */
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget> LoadingScreenWidgetClass;
+
+	/** Reference to the active loading screen instance so we can remove it later */
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoadingScreenWidget;
 
 	/** The class of the widget that notifies the player of the ball's arrival */
 	UPROPERTY(EditAnywhere, Category = "UI")

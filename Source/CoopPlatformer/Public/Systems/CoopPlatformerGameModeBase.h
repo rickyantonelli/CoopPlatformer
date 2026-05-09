@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/BallActor.h"
+#include "Mechanics/Spawn/Checkpoint.h"
 #include "Character/MyPaperCharacter.h"
 #include "Systems/MyGameStateBase.h"
 #include "Net/UnrealNetwork.h"
@@ -32,6 +33,12 @@ public:
 
 	/** Required for replicated variables - required for passing between players */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** Checks if all active controllers have their PlayerState IsLoaded flag set - logs when all are ready */
+	void CheckAllPlayersLoaded();
+
+	/** Teleports all active players to the ACheckpoint actor matching CheckpointID. */
+	void TeleportPlayersToCheckpoints(int32 CheckpointID);
 
 
 

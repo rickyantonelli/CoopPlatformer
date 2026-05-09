@@ -1,6 +1,8 @@
 // Copyright Ricky Antonelli
 
 #include "Character/MyPaperCharacter.h"
+#include "Systems/MyPlayerState.h"
+#include "Systems/CoopPlatformerGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PaperSpriteComponent.h"
 #include "PaperFlipbookComponent.h"
@@ -114,6 +116,21 @@ void AMyPaperCharacter::BeginPlay()
 	if (Background)
 	{
 		BackgroundLoc = Background->GetComponentLocation().Y;
+	}
+
+	if (IsLocallyControlled() && LoadingScreenWidgetClass)
+	{
+		if (APlayerController* PC = GetController<APlayerController>())
+		{
+			LoadingScreenWidget = CreateWidget<UUserWidget>(PC, LoadingScreenWidgetClass);
+			if (LoadingScreenWidget)
+			{
+				LoadingScreenWidget->AddToViewport(9999); // putting it in front of everything
+				UE_LOG(LogTemp, Log, TEXT("LoadingScreen: Widget shown for %s"), *GetName());
+				MovementEnabled = false;
+			}
+		}
+		ServerPlayerLoaded();
 	}
 
 }
@@ -733,5 +750,34 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
 	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);
 	DOREPLIFETIME(AMyPaperCharacter, ActiveCheckpoint);
+}
+
+void AMyPaperCharacter::ClientDismissLoadingScreen_Implementation()
+{
+	UE_LOG(LogTemp, Log, TEXT("LoadingScreen: Dismiss called on %s"), *GetName());
+	if (LoadingScreenWidget)
+	{
+		LoadingScreenWidget->RemoveFromParent();
+		LoadingScreenWidget = nullptr;
+		MovementEnabled = true;
+		UE_LOG(LogTemp, Log, TEXT("LoadingScreen: Widget removed"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LoadingScreen: Dismiss called but widget was null"));
+	}
+}
+
+void AMyPaperCharacter::ServerPlayerLoaded_Implementation()
+{
+	AMyPlayerState* PS = GetPlayerState<AMyPlayerState>();
+	if (!PS) return;
+
+	PS->IsLoaded = true;
+
+	if (ACoopPlatformerGameModeBase* GM = GetWorld()->GetAuthGameMode<ACoopPlatformerGameModeBase>())
+	{
+		GM->CheckAllPlayersLoaded();
+	}
 }
 

@@ -6,6 +6,7 @@
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include <Online/OnlineSessionNames.h>
+#include "Systems/CoopGameInstance.h"
 
 UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 {
@@ -119,18 +120,17 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 
 	if (WasSuccessful)
 	{
-		// defaults to the third person map if we can't load the map we want - should probably just make this a check()
-		FString Path = "/Game/ThirdPerson/Maps/ThirdPersonMap?listen";
-
-		if (!GameMapPath.IsEmpty())
-		{
-			Path = FString::Printf(TEXT("%s?listen"), *GameMapPath);
-		}
-
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Successfuly created server");
 		UE_LOG(LogTemp, Warning, TEXT("Successfuly created server"));
 
-		GetWorld()->ServerTravel(Path); // moves the server to a new level - `?listen` means as a listen server
+		UCoopGameInstance* GI = Cast<UCoopGameInstance>(GetGameInstance());
+		if (!GI)
+		{
+			UE_LOG(LogTemp, Error, TEXT("OnCreateSessionComplete: could not get CoopGameInstance."));
+			return;
+		}
+
+		GI->TravelToLevel(PendingLevel, PendingCheckpointID);
 	}
 }
 
