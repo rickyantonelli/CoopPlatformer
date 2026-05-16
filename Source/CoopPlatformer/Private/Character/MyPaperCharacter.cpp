@@ -120,16 +120,7 @@ void AMyPaperCharacter::BeginPlay()
 
 	if (IsLocallyControlled() && LoadingScreenWidgetClass)
 	{
-		if (APlayerController* PC = GetController<APlayerController>())
-		{
-			LoadingScreenWidget = CreateWidget<UUserWidget>(PC, LoadingScreenWidgetClass);
-			if (LoadingScreenWidget)
-			{
-				LoadingScreenWidget->AddToViewport(9999); // putting it in front of everything
-				UE_LOG(LogTemp, Log, TEXT("LoadingScreen: Widget shown for %s"), *GetName());
-				MovementEnabled = false;
-			}
-		}
+		ShowLoadingScreen();
 		ServerPlayerLoaded();
 	}
 
@@ -750,6 +741,22 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
 	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);
 	DOREPLIFETIME(AMyPaperCharacter, ActiveCheckpoint);
+}
+
+void AMyPaperCharacter::ShowLoadingScreen()
+{
+	if (!IsLocallyControlled() || !LoadingScreenWidgetClass) return;
+
+	if (APlayerController* PC = GetController<APlayerController>())
+	{
+		LoadingScreenWidget = CreateWidget<UUserWidget>(PC, LoadingScreenWidgetClass);
+		if (LoadingScreenWidget)
+		{
+			LoadingScreenWidget->AddToViewport(9999);
+			UE_LOG(LogTemp, Log, TEXT("LoadingScreen: Widget shown for %s"), *GetName());
+			MovementEnabled = false;
+		}
+	}
 }
 
 void AMyPaperCharacter::ClientDismissLoadingScreen_Implementation()

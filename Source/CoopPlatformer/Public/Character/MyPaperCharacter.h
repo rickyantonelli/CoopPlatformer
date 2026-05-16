@@ -114,6 +114,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientDismissLoadingScreen();
 
+	/** Shows the loading screen widget for this locally-controlled player. */
+	UFUNCTION(BlueprintCallable)
+	void ShowLoadingScreen();
+
 	/** Client RPC to display a widget notifying the player of a ball's arrival */
 	UFUNCTION(Client, Unreliable, BlueprintCallable)
 	void RemoveBallArrivingClientRPCFunction();
