@@ -83,6 +83,28 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 	// the session is not created until we hear back from Steam
 }
 
+void UMultiplayerSessionsSubsystem::ReturnToMainMenu()
+{
+	// If a session exists, destroy it first — OnDestroySessionComplete will do the travel.
+	if (SessionInterface.IsValid())
+	{
+		FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(MySessionName);
+		if (ExistingSession)
+		{
+			bReturnToMainMenuAfterDestroy = true;
+			SessionInterface->DestroySession(MySessionName);
+			return;
+		}
+	}
+
+	// No session to destroy — travel immediately.
+	APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
+	if (PC)
+	{
+		PC->ClientTravel(TEXT("/Game/Dynamic/MainMenu/MainMenu"), ETravelType::TRAVEL_Absolute);
+	}
+}
+
 void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, IOnlineSubsystem::Get()->GetSubsystemName().ToString());
@@ -141,6 +163,17 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 	{
 		CreateServerAfterDestroy = false;
 		CreateServer(DestroyServerName);
+		return;
+	}
+
+	if (bReturnToMainMenuAfterDestroy)
+	{
+		bReturnToMainMenuAfterDestroy = false;
+		APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
+		if (PC)
+		{
+			PC->ClientTravel(TEXT("/Game/Dynamic/MainMenu/MainMenu"), ETravelType::TRAVEL_Absolute);
+		}
 	}
 }
 
@@ -150,12 +183,13 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 	if (!WasSuccessful) return;
 	if (ServerNameToFind.IsEmpty()) return;
 
-	TArray<FOnlineSessionSearchResult> Results = SessionSearch->SearchResults;
-	FOnlineSessionSearchResult* CorrectResult = 0; // 0 by default so that it is invalid
+	const TArray<FOnlineSessionSearchResult>& Results = SessionSearch->SearchResults;
+	bool bFoundResult = false;
+	FOnlineSessionSearchResult CorrectResult;
 
 	if (Results.Num() > 0)
 	{
-		for (FOnlineSessionSearchResult Result : Results)
+		for (const FOnlineSessionSearchResult& Result : Results)
 		{
 			if (Result.IsValid())
 			{
@@ -164,17 +198,18 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 
 				if (ServerName.Equals(ServerNameToFind))
 				{
-					CorrectResult = &Result;
-					break; // found the one we are looking for, so dont need to keep going
+					CorrectResult = Result; // copy by value - safe to use after the loop
+					bFoundResult = true;
+					break;
 				}
 			}
 		}
 
-		if (CorrectResult)
+		if (bFoundResult)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, "Successfully found - joining");
 			UE_LOG(LogTemp, Warning, TEXT("Successfully found - joining"));
-			SessionInterface->JoinSession(0, MySessionName, *CorrectResult);
+			SessionInterface->JoinSession(0, MySessionName, CorrectResult);
 		}
 		else
 		{

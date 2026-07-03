@@ -157,6 +157,12 @@ void ACoopPlatformerGameModeBase::CheckAllPlayersLoaded()
 			TeleportPlayersToCheckpoints(GI->PendingCheckpointID);
 		}
 		GI->PendingCheckpointID = -1; // always clear regardless
+
+		if (GI->bPendingAttachBall)
+		{
+			GiveBallToHost();
+		}
+		GI->bPendingAttachBall = false; // always clear regardless
 	}
 
 	for (APlayerController* PC : ActiveControllers)
@@ -164,7 +170,52 @@ void ACoopPlatformerGameModeBase::CheckAllPlayersLoaded()
 		if (!PC) continue;
 		if (AMyPaperCharacter* Pawn = Cast<AMyPaperCharacter>(PC->GetPawn()))
 		{
-			Pawn->ClientDismissLoadingScreen();
+		Pawn->ClientDismissLoadingScreen();
 		}
 	}
+}
+
+void ACoopPlatformerGameModeBase::GiveBallToHost()
+{
+	AMyGameStateBase* MyGameState = GetGameState<AMyGameStateBase>();
+	if (!MyGameState) return;
+
+	ABallActor* Ball = MyGameState->BallActor;
+	if (!Ball) return;
+
+	// Find the host player (bFirstPlayer == true)
+	AMyPaperCharacter* HostPlayer = nullptr;
+	for (AMyPaperCharacter* Player : MyGameState->ActivePlayers)
+	{
+		if (Player && Player->bFirstPlayer)
+		{
+			HostPlayer = Player;
+			break;
+		}
+	}
+
+	if (!HostPlayer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GiveBallToHost: Could not find host player (bFirstPlayer)."));
+		return;
+	}
+
+	// Clear any previous holder state
+	AMyPaperCharacter* PreviousHolder = MyGameState->GetHolder();
+	if (PreviousHolder && PreviousHolder != HostPlayer)
+	{
+		PreviousHolder->IsHolding = false;
+	}
+
+	// Mirror the state set by Controller2D::ServerApplyBallCaught
+	Ball->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	MyGameState->SetBallHolder(HostPlayer);
+	HostPlayer->IsHolding = true;
+	HostPlayer->RemoveBallArrivingClientRPCFunction();
+	Ball->CanPass = true;
+	Ball->IsAttached = true;
+	Ball->IsMoving = false;
+	Ball->AttachToComponent(HostPlayer->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	UE_LOG(LogTemp, Log, TEXT("GiveBallToHost: Ball given to %s"), *HostPlayer->GetName());
 }

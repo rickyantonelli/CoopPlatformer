@@ -47,6 +47,14 @@ public:
 	void CreateServer(FString ServerName);
 
 	/**
+	* Destroys the current session and sends all local players back to the main menu.
+	* The host should call this; clients are disconnected automatically when the session is destroyed.
+	* If no session exists, travels to the main menu immediately.
+	*/
+	UFUNCTION(BlueprintCallable)
+	void ReturnToMainMenu();
+
+	/**
 	* Finds the server
 	* @param ServerName: The name of the server
 	*/
@@ -82,6 +90,9 @@ public:
 
 	/** For creating a server after we destroy the last */
 	bool CreateServerAfterDestroy;
+
+	/** When true, OnDestroySessionComplete will ClientTravel to the main menu. */
+	bool bReturnToMainMenuAfterDestroy = false;
 
 	/** The name of the server to destroy */
 	FString DestroyServerName;

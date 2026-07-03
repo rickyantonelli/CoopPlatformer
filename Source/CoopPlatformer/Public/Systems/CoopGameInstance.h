@@ -41,6 +41,9 @@ class COOPPLATFORMER_API UCoopGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 
+	virtual void Init() override;
+
+
 public:
 	/** Slot name used for SaveGameToSlot / LoadGameFromSlot. */
 	static const FString SaveSlotName;
@@ -86,7 +89,7 @@ public:
 	 * Pass INDEX_NONE (or omit) to skip checkpoint teleport.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Travel")
-	void TravelToLevel(ENovaLevel Level, int32 CheckpointID = -1);
+	void TravelToLevel(ENovaLevel Level, int32 CheckpointID = -1, bool bAttachBall = false);
 
 	/**
 	 * Set by TravelToLevel before ServerTravel fires.
@@ -95,4 +98,11 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Travel")
 	int32 PendingCheckpointID = -1;
+
+	/**
+	 * Set by TravelToLevel before ServerTravel fires.
+	 * Read and cleared by CheckAllPlayersLoaded to give the ball to the host.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Travel")
+	bool bPendingAttachBall = false;
 };

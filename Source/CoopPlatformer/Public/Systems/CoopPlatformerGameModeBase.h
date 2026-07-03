@@ -40,6 +40,9 @@ public:
 	/** Teleports all active players to the ACheckpoint actor matching CheckpointID. */
 	void TeleportPlayersToCheckpoints(int32 CheckpointID);
 
+	/** Gives the ball to the host player after level travel. Mirrors the ball-catch state from Controller2D::ServerApplyBallCaught. */
+	void GiveBallToHost();
+
 
 
 public:
