@@ -27,6 +27,8 @@ protected:
 	/** Override for BeginPlay*/
 	virtual void BeginPlay() override;
 
+	virtual void MulticastTriggerUnlock_Implementation() override;
+
 public:
 	/** When the player collides, disables or enables the PressurePlated Actor */
 	UFUNCTION()
@@ -36,13 +38,24 @@ public:
 	void OnBallCaught();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TArray<UBoxComponent*> KeyMeshes;
+	TArray<UPaperSpriteComponent*> KeyMeshes;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastYellowKey(UPaperSpriteComponent* SpriteComp);
+	void MulticastYellowKey(UPaperSpriteComponent* SpriteComp, UPaperFlipbookComponent* FlipbookComp);
+
+	UFUNCTION()
+	void OnYellowFlipbookFinished();
+
+	UFUNCTION()
+	void OnSamePassUnlockFlipbookFinished();
 
 private:
+	UPaperFlipbookComponent* FindFlipbookForSprite(UPaperSpriteComponent* SpriteComp) const;
+
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TArray<UPrimitiveComponent*> OverlappedMeshes;
+
+	TMap<UPaperFlipbookComponent*, UPaperSpriteComponent*> PendingYellowTransitions;
+	TMap<UPaperFlipbookComponent*, UPaperSpriteComponent*> PendingUnlockTransitions;
 	
 };

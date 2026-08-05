@@ -29,6 +29,13 @@ void AController2D::Tick(float DeltaSeconds)
 		// sets the arrays for the players and the ballactor object - so once these are set we never need to check or call again
 		GatherActorsHandler();
 	}
+
+	// Lazily acquire the ball reference - on clients the replicated GameState reference
+	// may not have arrived yet at BeginPlay, so we retry here until it is valid.
+	if (!BallActor && MyGameStateCoop && MyGameStateCoop->BallActor)
+	{
+		BallActor = MyGameStateCoop->BallActor;
+	}
 	BallPassingHandler(DeltaSeconds);
 
 }
@@ -53,7 +60,8 @@ void AController2D::BeginPlay()
 	// The ball just exists in each level, so it should always be there in a level
 
 	// TODO: Make this a check() later, cause we want a crash here if the ball doesn't exist
-	if (HasAuthority() && MyGameStateCoop && MyGameStateCoop->BallActor)
+	// Clients also cache the ball so they can run cosmetic flight interpolation locally.
+	if (MyGameStateCoop && MyGameStateCoop->BallActor)
 	{
 		BallActor = MyGameStateCoop->BallActor;
 	}
@@ -101,6 +109,11 @@ void AController2D::ServerPass()
 	BallActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	BallActor->IsAttached = false;
 	Holder->IsHolding = false;
+
+	// While in flight, every machine simulates the ball locally (BallPassingHandler).
+	// Disable movement replication so 40Hz server snapshots don't snap-fight the
+	// clients' smooth local interpolation. Re-enabled on catch. bReplicateMovement replicates.
+	BallActor->SetReplicateMovement(false);
 	BallActor->IsMoving = true;
 	BallActor->CanPass = false;
 	BallActor->BeginPassCooldown();
@@ -118,9 +131,13 @@ void AController2D::ServerPass()
 
 void AController2D::BallPassingHandler(float DeltaSeconds)
 {
-	// When the ball is passed and while it is traveling, this gets called every frame
+	// When the ball is passed and while it is traveling, this gets called every frame.
+	// Runs on the server (authoritative - drives the catch overlap) AND on clients
+	// (cosmetic prediction - all inputs are replicated: IsMoving, BallMovementSpeed,
+	// and the receiver via the replicated holder state). The attach on catch snaps
+	// the ball to the socket, correcting any small client/server divergence.
 
-	if (BallActor && BallActor->IsMoving && PlayersSet)
+	if (BallActor && BallActor->IsMoving && !BallActor->IsAttached && PlayersSet && MyGameStateCoop)
 	{
 		AMyPaperCharacter* Receiver = MyGameStateCoop->GetReceiver();
 		if (!Receiver) return;
@@ -152,6 +169,10 @@ void AController2D::ServerApplyBallCaught()
 		MyGameStateCoop->SetBallHolder(Receiver);
 		Receiver->IsHolding = true;
 		Receiver->RemoveBallArrivingClientRPCFunction();
+
+		// Flight is over - resume normal movement replication so the attached/idle ball
+		// stays server-synced. The socket attach below snaps clients to the exact spot.
+		BallActor->SetReplicateMovement(true);
 		BallActor->AttachToComponent(Receiver->BallSocket, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		BallActor->IsMoving = false;
 

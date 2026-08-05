@@ -2,6 +2,7 @@
 
 
 #include "Mechanics/Keys/MovingKeyActor.h"
+#include "Character/BallActor.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -73,7 +74,8 @@ void AMovingKeyActor::Tick(float DeltaTime)
 
 void AMovingKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!OtherActor->ActorHasTag("Ball")) return;
+	const ABallActor* BallActor = Cast<ABallActor>(OtherActor);
+	if (!BallActor || BallActor->IsAttached) return;
 	if (bOnCooldown) return;
 	if (!HasAuthority()) return;
 

@@ -55,6 +55,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperFlipbook> UnlockFlipbook;
 
+	/** Flipbook for halfway unlocking (same pass, timer key actor, etc)*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperFlipbook> YellowFlipbook;
+
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<USoundBase> CompletedSound;
 
@@ -84,4 +88,7 @@ public:
 
 	UFUNCTION()
 	void OnUnlockFlipbookFinished();
+
+	/** Returns true only when the overlapping actor is the free, unheld ball. */
+	bool CanBallActivateKey(const AActor* OtherActor) const;
 };

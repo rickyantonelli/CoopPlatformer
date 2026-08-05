@@ -24,7 +24,7 @@ void AResetKeyActor::BeginPlay()
 
 void AResetKeyActor::OnBoxCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("Ball") && Locked && LockedActors.Num() > 0)
+	if (CanBallActivateKey(OtherActor) && Locked && LockedActors.Num() > 0)
 	{
 		if (HasAuthority())
 		{

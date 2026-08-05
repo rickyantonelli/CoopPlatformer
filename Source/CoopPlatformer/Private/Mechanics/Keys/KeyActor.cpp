@@ -54,6 +54,12 @@ void AKeyActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+bool AKeyActor::CanBallActivateKey(const AActor* OtherActor) const
+{
+	const ABallActor* BallActor = Cast<ABallActor>(OtherActor);
+	return BallActor && !BallActor->IsAttached;
+}
+
 void AKeyActor::MulticastRedKey_Implementation()
 {
 	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
@@ -103,6 +109,12 @@ void AKeyActor::OnUnlockFlipbookFinished()
 			SpriteComp->SetVisibility(true);
 			
 		}
+	}
+
+	UPaperFlipbookComponent* KeyFlipbookComp = GetComponentByClass<UPaperFlipbookComponent>();
+	if (KeyFlipbookComp)
+	{
+		KeyFlipbookComp->SetVisibility(false);
 	}
 }
 
