@@ -75,3 +75,6 @@ DerivedDataCache/*
 
 #Starter Content
 Content/StarterContent/*
+
+# AI generated images (for concept, not for game assets)
+/Content/Generated_Images/
