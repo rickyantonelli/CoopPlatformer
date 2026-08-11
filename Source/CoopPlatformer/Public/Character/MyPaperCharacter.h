@@ -11,6 +11,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "PaperSpriteComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
@@ -147,7 +148,7 @@ public:
 	TObjectPtr<UPaperSpriteComponent> Background;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Capsule, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USceneComponent> BallSocket;
+	TObjectPtr<USphereComponent> BallSocket;
 
 	/** The default mapping context for the player */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))

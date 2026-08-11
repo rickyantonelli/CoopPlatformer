@@ -144,7 +144,7 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 
 		FVector NewLocation = FMath::VInterpConstantTo(
 			BallActor->GetActorLocation(),
-			Receiver->GetActorLocation(),
+			Receiver->BallSocket->GetComponentLocation(),
 			DeltaSeconds,
 			BallActor->BallMovementSpeed
 		);

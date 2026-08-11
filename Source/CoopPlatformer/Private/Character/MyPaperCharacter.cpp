@@ -33,8 +33,21 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	DoubleJumpFlipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DoubleJumpEffect"));
 	DoubleJumpFlipbook->SetupAttachment(RootComponent);
 
-	BallSocket = CreateDefaultSubobject<USceneComponent>(TEXT("BallSocket"));
+	BallSocket = CreateDefaultSubobject<USphereComponent>(TEXT("BallSocket"));
 	BallSocket->SetupAttachment(RootComponent);
+
+	// The socket doubles as the catch trigger so the ball is caught exactly where it is
+	// attached, instead of at the capsule. It must only ever see the ball: the shared
+	// AActor::OnActorBeginOverlap delegate that drives the catch also drives death,
+	// checkpoints and token pickups, so anything else overlapping this sphere would fire
+	// those from above the player's head.
+	BallSocket->InitSphereRadius(30.0f);
+	BallSocket->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	BallSocket->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+	BallSocket->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	BallSocket->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap); // "Ball"
+	BallSocket->SetGenerateOverlapEvents(true);
+	BallSocket->SetCanEverAffectNavigation(false);
 
 	GetCharacterMovement()->bNotifyApex = true;
 	BaseGravityScale = GetCharacterMovement()->GravityScale;

@@ -153,6 +153,32 @@ void ASamePassKeyActor::OnYellowFlipbookFinished()
 	}
 }
 
+void ASamePassKeyActor::MulticastRedKey_Implementation()
+{
+	for (UPaperSpriteComponent* SpriteComp : SpriteComps)
+	{
+		if (!SpriteComp)
+		{
+			continue;
+		}
+
+		if (UPaperFlipbookComponent* FlipbookComp = FindFlipbookForSprite(SpriteComp))
+		{
+			FlipbookComp->Stop();
+			FlipbookComp->SetVisibility(false);
+			FlipbookComp->OnFinishedPlaying.RemoveDynamic(this, &AKeyActor::OnUnlockFlipbookFinished);
+			FlipbookComp->OnFinishedPlaying.RemoveDynamic(this, &ASamePassKeyActor::OnYellowFlipbookFinished);
+			FlipbookComp->OnFinishedPlaying.RemoveDynamic(this, &ASamePassKeyActor::OnSamePassUnlockFlipbookFinished);
+		}
+
+		SpriteComp->SetSprite(RedKey);
+		SpriteComp->SetVisibility(true);
+	}
+
+	PendingYellowTransitions.Empty();
+	PendingUnlockTransitions.Empty();
+}
+
 void ASamePassKeyActor::MulticastTriggerUnlock_Implementation()
 {
 	Locked = false;
