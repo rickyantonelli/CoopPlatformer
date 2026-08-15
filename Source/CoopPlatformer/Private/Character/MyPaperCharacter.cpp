@@ -527,13 +527,13 @@ void AMyPaperCharacter::OnDeath()
 	GetWorld()->GetTimerManager().ClearTimer(DeathMovementTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(DeathVisibilityTimerHandle);
 
-	if (IsLocallyControlled())
+	if (HasAuthority())
 	{
-		// On death we instantly return the player to spawn
-		// but we want to disable controls for a short amount of time so player's dont instantly move on respawn
-		// set it up with MovementEnabled so that players still have things like pause menu still available
-		MovementEnabled = false;
-		GetWorld()->GetTimerManager().SetTimer(DeathMovementTimerHandle, [this]() {MovementEnabled = true; }, DeathDuration, false);
+		// On death we instantly return the player to spawn, but we want to disable
+		// controls for a short time so players don't instantly move on respawn.
+		// Death is processed server-side only, so this must reach the owning client
+		// via RPC (previously gated on IsLocallyControlled(), which is false on the server).
+		ClientDisableMovementForRespawn(DeathDuration);
 	}
 	if (SpriteComp && HasAuthority())
 	{
@@ -786,6 +786,12 @@ void AMyPaperCharacter::ClientDismissLoadingScreen_Implementation()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LoadingScreen: Dismiss called but widget was null"));
 	}
+}
+
+void AMyPaperCharacter::ClientDisableMovementForRespawn_Implementation(float Duration)
+{
+	MovementEnabled = false;
+	GetWorld()->GetTimerManager().SetTimer(DeathMovementTimerHandle, [this]() { MovementEnabled = true; }, Duration, false);
 }
 
 void AMyPaperCharacter::ServerPlayerLoaded_Implementation()

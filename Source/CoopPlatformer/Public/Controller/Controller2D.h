@@ -96,6 +96,14 @@ public:
 	UFUNCTION()
 	void OnOverlapBegin(AActor* PlayerActor, AActor* OtherActor);
 
+	/**
+	 * Distance (cm) from the receiver's BallSocket at which an in-flight ball is caught by
+	 * BallPassingHandler. This is the state-based safety net for the begin-overlap catch,
+	 * which cannot fire when the ball is redirected to a player it never stopped overlapping.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ball")
+	float BallCatchRadius = 25.0f;
+
 	/** Shifts the player's view target to the other player */
 	UFUNCTION(BlueprintCallable)
 	void ShiftViewTarget();

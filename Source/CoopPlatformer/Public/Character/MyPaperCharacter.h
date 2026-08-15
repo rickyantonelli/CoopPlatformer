@@ -115,6 +115,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientDismissLoadingScreen();
 
+	/** Client RPC - disables this player's local movement for the post-death respawn window */
+	UFUNCTION(Client, Reliable)
+	void ClientDisableMovementForRespawn(float Duration);
+
 	/** Shows the loading screen widget for this locally-controlled player. */
 	UFUNCTION(BlueprintCallable)
 	void ShowLoadingScreen();

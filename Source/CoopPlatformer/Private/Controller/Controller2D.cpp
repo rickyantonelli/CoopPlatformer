@@ -142,13 +142,40 @@ void AController2D::BallPassingHandler(float DeltaSeconds)
 		AMyPaperCharacter* Receiver = MyGameStateCoop->GetReceiver();
 		if (!Receiver) return;
 
+		const FVector SocketLocation = Receiver->BallSocket->GetComponentLocation();
+
 		FVector NewLocation = FMath::VInterpConstantTo(
 			BallActor->GetActorLocation(),
-			Receiver->BallSocket->GetComponentLocation(),
+			SocketLocation,
 			DeltaSeconds,
 			BallActor->BallMovementSpeed
 		);
 		BallActor->SetActorLocation(NewLocation);
+
+		// State-based catch fallback (server only).
+		//
+		// The primary catch path is the begin-overlap edge in OnOverlapBegin, but an edge is
+		// not guaranteed to exist: if the ball is redirected to a player it never stopped
+		// overlapping, no begin-overlap ever fires and the ball would home forever with
+		// IsAttached=false / CanPass=false - the arriving overlay stuck on screen and passing
+		// dead. This happens when the thrower is standing on a BallReboundComponent, since
+		// ReturnBallToThrower sends the ball back before it has left the thrower's volumes.
+		//
+		// Because VInterpConstantTo never overshoots, the ball always converges on the socket,
+		// so a small radius here is a reliable terminator for every flight.
+		if (HasAuthority() && FVector::DistSquared(NewLocation, SocketLocation) <= FMath::Square(BallCatchRadius))
+		{
+			// Mirror the overlap path: a receiver that is not passing through rebounds instead
+			// of catching. That swaps the holder, so the next frame homes at the other player
+			// and this check will not re-fire.
+			if (!Receiver->bPassingThrough)
+			{
+				ReturnBallToThrower();
+				return;
+			}
+
+			ServerApplyBallCaught();
+		}
 	}
 }
 
