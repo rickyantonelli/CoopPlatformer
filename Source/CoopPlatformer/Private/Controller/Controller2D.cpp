@@ -301,7 +301,7 @@ void AController2D::CountdownPingServerRPCFunction_Implementation()
 void AController2D::CollectPlayerDeath(AActor* PlayerActor)
 {
 	AMyPaperCharacter* PlayerCharacterActor = Cast<AMyPaperCharacter>(PlayerActor);
-	if (PlayerCharacterActor)
+	if (PlayerCharacterActor && !PlayerCharacterActor->bDead)
 	{
 		if (PlayerCharacterActor->IsHolding)
 		{
@@ -313,14 +313,7 @@ void AController2D::CollectPlayerDeath(AActor* PlayerActor)
 			ReturnBallToThrower();
 		}
 
-		// The player dies - returning them to spawn (or checkpoint) and disabling movement for a short amount of time
-		UCharacterMovementComponent* MyCharacterMovement = PlayerCharacterActor->GetCharacterMovement();
-		if (MyCharacterMovement)
-		{
-			// reset the movement to zero so that the momentum doesn't continue when the player respawns
-			MyCharacterMovement->Velocity = FVector::ZeroVector;
-		}
-		PlayerCharacterActor->TeleportTo(PlayerCharacterActor->SpawnLocation, PlayerCharacterActor->GetActorRotation());
+		// The character remains at the death location until its overlay flipbook finishes.
 		PlayerCharacterActor->OnDeath();
 	}
 }
@@ -466,11 +459,13 @@ void AController2D::MulticastOnCaughtActivated_Implementation()
 
 void AController2D::MulticastKillBothPlayers_Implementation()
 {
-	// trigger death for both players
-	for (AMyPaperCharacter* ActivePlayer : MyGameStateCoop->ActivePlayers)
+	// Death initiation remains authoritative; bDead replicates the presentation to clients.
+	if (HasAuthority() && MyGameStateCoop)
 	{
-		ActivePlayer->TeleportTo(ActivePlayer->SpawnLocation, ActivePlayer->GetActorRotation());
-		ActivePlayer->OnDeath();
+		for (AMyPaperCharacter* ActivePlayer : MyGameStateCoop->ActivePlayers)
+		{
+			if (ActivePlayer && !ActivePlayer->bDead) ActivePlayer->OnDeath();
+		}
 	}
 	OnResetActivated.Broadcast();
 	if (MyGameStateCoop)

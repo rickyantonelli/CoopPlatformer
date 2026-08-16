@@ -33,6 +33,13 @@ AMyPaperCharacter::AMyPaperCharacter(const FObjectInitializer& ObjectInitializer
 	DoubleJumpFlipbook = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DoubleJumpEffect"));
 	DoubleJumpFlipbook->SetupAttachment(RootComponent);
 
+	DeathEffect = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("DeathEffect"));
+	DeathEffect->SetupAttachment(RootComponent);
+	DeathEffect->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DeathEffect->SetLooping(false);
+	DeathEffect->SetVisibility(false);
+	DeathEffect->SetIsReplicated(true);
+
 	BallSocket = CreateDefaultSubobject<USphereComponent>(TEXT("BallSocket"));
 	BallSocket->SetupAttachment(RootComponent);
 
@@ -124,6 +131,14 @@ void AMyPaperCharacter::BeginPlay()
 	if (SpriteComp)
 	{
 		OriginalFlipbookScale = SpriteComp->GetRelativeScale3D();
+	}
+
+	if (DeathEffect)
+	{
+		DeathEffect->SetLooping(false);
+		DeathEffect->Stop();
+		DeathEffect->SetVisibility(false);
+		DeathEffect->OnFinishedPlaying.AddUniqueDynamic(this, &AMyPaperCharacter::HandleDeathEffectFinished);
 	}
 
 	if (Background)
@@ -520,27 +535,129 @@ void AMyPaperCharacter::OnJumped_Implementation()
 
 void AMyPaperCharacter::OnDeath()
 {
+	if (!HasAuthority() || bDead) return;
+
 	// Cancel any in-flight timers that would mutate state during death
 	GetWorld()->GetTimerManager().ClearTimer(CoyoteTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(WallJumpTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(WallJumpGraceTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(DeathMovementTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(DeathVisibilityTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(DeathRespawnTimerHandle);
 
-	if (HasAuthority())
+	bDead = true;
+	bDeathEffectFinished = false;
+	bRespawnDelayFinished = DeathDuration <= 0.0f;
+	OnRep_Dead();
+	ForceNetUpdate();
+
+	if (!bRespawnDelayFinished)
 	{
-		// On death we instantly return the player to spawn, but we want to disable
-		// controls for a short time so players don't instantly move on respawn.
-		// Death is processed server-side only, so this must reach the owning client
-		// via RPC (previously gated on IsLocallyControlled(), which is false on the server).
-		ClientDisableMovementForRespawn(DeathDuration);
+		GetWorld()->GetTimerManager().SetTimer(
+			DeathRespawnTimerHandle,
+			this,
+			&AMyPaperCharacter::HandleRespawnDelayFinished,
+			DeathDuration,
+			false);
 	}
-	if (SpriteComp && HasAuthority())
+
+	// Never leave the player stuck if the overlay was not assigned in the Blueprint.
+	if (!DeathEffect || !DeathEffect->GetFlipbook()) HandleDeathEffectFinished();
+
+	TryCompleteRespawn();
+}
+
+void AMyPaperCharacter::OnRep_Dead()
+{
+	if (bDead)
 	{
-		bDead = true;
-		SpriteComp->SetVisibility(false);
-		GetWorld()->GetTimerManager().SetTimer(DeathVisibilityTimerHandle, [this]() {SpriteComp->SetVisibility(true); bDead = false; }, DeathDuration, false);
+		ApplyDeathState();
 	}
+	else
+	{
+		ApplyRespawnState();
+	}
+}
+
+void AMyPaperCharacter::ApplyDeathState()
+{
+	MovementEnabled = false;
+	JumpEnabled = false;
+
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->StopMovementImmediately();
+		MovementComponent->DisableMovement();
+	}
+
+	if (SpriteComp) SpriteComp->SetVisibility(false);
+	if (DoubleJumpFlipbook) DoubleJumpFlipbook->SetVisibility(false);
+
+	if (DeathEffect)
+	{
+		DeathEffect->SetLooping(false);
+		DeathEffect->SetVisibility(true);
+		DeathEffect->PlayFromStart();
+	}
+}
+
+void AMyPaperCharacter::HandleDeathEffectFinished()
+{
+	if (!bDead) return;
+
+	if (DeathEffect)
+	{
+		DeathEffect->Stop();
+		DeathEffect->SetVisibility(false);
+	}
+
+	if (!HasAuthority() || bDeathEffectFinished) return;
+
+	bDeathEffectFinished = true;
+	TeleportTo(SpawnLocation, GetActorRotation());
+
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->StopMovementImmediately();
+	}
+
+	ForceNetUpdate();
+	TryCompleteRespawn();
+}
+
+void AMyPaperCharacter::HandleRespawnDelayFinished()
+{
+	if (!HasAuthority() || !bDead) return;
+
+	bRespawnDelayFinished = true;
+	TryCompleteRespawn();
+}
+
+void AMyPaperCharacter::TryCompleteRespawn()
+{
+	if (!HasAuthority() || !bDead || !bDeathEffectFinished || !bRespawnDelayFinished) return;
+
+	bDead = false;
+	OnRep_Dead();
+	ForceNetUpdate();
+}
+
+void AMyPaperCharacter::ApplyRespawnState()
+{
+	if (DeathEffect)
+	{
+		DeathEffect->Stop();
+		DeathEffect->SetVisibility(false);
+	}
+
+	if (SpriteComp) SpriteComp->SetVisibility(true);
+
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->StopMovementImmediately();
+		MovementComponent->SetDefaultMovementMode();
+	}
+
+	MovementEnabled = true;
+	JumpEnabled = true;
 }
 
 void AMyPaperCharacter::NotifyJumpApex()
@@ -752,6 +869,7 @@ void AMyPaperCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	DOREPLIFETIME(AMyPaperCharacter, bPassingThrough);
 	DOREPLIFETIME(AMyPaperCharacter, JumpMaxCount);
 	DOREPLIFETIME(AMyPaperCharacter, bFirstPlayer);
+	DOREPLIFETIME(AMyPaperCharacter, bDead);
 	DOREPLIFETIME(AMyPaperCharacter, ControlRotation);
 	DOREPLIFETIME(AMyPaperCharacter, ActiveCheckpoint);
 }
@@ -786,12 +904,6 @@ void AMyPaperCharacter::ClientDismissLoadingScreen_Implementation()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LoadingScreen: Dismiss called but widget was null"));
 	}
-}
-
-void AMyPaperCharacter::ClientDisableMovementForRespawn_Implementation(float Duration)
-{
-	MovementEnabled = false;
-	GetWorld()->GetTimerManager().SetTimer(DeathMovementTimerHandle, [this]() { MovementEnabled = true; }, Duration, false);
 }
 
 void AMyPaperCharacter::ServerPlayerLoaded_Implementation()

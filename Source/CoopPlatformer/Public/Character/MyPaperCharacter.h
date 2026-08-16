@@ -115,10 +115,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientDismissLoadingScreen();
 
-	/** Client RPC - disables this player's local movement for the post-death respawn window */
-	UFUNCTION(Client, Reliable)
-	void ClientDisableMovementForRespawn(float Duration);
-
 	/** Shows the loading screen widget for this locally-controlled player. */
 	UFUNCTION(BlueprintCallable)
 	void ShowLoadingScreen();
@@ -147,6 +143,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperFlipbookComponent> DoubleJumpFlipbook;
+
+	/** Overlay flipbook shown over the hidden player while the death effect plays. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperFlipbookComponent> DeathEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPaperSpriteComponent> Background;
@@ -307,8 +307,7 @@ public:
 	FTimerHandle CoyoteTimerHandle;
 	FTimerHandle DoubleJumpGraceTimerHandle;
 	FTimerHandle DevJumpResetTimerHandle;
-	FTimerHandle DeathMovementTimerHandle;
-	FTimerHandle DeathVisibilityTimerHandle;
+	FTimerHandle DeathRespawnTimerHandle;
 	FTimerHandle WallJumpTimerHandle;
 	FTimerHandle WallJumpGraceTimerHandle;
 	FTimerHandle FrictionTimerHandle;
@@ -342,7 +341,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Debug")
 	bool bFirstPlayer;
 
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Dead, BlueprintReadOnly, Category = "Debug")
 	bool bDead = false;
+
+	bool bDeathEffectFinished = false;
+
+	bool bRespawnDelayFinished = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Debug")
 	bool bCanXMove = true;
@@ -404,6 +408,22 @@ public:
 	/** When server changes IsHolding */
 	UFUNCTION()
 	void OnRep_IsHolding();
+
+	/** Applies the replicated death presentation and movement state. */
+	UFUNCTION()
+	void OnRep_Dead();
+
+	/** Called locally when the non-looping death overlay reaches its final frame. */
+	UFUNCTION()
+	void HandleDeathEffectFinished();
+
+	void HandleRespawnDelayFinished();
+
+	void TryCompleteRespawn();
+
+	void ApplyDeathState();
+
+	void ApplyRespawnState();
 
 	/** Resets the jump ability of a player - a core mechanic that allows for double jumping if ball is caught in mid air */
 	UFUNCTION()
