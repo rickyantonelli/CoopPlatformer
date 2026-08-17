@@ -43,51 +43,84 @@ void ASplitPlayersTeleporter::BeginPlay()
 	
 }
 
+void ASplitPlayersTeleporter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (P1Player)
+	{
+		P1Player->OnPlayerDeathStarted.RemoveDynamic(this, &ASplitPlayersTeleporter::HandlePlayerDeath);
+	}
+
+	if (P2Player && P2Player != P1Player)
+	{
+		P2Player->OnPlayerDeathStarted.RemoveDynamic(this, &ASplitPlayersTeleporter::HandlePlayerDeath);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void ASplitPlayersTeleporter::OnTeleportDistribute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// no ball teleporting, only players
-	if (OtherActor->ActorHasTag("Player") && !TPActorsOnCD.Contains(OtherActor))
+	AMyPaperCharacter* Player = Cast<AMyPaperCharacter>(OtherActor);
+	if (Player && !Player->bDead && !TPActorsOnCD.Contains(Player))
 	{
-		TPActorsOnCD.Add(OtherActor);
-		ApplyCameraLag(OtherActor);
-
-		// for the ball or player, change the actor location to the other teleporter
-		// FVector TargetLocation = (OverlappedComponent == TPMesh1) ? TPMesh2->GetComponentLocation() : TPMesh1->GetComponentLocation();
 		FVector TargetLocation = FVector::ZeroVector;
-		if (bP1Taken)
+		if (!P1Player)
 		{
+			P1Player = Player;
+			bP1Taken = true;
+			TargetLocation = P1Teleporter->GetComponentLocation();
+		}
+		else if (!P2Player)
+		{
+			P2Player = Player;
 			TargetLocation = P2Teleporter->GetComponentLocation();
 		}
 		else
 		{
-			TargetLocation = P1Teleporter->GetComponentLocation();
-			bP1Taken = true;
+			return;
 		}
-		OtherActor->TeleportTo(TargetLocation, OtherActor->GetActorRotation());
+
+		TPActorsOnCD.Add(Player);
+		ApplyCameraLag(Player);
+		Player->OnPlayerDeathStarted.AddUniqueDynamic(this, &ASplitPlayersTeleporter::HandlePlayerDeath);
+		Player->TeleportTo(TargetLocation, Player->GetActorRotation());
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, Player]() {TPActorsOnCD.Remove(Player); }, TeleportCooldown, false);
 	}
 }
 
 void ASplitPlayersTeleporter::OnTeleportReturn(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("Player") && !TPActorsOnCD.Contains(OtherActor))
+	AMyPaperCharacter* Player = Cast<AMyPaperCharacter>(OtherActor);
+	if (Player && !Player->bDead && !TPActorsOnCD.Contains(Player))
 	{
-		TPActorsOnCD.Add(OtherActor);
-		ApplyCameraLag(OtherActor);
+		TPActorsOnCD.Add(Player);
+		ApplyCameraLag(Player);
 		
 		FVector TargetLocation = Teleporter->GetComponentLocation();
 		
-		// if overlappedcomponent is P1Teleporter, make bP1Taken false
-		if (OverlappedComponent->GetName() == P1Teleporter->GetName())
-		{
-			bP1Taken = false;
-		}
+		if (P1Player == Player) P1Player = nullptr;
+		if (P2Player == Player) P2Player = nullptr;
+		bP1Taken = P1Player != nullptr;
+		Player->OnPlayerDeathStarted.RemoveDynamic(this, &ASplitPlayersTeleporter::HandlePlayerDeath);
 
-		OtherActor->TeleportTo(TargetLocation, OtherActor->GetActorRotation());
+		Player->TeleportTo(TargetLocation, Player->GetActorRotation());
 		FTimerHandle TimerHandler;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, OtherActor]() {TPActorsOnCD.Remove(OtherActor); }, TeleportCooldown, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandler, [this, Player]() {TPActorsOnCD.Remove(Player); }, TeleportCooldown, false);
 	}
+}
+
+void ASplitPlayersTeleporter::HandlePlayerDeath(AMyPaperCharacter* Player)
+{
+	if (!Player) return;
+
+	TPActorsOnCD.Remove(Player);
+
+	if (P1Player == Player) P1Player = nullptr;
+	if (P2Player == Player) P2Player = nullptr;
+	bP1Taken = P1Player != nullptr;
+
+	Player->OnPlayerDeathStarted.RemoveDynamic(this, &ASplitPlayersTeleporter::HandlePlayerDeath);
 }
 
 void ASplitPlayersTeleporter::ApplyCameraLag(AActor* PlayerActor)

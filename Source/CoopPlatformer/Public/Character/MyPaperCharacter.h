@@ -19,10 +19,13 @@
 #include "Character/NovaCharacterMovementComponent.h"
 #include "MyPaperCharacter.generated.h"
 
+class AMyPaperCharacter;
+
 // TODO: currently no reason for this to need to be dynamic
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBallPassActivated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwapActivated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCountdownPingActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerDeathStarted, AMyPaperCharacter*, Player);
 /**
  * The PaperCharacter class is the player class for the game - holds a variety of responsibilities
  * Player Movement - moving left and right
@@ -396,6 +399,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FCountdownPingActivated OnCountdownPingActivated;
+
+	/** Broadcast when the player's replicated death state begins. */
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FPlayerDeathStarted OnPlayerDeathStarted;
 
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")

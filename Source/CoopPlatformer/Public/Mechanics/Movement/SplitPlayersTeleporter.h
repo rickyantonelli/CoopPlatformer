@@ -7,6 +7,8 @@
 #include "Components/BoxComponent.h"
 #include "SplitPlayersTeleporter.generated.h"
 
+class AMyPaperCharacter;
+
 UCLASS()
 class COOPPLATFORMER_API ASplitPlayersTeleporter : public AActor
 {
@@ -19,6 +21,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 
@@ -41,10 +44,19 @@ public:
 	void OnTeleportReturn(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
+	void HandlePlayerDeath(AMyPaperCharacter* Player);
+
+	UFUNCTION()
 	void ApplyCameraLag(AActor* PlayerActor);
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	TArray<AActor*> TPActorsOnCD;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	TObjectPtr<AMyPaperCharacter> P1Player;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	TObjectPtr<AMyPaperCharacter> P2Player;
 
 	UPROPERTY(EditAnywhere, Category = "Custom")
 	float TeleportCooldown;

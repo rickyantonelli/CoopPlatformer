@@ -569,6 +569,7 @@ void AMyPaperCharacter::OnRep_Dead()
 {
 	if (bDead)
 	{
+		OnPlayerDeathStarted.Broadcast(this);
 		ApplyDeathState();
 	}
 	else
