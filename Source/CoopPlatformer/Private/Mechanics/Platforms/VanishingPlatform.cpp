@@ -40,10 +40,16 @@ void AVanishingPlatform::BeginPlay()
 	{
 		Flipbook->OnFinishedPlaying.AddDynamic(this, &AVanishingPlatform::OnVanishFlipbookFinished);
 
-		float DefaultFPS = Flipbook->GetFlipbook()->GetFramesPerSecond();
-		int32 NumFrames = Flipbook->GetFlipbook()->GetNumFrames();
-		float PlayRateMultiplier = (NumFrames / VanishingTime) / DefaultFPS;
-		Flipbook->SetPlayRate(PlayRateMultiplier);
+		if (!VanishAnimation)
+		{
+			VanishAnimation = Flipbook->GetFlipbook();
+		}
+
+		if (VanishAnimation)
+		{
+			Flipbook->SetFlipbook(VanishAnimation);
+			SetFlipbookPlayRateForDuration(VanishingTime);
+		}
 	}
 
 	
@@ -51,11 +57,16 @@ void AVanishingPlatform::BeginPlay()
 
 void AVanishingPlatform::OnBoxCollision(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor->ActorHasTag("Player") && !bIsVanishing)
+	if (OtherActor->ActorHasTag("Player") && !bIsVanishing && !bIsRespawning)
 	{
 		bIsVanishing = true;
 
 		Sprite->SetVisibility(false);
+		if (VanishAnimation)
+		{
+			Flipbook->SetFlipbook(VanishAnimation);
+			SetFlipbookPlayRateForDuration(VanishingTime);
+		}
 		Flipbook->SetVisibility(true);
 		Flipbook->SetLooping(false);
 		Flipbook->PlayFromStart();
@@ -101,10 +112,29 @@ void AVanishingPlatform::ResetVanish()
 		Sprite->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 	Sprite->SetVisibility(true);
+
+	if (Flipbook)
+	{
+		Flipbook->SetVisibility(false);
+		if (VanishAnimation)
+		{
+			Flipbook->SetFlipbook(VanishAnimation);
+			SetFlipbookPlayRateForDuration(VanishingTime);
+		}
+	}
+
+	bIsRespawning = false;
+	bIsVanishing = false;
 }
 
 void AVanishingPlatform::OnVanishFlipbookFinished()
 {
+	if (bIsRespawning)
+	{
+		ResetVanish();
+		return;
+	}
+
 	if (Platform)
 	{
 		Platform->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -113,10 +143,40 @@ void AVanishingPlatform::OnVanishFlipbookFinished()
 	{
 		Sprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	Flipbook->SetVisibility(false);
 
+	if (Flipbook && UnvanishAnimation && RespawnTime > KINDA_SMALL_NUMBER)
+	{
+		bIsRespawning = true;
+		Flipbook->SetFlipbook(UnvanishAnimation);
+		Flipbook->SetLooping(false);
+		SetFlipbookPlayRateForDuration(RespawnTime);
+		Flipbook->SetVisibility(true);
+		Flipbook->PlayFromStart();
+		return;
+	}
+
+	Flipbook->SetVisibility(false);
 	bIsVanishing = false;
 
 	FTimerHandle ResetTimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(ResetTimerHandle, [this]() { ResetVanish();  }, RespawnTime, false);
+}
+
+void AVanishingPlatform::SetFlipbookPlayRateForDuration(float Duration)
+{
+	if (!Flipbook || Duration <= KINDA_SMALL_NUMBER || !Flipbook->GetFlipbook())
+	{
+		return;
+	}
+
+	const float DefaultFPS = Flipbook->GetFlipbook()->GetFramesPerSecond();
+	const int32 NumFrames = Flipbook->GetFlipbook()->GetNumFrames();
+	if (DefaultFPS <= KINDA_SMALL_NUMBER || NumFrames <= 0)
+	{
+		return;
+	}
+
+	const float PlayRateMultiplier =
+		(static_cast<float>(NumFrames) / Duration) / DefaultFPS;
+	Flipbook->SetPlayRate(PlayRateMultiplier);
 }

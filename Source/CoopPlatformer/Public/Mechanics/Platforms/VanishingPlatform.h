@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "PaperSpriteComponent.h"
 #include "PaperFlipbookComponent.h"
+#include "PaperFlipbook.h"
 #include "VanishingPlatform.generated.h"
 
 UCLASS()
@@ -36,10 +37,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	TObjectPtr<UPaperFlipbookComponent> Flipbook;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
+	TObjectPtr<UPaperFlipbook> VanishAnimation = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
+	TObjectPtr<UPaperFlipbook> UnvanishAnimation = nullptr;
+
 	UFUNCTION()
 	void OnBoxCollision(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	bool bIsVanishing = false;
+	bool bIsRespawning = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
 	float VanishingTime = 2.0f;
@@ -52,5 +60,8 @@ public:
 
 	UFUNCTION()
 	void OnVanishFlipbookFinished();
+
+private:
+	void SetFlipbookPlayRateForDuration(float Duration);
 
 };
