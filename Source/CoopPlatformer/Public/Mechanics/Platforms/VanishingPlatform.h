@@ -55,6 +55,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
 	float RespawnTime = 2.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customizable")
+	float PlayerPushDistance = 20.0f;
+
 	UFUNCTION()
 	void ResetVanish();
 
@@ -62,6 +65,9 @@ public:
 	void OnVanishFlipbookFinished();
 
 private:
+	bool IsPlayerOverlappingPlatform(AActor* Player);
+	void RepositionPlayerIfStuck(AActor* Player);
+
 	void SetFlipbookPlayRateForDuration(float Duration);
 
 };

@@ -2,6 +2,7 @@
 
 #include "Mechanics/Platforms/VanishingPlatform.h"
 #include "Character/MyPaperCharacter.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/OverlapResult.h"
 #include "PaperFlipbook.h"
 
@@ -80,26 +81,27 @@ void AVanishingPlatform::ResetVanish()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
-	FCollisionObjectQueryParams ObjectParams;
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
-
-	bool bAnyOverlap = GetWorld()->OverlapMultiByObjectType(
-		Overlaps,
-		Sprite->GetComponentLocation(),
-		Sprite->GetComponentQuat(),
-		ECC_Pawn,
-		Sprite->GetCollisionShape(),
-		Params
-	);
-
-
-	for (const FOverlapResult& Result : Overlaps)
+	UPrimitiveComponent* PlatformCollision = Platform ? Cast<UPrimitiveComponent>(Platform) : Sprite;
+	if (PlatformCollision)
 	{
-		if (AMyPaperCharacter* PC = Cast<AMyPaperCharacter>(Result.GetActor()))
+		const bool bAnyOverlap = GetWorld()->OverlapMultiByObjectType(
+			Overlaps,
+			PlatformCollision->GetComponentLocation(),
+			PlatformCollision->GetComponentQuat(),
+			ECC_Pawn,
+			PlatformCollision->GetCollisionShape(),
+			Params
+		);
+
+		if (bAnyOverlap && HasAuthority())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Player still on platform, delaying respawn."));
+			for (const FOverlapResult& Result : Overlaps)
+			{
+				if (AMyPaperCharacter* PC = Cast<AMyPaperCharacter>(Result.GetActor()))
+				{
+					RepositionPlayerIfStuck(PC);
+				}
+			}
 		}
 	}
 
@@ -125,6 +127,67 @@ void AVanishingPlatform::ResetVanish()
 
 	bIsRespawning = false;
 	bIsVanishing = false;
+}
+
+bool AVanishingPlatform::IsPlayerOverlappingPlatform(AActor* Player)
+{
+	if (!Player)
+	{
+		return false;
+	}
+
+	UCapsuleComponent* PlayerCapsule = Player->FindComponentByClass<UCapsuleComponent>();
+	if (!PlayerCapsule)
+	{
+		return false;
+	}
+
+	UPrimitiveComponent* PlatformCollision = Platform ? Cast<UPrimitiveComponent>(Platform) : Sprite;
+	if (!PlatformCollision)
+	{
+		return false;
+	}
+
+	const FVector PlayerLocation = Player->GetActorLocation();
+	const float PlayerRadius = PlayerCapsule->GetScaledCapsuleRadius();
+	const float PlayerHalfHeight = PlayerCapsule->GetScaledCapsuleHalfHeight();
+	const FVector PlatformLocation = GetActorLocation();
+	const FVector PlatformExtent = PlatformCollision->Bounds.BoxExtent;
+
+	const bool bOverlapsX =
+		(PlayerLocation.X - PlayerRadius < PlatformLocation.X + PlatformExtent.X) &&
+		(PlayerLocation.X + PlayerRadius > PlatformLocation.X - PlatformExtent.X);
+	const bool bOverlapsY =
+		(PlayerLocation.Y - PlayerRadius < PlatformLocation.Y + PlatformExtent.Y) &&
+		(PlayerLocation.Y + PlayerRadius > PlatformLocation.Y - PlatformExtent.Y);
+	const bool bOverlapsZ =
+		(PlayerLocation.Z - PlayerHalfHeight < PlatformLocation.Z + PlatformExtent.Z) &&
+		(PlayerLocation.Z + PlayerHalfHeight > PlatformLocation.Z - PlatformExtent.Z);
+
+	return bOverlapsX && bOverlapsY && bOverlapsZ;
+}
+
+void AVanishingPlatform::RepositionPlayerIfStuck(AActor* Player)
+{
+	if (!Player || !IsPlayerOverlappingPlatform(Player))
+	{
+		return;
+	}
+
+	UPrimitiveComponent* PlatformCollision = Platform ? Cast<UPrimitiveComponent>(Platform) : Sprite;
+	if (!PlatformCollision)
+	{
+		return;
+	}
+
+	const FVector PlatformExtent = PlatformCollision->Bounds.BoxExtent;
+	FVector NewLocation = Player->GetActorLocation();
+	NewLocation.Z = GetActorLocation().Z + PlatformExtent.Z + PlayerPushDistance;
+
+	Player->SetActorLocation(NewLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	UE_LOG(LogTemp, Warning, TEXT("Player %s was stuck in vanishing platform %s, pushed up on Z axis to %f"),
+		*Player->GetName(), *GetName(), NewLocation.Z);
 }
 
 void AVanishingPlatform::OnVanishFlipbookFinished()
